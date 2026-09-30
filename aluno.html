@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Área do Aluno Amaral</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: app de uma coluna (max 760px), abas fixas no topo; rotinas como partitura de tarefas */
+:root {
+  --papel: #FBFAF7; --papel-2: #F2EEE6; --tinta: #1C1A17; --tinta-suave: #5A534B;
+  --madeira: #8A4B2A; --madeira-forte: #6E3A1E; --ceu: #2F6A9E; --linha: #E3DDD3;
+  --sobre-madeira: #FBFAF7; --ok: #2F7A4F; --erro: #B3261E;
+  --calor-0: #EAE4DA; --calor-1: #E2B99C; --calor-2: #C27A4C; --calor-3: #8A4B2A;
+  --f-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+  --f-texto: 'Figtree', 'Segoe UI', system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --papel: #171412; --papel-2: #211C18; --tinta: #F3EEE7; --tinta-suave: #B9AFA4;
+    --madeira: #C27A4C; --madeira-forte: #8A4B2A; --ceu: #7FB0DB; --linha: #3A322B;
+    --sobre-madeira: #171412; --ok: #6FC08F; --erro: #F2A29C;
+    --calor-0: #2A241F; --calor-1: #5C3A25; --calor-2: #9A5A33; --calor-3: #D48A58; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --papel: #171412; --papel-2: #211C18; --tinta: #F3EEE7; --tinta-suave: #B9AFA4;
+  --madeira: #C27A4C; --madeira-forte: #8A4B2A; --ceu: #7FB0DB; --linha: #3A322B;
+  --sobre-madeira: #171412; --ok: #6FC08F; --erro: #F2A29C;
+  --calor-0: #2A241F; --calor-1: #5C3A25; --calor-2: #9A5A33; --calor-3: #D48A58; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--papel); color: var(--tinta); font: 16px/1.55 var(--f-texto); padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+[hidden] { display: none !important; }
+a { color: var(--ceu); }
+h1, h2, h3 { font-family: var(--f-display); line-height: 1.1; margin: 0; text-wrap: balance; }
+h1 { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; }
+h2 { font-size: 22px; font-weight: 800; }
+h3 { font-size: 18px; font-weight: 700; }
+p { margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--ceu); outline-offset: 2px; }
+.wrap { max-width: 760px; margin-inline: auto; padding-inline: 16px; }
+.pilha { display: flex; flex-direction: column; gap: 16px; }
+.suave { color: var(--tinta-suave); }
+.pequeno { font-size: 14px; }
+.rotulo { font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--madeira); }
+
+.botao { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 999px; border: 2px solid var(--madeira); background: var(--madeira); color: var(--sobre-madeira); font-weight: 700; cursor: pointer; text-decoration: none; }
+.botao:hover { background: var(--madeira-forte); border-color: var(--madeira-forte); }
+.botao:disabled { opacity: .55; cursor: default; }
+.botao.vazado { background: transparent; color: var(--tinta); border-color: var(--linha); }
+.botao.vazado:hover { border-color: var(--tinta); }
+.botao.mini { min-height: 36px; padding: 0 12px; font-size: 14px; }
+.link-botao { background: none; border: 0; padding: 6px 4px; min-height: 36px; color: var(--tinta-suave); font-weight: 600; cursor: pointer; }
+.link-botao:hover { color: var(--tinta); }
+
+.campo { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.campo label { font-weight: 700; font-size: 14px; }
+.campo input, .campo select, .campo textarea { width: 100%; min-height: 46px; padding: 10px 12px; border: 1.5px solid var(--linha); border-radius: 10px; background: var(--papel); }
+.campo textarea { min-height: 96px; resize: vertical; }
+.linha2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 520px) { .linha2 { grid-template-columns: minmax(0, 1fr); } }
+.msg { font-size: 14px; padding: 10px 12px; border-radius: 10px; background: var(--papel-2); }
+.msg.erro { color: var(--erro); }
+.msg.ok { color: var(--ok); }
+
+/* Marca */
+.marca { display: flex; align-items: center; gap: 10px; color: var(--tinta); text-decoration: none; }
+.marca svg { width: 38px; height: 34px; flex: none; }
+.marca b { font-family: var(--f-display); font-weight: 800; font-size: 21px; letter-spacing: -0.02em; line-height: 1; display: block; }
+.marca span { font-size: 9px; font-weight: 700; letter-spacing: 0.22em; color: var(--madeira); }
+
+/* Entrada */
+.entrada { min-height: 100vh; display: flex; align-items: center; padding-block: 40px; }
+.cartao { background: var(--papel-2); border: 1px solid var(--linha); border-radius: 20px; padding: 24px; }
+.abas-entrada { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px; border-radius: 999px; background: var(--papel); border: 1px solid var(--linha); }
+.abas-entrada button { min-height: 40px; border: 0; border-radius: 999px; background: transparent; font-weight: 700; cursor: pointer; }
+.abas-entrada button[aria-selected="true"] { background: var(--tinta); color: var(--papel); }
+
+/* App */
+.topo { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--papel); border-bottom: 1px solid var(--linha); }
+.topo-linha { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-block: 10px; }
+.abas { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+.abas button { flex: none; min-height: 44px; padding: 0 14px; border: 0; border-bottom: 3px solid transparent; background: none; font-weight: 700; color: var(--tinta-suave); cursor: pointer; }
+.abas button[aria-selected="true"] { color: var(--tinta); border-bottom-color: var(--madeira); }
+main.wrap { padding-block: 24px 64px; }
+
+/* Rotinas */
+.rotina { border: 1px solid var(--linha); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 12px; background: var(--papel); }
+.rotina-cab { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: var(--papel-2); border: 1px solid var(--linha); }
+.itens { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.item { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding-block: 10px; border-top: 1px solid var(--linha); }
+.item input { width: 22px; height: 22px; accent-color: var(--madeira); cursor: pointer; }
+.item label { cursor: pointer; overflow-wrap: anywhere; }
+.item.feito label { color: var(--tinta-suave); text-decoration: line-through; }
+.min { font-size: 13px; font-weight: 700; color: var(--tinta-suave); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.barra { height: 8px; border-radius: 999px; background: var(--calor-0); overflow: hidden; }
+.barra i { display: block; height: 100%; background: var(--madeira); width: 0; transition: width .3s; }
+@media (prefers-reduced-motion: reduce) { .barra i { transition: none; } }
+
+/* Progresso */
+.numeros { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.numero { padding: 16px; border-radius: 14px; background: var(--papel-2); }
+.numero b { display: block; font-family: var(--f-display); font-size: 34px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.numero span { font-size: 13px; color: var(--tinta-suave); }
+@media (max-width: 460px) { .numero b { font-size: 26px; } }
+.calor-caixa { overflow-x: auto; }
+.calor { display: grid; grid-template-rows: repeat(7, 16px); grid-auto-flow: column; grid-auto-columns: 16px; gap: 4px; }
+.calor i { border-radius: 4px; background: var(--calor-0); }
+.calor i[data-n="1"] { background: var(--calor-1); }
+.calor i[data-n="2"] { background: var(--calor-2); }
+.calor i[data-n="3"] { background: var(--calor-3); }
+.calor i.hoje { outline: 2px solid var(--tinta); outline-offset: 1px; }
+.legenda { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--tinta-suave); }
+.legenda i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
+/* Comunidade */
+.post { border-top: 1px solid var(--linha); padding-block: 18px; display: flex; flex-direction: column; gap: 10px; }
+.autor { display: flex; align-items: center; gap: 10px; }
+.avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--madeira); color: var(--sobre-madeira); display: grid; place-items: center; font-weight: 800; flex: none; }
+.avatar.prof { background: var(--tinta); color: var(--papel); }
+.autor b { display: block; line-height: 1.2; }
+.post-texto { white-space: pre-wrap; overflow-wrap: anywhere; }
+.acoes-post { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.curtir[aria-pressed="true"] { color: var(--madeira); }
+.comentarios { display: flex; flex-direction: column; gap: 8px; padding-left: 16px; border-left: 2px solid var(--linha); }
+.comentario { font-size: 15px; overflow-wrap: anywhere; }
+.comentario b { margin-right: 6px; }
+.form-coment { display: flex; gap: 8px; }
+.form-coment input { flex: 1; min-width: 0; min-height: 40px; padding: 8px 12px; border: 1.5px solid var(--linha); border-radius: 999px; background: var(--papel); }
+
+/* Professor */
+.tabela-caixa { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--linha); white-space: nowrap; }
+th { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tinta-suave); }
+td.num { font-variant-numeric: tabular-nums; }
+.vazio { padding: 28px 20px; border: 1.5px dashed var(--linha); border-radius: 16px; text-align: center; color: var(--tinta-suave); }
+.separador { height: 1px; background: var(--linha); margin-block: 8px; }
+</style>
+</head>
+<body>
+
+<template id="svg-marca">
+  <svg viewBox="0 0 220 200" aria-hidden="true">
+    <polygon points="52,118 6,92 14,146" fill="#6E3A1E"/>
+    <circle cx="100" cy="115" r="62" fill="#8A4B2A"/>
+    <circle cx="156" cy="72" r="34" fill="#8A4B2A"/>
+    <polygon points="186,63 214,74 186,85" fill="currentColor"/>
+    <circle cx="165" cy="66" r="6.5" fill="#FBFAF7"/>
+    <circle cx="166.5" cy="66" r="3.2" fill="#1C1A17"/>
+    <rect x="58" y="98" width="92" height="54" rx="10" fill="#FBFAF7"/>
+    <path d="M81 100V150M104 100V150M127 100V150" stroke="#1C1A17" stroke-width="2"/>
+    <rect x="74" y="98" width="14" height="32" rx="2" fill="#1C1A17"/>
+    <rect x="97" y="98" width="14" height="32" rx="2" fill="#1C1A17"/>
+    <rect x="120" y="98" width="14" height="32" rx="2" fill="#1C1A17"/>
+    <path d="M88 176L84 196M114 176L118 196" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+  </svg>
+</template>
+
+<!-- Tela: configuração ausente -->
+<section id="tela-config" class="entrada" hidden>
+  <div class="wrap pilha">
+    <h1>Área do aluno em configuração</h1>
+    <p class="suave">Falta ligar esta página ao banco de dados da escola. Preencha o arquivo config.js.</p>
+  </div>
+</section>
+
+<!-- Tela: entrar / criar conta -->
+<section id="tela-entrar" class="entrada" hidden>
+  <div class="wrap" style="max-width: 460px">
+    <div class="pilha">
+      <a class="marca" href="./"><span class="marca-svg"></span><span><b>amaral</b><span>ESCOLA DE MÚSICA</span></span></a>
+      <h1>Área do aluno</h1>
+      <p class="suave">Rotinas de estudo, seu progresso e a comunidade da escola.</p>
+      <div class="cartao pilha">
+        <div class="abas-entrada" role="tablist" aria-label="Entrar ou criar conta">
+          <button type="button" role="tab" id="aba-entrar" aria-selected="true">Entrar</button>
+          <button type="button" role="tab" id="aba-criar" aria-selected="false">Criar conta</button>
+        </div>
+        <form id="form-entrar" class="pilha" novalidate>
+          <div class="campo" id="campo-nome" hidden><label for="e-nome">Nome completo</label><input id="e-nome" autocomplete="name" maxlength="80"></div>
+          <div class="campo" id="campo-instr" hidden><label for="e-instr">Instrumento principal</label>
+            <select id="e-instr"><option>Teclado</option><option>Piano</option><option>Violão</option><option>Guitarra</option><option>Canto coral</option><option>Concurso</option></select></div>
+          <div class="campo"><label for="e-email">E-mail</label><input id="e-email" type="email" autocomplete="email" required></div>
+          <div class="campo"><label for="e-senha">Senha</label><input id="e-senha" type="password" autocomplete="current-password" minlength="6" required></div>
+          <button class="botao" type="submit" id="btn-entrar">Entrar</button>
+          <button class="link-botao" type="button" id="btn-esqueci">Esqueci minha senha</button>
+          <p class="msg" id="msg-entrar" role="status" hidden></p>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Tela: nova senha (link de recuperação) -->
+<section id="tela-senha" class="entrada" hidden>
+  <div class="wrap" style="max-width: 460px">
+    <form id="form-senha" class="cartao pilha" novalidate>
+      <h2>Criar nova senha</h2>
+      <div class="campo"><label for="nova-senha">Nova senha</label><input id="nova-senha" type="password" autocomplete="new-password" minlength="6" required></div>
+      <button class="botao" type="submit">Salvar senha</button>
+      <p class="msg" id="msg-senha" role="status" hidden></p>
+    </form>
+  </div>
+</section>
+
+<!-- Tela: aguardando aprovação -->
+<section id="tela-espera" class="entrada" hidden>
+  <div class="wrap pilha" style="max-width: 520px">
+    <span class="rotulo">Quase lá</span>
+    <h1>Seu cadastro está com o professor</h1>
+    <p class="suave">Assim que o professor Alison aprovar sua entrada, você vê as rotinas e a comunidade aqui. Pode fechar e voltar mais tarde.</p>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap">
+      <button class="botao" type="button" id="btn-verificar">Verificar de novo</button>
+      <button class="botao vazado" type="button" data-sair>Sair</button>
+    </div>
+  </div>
+</section>
+
+<!-- Tela: app -->
+<div id="tela-app" hidden>
+  <header class="topo">
+    <div class="wrap">
+      <div class="topo-linha">
+        <a class="marca" href="./"><span class="marca-svg"></span><span><b>amaral</b><span>ÁREA DO ALUNO</span></span></a>
+        <div style="display: flex; align-items: center; gap: 4px">
+          <span class="pequeno suave" id="ola"></span>
+          <button class="link-botao" type="button" data-sair>Sair</button>
+        </div>
+      </div>
+      <nav class="abas" role="tablist" aria-label="Seções">
+        <button type="button" role="tab" data-aba="rotinas" aria-selected="true">Rotinas</button>
+        <button type="button" role="tab" data-aba="progresso" aria-selected="false">Meu progresso</button>
+        <button type="button" role="tab" data-aba="comunidade" aria-selected="false">Comunidade</button>
+        <button type="button" role="tab" data-aba="professor" aria-selected="false" id="aba-professor" hidden>Professor</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- Rotinas -->
+    <section id="painel-rotinas" class="pilha">
+      <div class="pilha" style="gap: 6px">
+        <h1>Estudo de hoje</h1>
+        <p class="suave" id="hoje-resumo">Marque cada exercício quando terminar.</p>
+      </div>
+      <div class="barra" aria-hidden="true"><i id="barra-hoje"></i></div>
+      <label class="pequeno" style="display: flex; gap: 8px; align-items: center"><input type="checkbox" id="ver-todas"> Ver rotinas de todos os instrumentos</label>
+      <div id="lista-rotinas" class="pilha"><div class="vazio">Carregando rotinas…</div></div>
+    </section>
+
+    <!-- Progresso -->
+    <section id="painel-progresso" class="pilha" hidden>
+      <h1>Meu progresso</h1>
+      <div class="numeros">
+        <div class="numero"><b id="p-sequencia">0</b><span>dias seguidos</span></div>
+        <div class="numero"><b id="p-dias">0</b><span>dias estudados em 30 dias</span></div>
+        <div class="numero"><b id="p-minutos">0</b><span>minutos nesta semana</span></div>
+      </div>
+      <div class="pilha" style="gap: 10px">
+        <h2>Últimas 12 semanas</h2>
+        <div class="calor-caixa"><div class="calor" id="calor" role="img" aria-label="Mapa de dias estudados nas últimas 12 semanas"></div></div>
+        <div class="legenda">menos <i style="background: var(--calor-0)"></i><i style="background: var(--calor-1)"></i><i style="background: var(--calor-2)"></i><i style="background: var(--calor-3)"></i> mais minutos</div>
+      </div>
+    </section>
+
+    <!-- Comunidade -->
+    <section id="painel-comunidade" class="pilha" hidden>
+      <h1>Comunidade</h1>
+      <form id="form-post" class="cartao pilha" novalidate>
+        <div class="campo"><label for="post-texto">Compartilhe com a turma</label><textarea id="post-texto" maxlength="2000" placeholder="Uma dúvida, uma conquista, o que você estudou hoje…"></textarea></div>
+        <div class="campo"><label for="post-link">Link de vídeo ou áudio (opcional)</label><input id="post-link" type="url" inputmode="url" placeholder="https://youtube.com/…"></div>
+        <div><button class="botao" type="submit">Publicar</button></div>
+        <p class="msg" id="msg-post" role="status" hidden></p>
+      </form>
+      <div id="feed"><div class="vazio">Carregando a comunidade…</div></div>
+    </section>
+
+    <!-- Professor -->
+    <section id="painel-professor" class="pilha" hidden>
+      <h1>Painel do professor</h1>
+
+      <div class="pilha" id="bloco-pendentes">
+        <h2>Aguardando aprovação</h2>
+        <div id="lista-pendentes"></div>
+      </div>
+
+      <div class="separador"></div>
+
+      <form id="form-rotina" class="cartao pilha" novalidate>
+        <h2>Publicar rotina</h2>
+        <div class="campo"><label for="r-titulo">Título</label><input id="r-titulo" maxlength="120" placeholder="Semana 1: campo harmônico de Dó maior"></div>
+        <div class="linha2">
+          <div class="campo"><label for="r-instr">Para</label><select id="r-instr"><option>Todos</option><option>Teclado</option><option>Piano</option><option>Violão</option><option>Guitarra</option><option>Canto coral</option><option>Concurso</option></select></div>
+          <div class="campo"><label for="r-nivel">Nível</label><select id="r-nivel"><option>Todos os níveis</option><option>Iniciante</option><option>Intermediário</option><option>Avançado</option></select></div>
+        </div>
+        <div class="campo"><label for="r-itens">Exercícios (um por linha: exercício | minutos)</label>
+          <textarea id="r-itens" rows="6" placeholder="Escala de Dó maior, mãos separadas, 60 bpm | 10&#10;Tríades do campo harmônico de Dó | 15&#10;Leitura: lição 3 da apostila | 10"></textarea></div>
+        <div class="campo"><label for="r-obs">Observação (opcional)</label><input id="r-obs" maxlength="300" placeholder="Use o metrônomo. Na próxima aula, tocamos juntos."></div>
+        <div><button class="botao" type="submit">Publicar rotina</button></div>
+        <p class="msg" id="msg-rotina" role="status" hidden></p>
+      </form>
+
+      <div class="pilha">
+        <h2>Rotinas publicadas</h2>
+        <div id="lista-rotinas-prof"></div>
+      </div>
+
+      <div class="pilha">
+        <h2>Quem estudou nos últimos 7 dias</h2>
+        <div class="tabela-caixa"><table><thead><tr><th>Aluno</th><th>Instrumento</th><th>Dias</th><th>Minutos</th><th>Último estudo</th></tr></thead><tbody id="tabela-alunos"></tbody></table></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+(function () {
+  'use strict';
+  var cfg = window.AMARAL_CONFIG || {};
+  var $ = function (id) { return document.getElementById(id); };
+  var telas = ['tela-config', 'tela-entrar', 'tela-senha', 'tela-espera', 'tela-app'];
+  function mostrarTela(id) { telas.forEach(function (t) { $(t).hidden = t !== id; }); }
+
+  // Marca nas telas
+  document.querySelectorAll('.marca-svg').forEach(function (s) { s.appendChild($('svg-marca').content.cloneNode(true)); });
+
+  // Monta elementos sem innerHTML (dados de usuários nunca viram HTML)
+  function el(tag, attrs) {
+    var e = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) {
+      var v = attrs[k];
+      if (v == null || v === false) return;
+      if (k === 'text') e.textContent = v;
+      else if (k === 'class') e.className = v;
+      else if (k.slice(0, 2) === 'on') e.addEventListener(k.slice(2), v);
+      else e.setAttribute(k, v === true ? '' : v);
+    });
+    for (var i = 2; i < arguments.length; i++) {
+      var c = arguments[i];
+      if (c == null) continue;
+      (Array.isArray(c) ? c : [c]).forEach(function (x) { if (x != null) e.appendChild(typeof x === 'string' ? document.createTextNode(x) : x); });
+    }
+    return e;
+  }
+  function aviso(id, texto, tipo) { var m = $(id); m.textContent = texto; m.className = 'msg ' + (tipo || ''); m.hidden = !texto; }
+  function iniciais(nome) { return (nome || '?').trim().split(/\s+/).slice(0, 2).map(function (p) { return p[0]; }).join('').toUpperCase() || '?'; }
+  function hojeISO() { var d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); }
+  function isoDe(d) { var x = new Date(d); x.setMinutes(x.getMinutes() - x.getTimezoneOffset()); return x.toISOString().slice(0, 10); }
+  function diasAtras(n) { var d = new Date(); d.setDate(d.getDate() - n); return isoDe(d); }
+  function quando(ts) {
+    var s = (Date.now() - new Date(ts).getTime()) / 1000;
+    if (s < 60) return 'agora';
+    if (s < 3600) return Math.floor(s / 60) + ' min';
+    if (s < 86400) return Math.floor(s / 3600) + ' h';
+    return new Date(ts).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' });
+  }
+  function linkSeguro(u) { return /^https:\/\/[^\s]+$/i.test(u || '') ? u : ''; }
+
+  if (!cfg.url || !cfg.anonKey || !window.supabase) { mostrarTela('tela-config'); return; }
+  var sb = window.supabase.createClient(cfg.url, cfg.anonKey);
+  var eu = null;       // perfil do usuário logado
+  var abaAtual = 'rotinas';
+
+  // ---------- Entrar / criar conta ----------
+  var modoCriar = false;
+  function modo(criar) {
+    modoCriar = criar;
+    $('aba-entrar').setAttribute('aria-selected', String(!criar));
+    $('aba-criar').setAttribute('aria-selected', String(criar));
+    $('campo-nome').hidden = !criar; $('campo-instr').hidden = !criar;
+    $('btn-entrar').textContent = criar ? 'Criar conta' : 'Entrar';
+    $('e-senha').setAttribute('autocomplete', criar ? 'new-password' : 'current-password');
+    $('btn-esqueci').hidden = criar;
+    aviso('msg-entrar', '');
+  }
+  $('aba-entrar').addEventListener('click', function () { modo(false); });
+  $('aba-criar').addEventListener('click', function () { modo(true); });
+
+  $('form-entrar').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var email = $('e-email').value.trim(), senha = $('e-senha').value;
+    if (!email || senha.length < 6) return aviso('msg-entrar', 'Informe o e-mail e uma senha com pelo menos 6 caracteres.', 'erro');
+    $('btn-entrar').disabled = true;
+    try {
+      if (modoCriar) {
+        var nome = $('e-nome').value.trim();
+        if (!nome) { $('btn-entrar').disabled = false; return aviso('msg-entrar', 'Informe seu nome.', 'erro'); }
+        var r = await sb.auth.signUp({ email: email, password: senha, options: { data: { nome: nome, instrumento: $('e-instr').value }, emailRedirectTo: location.href.split('#')[0] } });
+        if (r.error) throw r.error;
+        if (!r.data.session) aviso('msg-entrar', 'Conta criada. Abra o e-mail que enviamos e confirme o cadastro para entrar.', 'ok');
+      } else {
+        var r2 = await sb.auth.signInWithPassword({ email: email, password: senha });
+        if (r2.error) throw r2.error;
+      }
+    } catch (err) {
+      var m = String(err.message || err);
+      if (/invalid login/i.test(m)) m = 'E-mail ou senha incorretos.';
+      else if (/already registered/i.test(m)) m = 'Esse e-mail já tem conta. Use a aba Entrar.';
+      else if (/email not confirmed/i.test(m)) m = 'Confirme seu e-mail pelo link que enviamos antes de entrar.';
+      aviso('msg-entrar', m, 'erro');
+    }
+    $('btn-entrar').disabled = false;
+  });
+
+  $('btn-esqueci').addEventListener('click', async function () {
+    var email = $('e-email').value.trim();
+    if (!email) return aviso('msg-entrar', 'Digite seu e-mail acima e toque de novo em "Esqueci minha senha".', 'erro');
+    var r = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.href.split('#')[0] });
+    aviso('msg-entrar', r.error ? r.error.message : 'Enviamos um link para criar uma nova senha no seu e-mail.', r.error ? 'erro' : 'ok');
+  });
+
+  $('form-senha').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var s = $('nova-senha').value;
+    if (s.length < 6) return aviso('msg-senha', 'A senha precisa ter pelo menos 6 caracteres.', 'erro');
+    var r = await sb.auth.updateUser({ password: s });
+    if (r.error) return aviso('msg-senha', r.error.message, 'erro');
+    aviso('msg-senha', 'Senha salva.', 'ok');
+    carregarUsuario();
+  });
+
+  document.querySelectorAll('[data-sair]').forEach(function (b) { b.addEventListener('click', function () { sb.auth.signOut(); }); });
+  $('btn-verificar').addEventListener('click', carregarUsuario);
+
+  sb.auth.onAuthStateChange(function (ev, sessao) {
+    if (ev === 'PASSWORD_RECOVERY') return mostrarTela('tela-senha');
+    if (!sessao) { eu = null; modo(false); return mostrarTela('tela-entrar'); }
+    if (ev === 'SIGNED_IN' || ev === 'INITIAL_SESSION') setTimeout(carregarUsuario, 0);
+  });
+
+  async function carregarUsuario() {
+    var u = (await sb.auth.getUser()).data.user;
+    if (!u) return mostrarTela('tela-entrar');
+    var r = await sb.from('perfis').select('*').eq('id', u.id).maybeSingle();
+    eu = r.data;
+    if (!eu || !eu.aprovado) return mostrarTela('tela-espera');
+    $('ola').textContent = 'Olá, ' + (eu.nome.split(' ')[0] || 'aluno');
+    $('aba-professor').hidden = eu.papel !== 'professor';
+    mostrarTela('tela-app');
+    abrir(abaAtual);
+  }
+
+  // ---------- Abas ----------
+  document.querySelectorAll('[data-aba]').forEach(function (b) { b.addEventListener('click', function () { abrir(b.dataset.aba); }); });
+  function abrir(aba) {
+    abaAtual = aba;
+    document.querySelectorAll('[data-aba]').forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.aba === aba)); });
+    ['rotinas', 'progresso', 'comunidade', 'professor'].forEach(function (a) { $('painel-' + a).hidden = a !== aba; });
+    ({ rotinas: carregarRotinas, progresso: carregarProgresso, comunidade: carregarFeed, professor: carregarProfessor })[aba]();
+  }
+
+  // ---------- Rotinas ----------
+  $('ver-todas').addEventListener('change', carregarRotinas);
+  async function carregarRotinas() {
+    var q = sb.from('rotinas').select('*').eq('ativa', true).order('criado_em', { ascending: false });
+    if (!$('ver-todas').checked && eu.papel !== 'professor') q = q.in('instrumento', ['Todos', eu.instrumento]);
+    var rs = await Promise.all([q, sb.from('progresso').select('rotina_id,item,minutos').eq('aluno_id', eu.id).eq('dia', hojeISO())]);
+    var rotinas = rs[0].data || [], feitos = rs[1].data || [];
+    var marcado = {}; feitos.forEach(function (f) { marcado[f.rotina_id + ':' + f.item] = true; });
+    var lista = $('lista-rotinas'); lista.replaceChildren();
+    if (!rotinas.length) {
+      lista.appendChild(el('div', { class: 'vazio', text: 'Ainda não há rotina publicada para ' + eu.instrumento + '. Quando o professor publicar, ela aparece aqui.' }));
+    }
+    var totalMin = 0, feitoMin = 0;
+    rotinas.forEach(function (r) {
+      var itens = Array.isArray(r.itens) ? r.itens : [];
+      var ul = el('ul', { class: 'itens' });
+      itens.forEach(function (it, i) {
+        var chave = r.id + ':' + i, feito = !!marcado[chave], min = Number(it.minutos) || 0;
+        totalMin += min; if (feito) feitoMin += min;
+        var id = 'it-' + r.id + '-' + i;
+        var li = el('li', { class: 'item' + (feito ? ' feito' : '') },
+          el('input', { type: 'checkbox', id: id, checked: feito, onchange: function (e) { marcar(r.id, i, min, e.target.checked, li); } }),
+          el('label', { for: id, text: String(it.texto || '') }),
+          el('span', { class: 'min', text: min ? min + ' min' : '' }));
+        ul.appendChild(li);
+      });
+      lista.appendChild(el('article', { class: 'rotina' },
+        el('div', { class: 'rotina-cab' },
+          el('div', { class: 'pilha', style: 'gap: 6px' }, el('h3', { text: r.titulo }),
+            el('div', { class: 'chips' }, el('span', { class: 'chip', text: r.instrumento }), el('span', { class: 'chip', text: r.nivel })))),
+        r.observacao ? el('p', { class: 'suave pequeno', text: r.observacao }) : null,
+        ul));
+    });
+    atualizarResumo(feitoMin, totalMin);
+  }
+  function atualizarResumo(feito, total) {
+    $('hoje-resumo').textContent = total ? feito + ' de ' + total + ' minutos estudados hoje.' : 'Marque cada exercício quando terminar.';
+    $('barra-hoje').style.width = total ? Math.round(100 * feito / total) + '%' : '0';
+  }
+  async function marcar(rotinaId, item, minutos, feito, li) {
+    li.classList.toggle('feito', feito);
+    var r = feito
+      ? await sb.from('progresso').insert({ rotina_id: rotinaId, item: item, minutos: minutos })
+      : await sb.from('progresso').delete().match({ aluno_id: eu.id, rotina_id: rotinaId, item: item, dia: hojeISO() });
+    if (r.error && !/duplicate/i.test(r.error.message)) { li.classList.toggle('feito', !feito); li.querySelector('input').checked = !feito; }
+    carregarRotinas();
+  }
+
+  // ---------- Progresso ----------
+  async function carregarProgresso() {
+    var r = await sb.from('progresso').select('dia,minutos').eq('aluno_id', eu.id).gte('dia', diasAtras(84));
+    var porDia = {};
+    (r.data || []).forEach(function (p) { porDia[p.dia] = (porDia[p.dia] || 0) + (p.minutos || 0) + 0.001; });
+    // sequência: conta a partir de hoje (ou de ontem, se hoje ainda não estudou)
+    var seq = 0, i = porDia[hojeISO()] ? 0 : 1;
+    while (porDia[diasAtras(i)]) { seq++; i++; }
+    var dias30 = 0; for (var d = 0; d < 30; d++) if (porDia[diasAtras(d)]) dias30++;
+    var hoje = new Date(), dow = hoje.getDay(), minSemana = 0;
+    for (var k = 0; k <= dow; k++) minSemana += Math.floor(porDia[diasAtras(k)] || 0);
+    $('p-sequencia').textContent = seq; $('p-dias').textContent = dias30; $('p-minutos').textContent = minSemana;
+    // mapa: 12 colunas (semanas) de domingo a sábado
+    var calor = $('calor'); calor.replaceChildren();
+    var inicio = new Date(); inicio.setDate(inicio.getDate() - dow - 77);
+    for (var n = 0; n < 84; n++) {
+      var dt = new Date(inicio); dt.setDate(inicio.getDate() + n);
+      var iso = isoDe(dt), min = porDia[iso] || 0;
+      var nivel = !min ? 0 : min < 15 ? 1 : min < 40 ? 2 : 3;
+      if (dt > hoje) nivel = 0;
+      calor.appendChild(el('i', { 'data-n': String(nivel), class: iso === hojeISO() ? 'hoje' : null, title: dt.toLocaleDateString('pt-BR') + (min ? ': ' + Math.floor(min) + ' min' : '') }));
+    }
+  }
+
+  // ---------- Comunidade ----------
+  $('form-post').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var texto = $('post-texto').value.trim(), link = $('post-link').value.trim();
+    if (!texto) return aviso('msg-post', 'Escreva alguma coisa antes de publicar.', 'erro');
+    if (link && !linkSeguro(link)) return aviso('msg-post', 'O link precisa começar com https://', 'erro');
+    var r = await sb.from('posts').insert({ texto: texto, link: link });
+    if (r.error) return aviso('msg-post', 'Não foi possível publicar: ' + r.error.message, 'erro');
+    $('post-texto').value = ''; $('post-link').value = ''; aviso('msg-post', '');
+    carregarFeed();
+  });
+
+  async function carregarFeed() {
+    var r = await sb.from('posts').select('id,texto,link,criado_em,autor_id,autor:perfis(nome,instrumento,papel)').order('criado_em', { ascending: false }).limit(50);
+    var posts = r.data || [], ids = posts.map(function (p) { return p.id; });
+    var extras = ids.length ? await Promise.all([
+      sb.from('comentarios').select('id,post_id,texto,criado_em,autor_id,autor:perfis(nome)').in('post_id', ids).order('criado_em'),
+      sb.from('curtidas').select('post_id,autor_id').in('post_id', ids)
+    ]) : [{ data: [] }, { data: [] }];
+    var coms = extras[0].data || [], curts = extras[1].data || [];
+    var feed = $('feed'); feed.replaceChildren();
+    if (!posts.length) feed.appendChild(el('div', { class: 'vazio', text: 'Nenhuma publicação ainda. Seja o primeiro a contar o que estudou hoje.' }));
+    posts.forEach(function (p) {
+      var autor = p.autor || {}, meus = curts.filter(function (c) { return c.post_id === p.id; });
+      var curti = meus.some(function (c) { return c.autor_id === eu.id; });
+      var link = linkSeguro(p.link);
+      var lista = el('div', { class: 'comentarios' });
+      coms.filter(function (c) { return c.post_id === p.id; }).forEach(function (c) {
+        lista.appendChild(el('p', { class: 'comentario' }, el('b', { text: (c.autor && c.autor.nome) || 'Aluno' }), c.texto));
+      });
+      var campo = el('input', { 'aria-label': 'Escreva um comentário', placeholder: 'Comentar…', maxlength: '1000' });
+      lista.appendChild(el('form', { class: 'form-coment', onsubmit: async function (e) {
+        e.preventDefault(); var t = campo.value.trim(); if (!t) return;
+        var rc = await sb.from('comentarios').insert({ post_id: p.id, texto: t });
+        if (!rc.error) carregarFeed();
+      } }, campo, el('button', { class: 'botao mini', type: 'submit', text: 'Enviar' })));
+      var podeApagar = p.autor_id === eu.id || eu.papel === 'professor';
+      feed.appendChild(el('article', { class: 'post' },
+        el('div', { class: 'autor' },
+          el('span', { class: 'avatar' + (autor.papel === 'professor' ? ' prof' : ''), 'aria-hidden': 'true', text: iniciais(autor.nome) }),
+          el('div', null, el('b', { text: (autor.nome || 'Aluno') + (autor.papel === 'professor' ? ' · Professor' : '') }),
+            el('span', { class: 'pequeno suave', text: (autor.instrumento || '') + ' · ' + quando(p.criado_em) }))),
+        el('p', { class: 'post-texto', text: p.texto }),
+        link ? el('a', { href: link, target: '_blank', rel: 'noopener noreferrer', text: 'Abrir vídeo/áudio ↗' }) : null,
+        el('div', { class: 'acoes-post' },
+          el('button', { class: 'link-botao curtir', type: 'button', 'aria-pressed': String(curti), text: (curti ? '♥ ' : '♡ ') + meus.length, 'aria-label': 'Curtir, ' + meus.length + ' curtidas',
+            onclick: async function () {
+              if (curti) await sb.from('curtidas').delete().match({ post_id: p.id, autor_id: eu.id });
+              else await sb.from('curtidas').insert({ post_id: p.id });
+              carregarFeed();
+            } }),
+          podeApagar ? el('button', { class: 'link-botao', type: 'button', text: 'Apagar', onclick: function (e) { confirmarApagar(e.target, p.id); } }) : null),
+        lista));
+    });
+  }
+  function confirmarApagar(botao, id) {
+    if (botao.dataset.confirmar) {
+      sb.from('posts').delete().eq('id', id).then(carregarFeed);
+    } else {
+      botao.dataset.confirmar = '1'; botao.textContent = 'Toque de novo para apagar';
+      setTimeout(function () { if (botao.isConnected) { delete botao.dataset.confirmar; botao.textContent = 'Apagar'; } }, 4000);
+    }
+  }
+
+  // ---------- Professor ----------
+  $('form-rotina').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var titulo = $('r-titulo').value.trim();
+    var itens = $('r-itens').value.split('\n').map(function (l) { return l.trim(); }).filter(Boolean).map(function (l) {
+      var partes = l.split('|'), min = parseInt((partes[1] || '').replace(/\D/g, ''), 10);
+      return { texto: partes[0].trim(), minutos: isNaN(min) ? 0 : Math.min(min, 600) };
+    });
+    if (!titulo || !itens.length) return aviso('msg-rotina', 'Dê um título e escreva pelo menos um exercício.', 'erro');
+    var r = await sb.from('rotinas').insert({ titulo: titulo, instrumento: $('r-instr').value, nivel: $('r-nivel').value, itens: itens, observacao: $('r-obs').value.trim() });
+    if (r.error) return aviso('msg-rotina', 'Não foi possível publicar: ' + r.error.message, 'erro');
+    $('r-titulo').value = ''; $('r-itens').value = ''; $('r-obs').value = '';
+    aviso('msg-rotina', 'Rotina publicada. Os alunos de ' + $('r-instr').value + ' já podem ver.', 'ok');
+    carregarProfessor();
+  });
+
+  async function carregarProfessor() {
+    var rs = await Promise.all([
+      sb.from('perfis').select('*').order('criado_em'),
+      sb.from('rotinas').select('id,titulo,instrumento,nivel,ativa,criado_em').order('criado_em', { ascending: false }),
+      sb.from('progresso').select('aluno_id,dia,minutos').gte('dia', diasAtras(6))
+    ]);
+    var perfis = rs[0].data || [], rotinas = rs[1].data || [], prog = rs[2].data || [];
+
+    var pend = $('lista-pendentes'); pend.replaceChildren();
+    var pendentes = perfis.filter(function (p) { return !p.aprovado; });
+    if (!pendentes.length) pend.appendChild(el('p', { class: 'suave', text: 'Nenhum cadastro esperando.' }));
+    pendentes.forEach(function (p) {
+      pend.appendChild(el('div', { class: 'autor', style: 'justify-content: space-between; padding-block: 8px; border-top: 1px solid var(--linha)' },
+        el('div', { class: 'autor' }, el('span', { class: 'avatar', 'aria-hidden': 'true', text: iniciais(p.nome) }),
+          el('div', null, el('b', { text: p.nome || 'Sem nome' }), el('span', { class: 'pequeno suave', text: p.instrumento + ' · ' + quando(p.criado_em) }))),
+        el('button', { class: 'botao mini', type: 'button', text: 'Aprovar', onclick: async function () {
+          await sb.from('perfis').update({ aprovado: true }).eq('id', p.id); carregarProfessor();
+        } })));
+    });
+
+    var lr = $('lista-rotinas-prof'); lr.replaceChildren();
+    if (!rotinas.length) lr.appendChild(el('p', { class: 'suave', text: 'Nenhuma rotina publicada ainda.' }));
+    rotinas.forEach(function (r) {
+      lr.appendChild(el('div', { class: 'autor', style: 'justify-content: space-between; padding-block: 8px; border-top: 1px solid var(--linha)' },
+        el('div', { style: 'min-width: 0' }, el('b', { text: r.titulo }), el('span', { class: 'pequeno suave', text: r.instrumento + ' · ' + r.nivel + (r.ativa ? '' : ' · arquivada') })),
+        el('button', { class: 'botao mini vazado', type: 'button', text: r.ativa ? 'Arquivar' : 'Reativar', onclick: async function () {
+          await sb.from('rotinas').update({ ativa: !r.ativa }).eq('id', r.id); carregarProfessor();
+        } })));
+    });
+
+    var tb = $('tabela-alunos'); tb.replaceChildren();
+    perfis.filter(function (p) { return p.aprovado && p.papel !== 'professor'; }).map(function (p) {
+      var meus = prog.filter(function (x) { return x.aluno_id === p.id; });
+      var dias = {}; meus.forEach(function (x) { dias[x.dia] = 1; });
+      var ult = meus.map(function (x) { return x.dia; }).sort().pop();
+      return { p: p, dias: Object.keys(dias).length, min: meus.reduce(function (s, x) { return s + (x.minutos || 0); }, 0), ult: ult };
+    }).sort(function (a, b) { return b.dias - a.dias || b.min - a.min; }).forEach(function (l) {
+      tb.appendChild(el('tr', null, el('td', { text: l.p.nome }), el('td', { text: l.p.instrumento }),
+        el('td', { class: 'num', text: String(l.dias) }), el('td', { class: 'num', text: String(l.min) }),
+        el('td', { text: l.ult ? new Date(l.ult + 'T12:00').toLocaleDateString('pt-BR') : 'não estudou' })));
+    });
+    if (!tb.children.length) tb.appendChild(el('tr', null, el('td', { colspan: '5', class: 'suave', text: 'Nenhum aluno aprovado ainda.' })));
+  }
+})();
+</script>
+</body>
+</html>

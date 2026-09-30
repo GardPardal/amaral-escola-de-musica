@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Amaral Escola de Música</title>
+<meta name="description" content="Aulas de teclado, piano, violão, guitarra e canto coral em Wenceslau Braz (PR). Preparação para concursos públicos e de orquestras.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: coluna única de leitura (max 1120px), seções que alternam papel e madeira; o teclado de funções harmônicas é o momento principal */
+:root {
+  --papel: #FBFAF7;
+  --papel-2: #F2EEE6;
+  --tinta: #1C1A17;
+  --tinta-suave: #5A534B;
+  --madeira: #8A4B2A;
+  --madeira-forte: #6E3A1E;
+  --ceu: #2F6A9E;
+  --linha: #E3DDD3;
+  --sobre-madeira: #FBFAF7;
+  --tecla-branca: #FFFFFF;
+  --tecla-preta: #1C1A17;
+  --f-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+  --f-texto: 'Figtree', 'Segoe UI', system-ui, sans-serif;
+  --raio: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --papel: #171412; --papel-2: #211C18; --tinta: #F3EEE7; --tinta-suave: #B9AFA4;
+    --madeira: #C27A4C; --madeira-forte: #8A4B2A; --ceu: #7FB0DB; --linha: #3A322B;
+    --sobre-madeira: #171412; --tecla-branca: #F3EEE7; --tecla-preta: #0D0B0A; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --papel: #171412; --papel-2: #211C18; --tinta: #F3EEE7; --tinta-suave: #B9AFA4;
+  --madeira: #C27A4C; --madeira-forte: #8A4B2A; --ceu: #7FB0DB; --linha: #3A322B;
+  --sobre-madeira: #171412; --tecla-branca: #F3EEE7; --tecla-preta: #0D0B0A; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; background: var(--papel); color: var(--tinta); font-family: var(--f-texto); font-size: 17px; line-height: 1.6; }
+a { color: var(--ceu); }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--ceu); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--f-display); line-height: 1.05; text-wrap: balance; margin: 0; }
+h2 { font-size: clamp(32px, 5vw, 52px); font-weight: 800; letter-spacing: -0.02em; }
+h3 { font-size: 22px; font-weight: 700; }
+p { margin: 0; }
+.wrap { max-width: 1120px; margin-inline: auto; padding-inline: 20px; }
+.rotulo { font-size: 13px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--madeira); }
+.secao { padding-block: 88px; }
+.secao-cab { display: flex; flex-direction: column; gap: 14px; max-width: 680px; margin-bottom: 44px; }
+.secao-cab p { color: var(--tinta-suave); font-size: 19px; }
+
+/* Topo */
+.topo { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: var(--papel); border-bottom: 1px solid var(--linha); }
+.topo .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 12px; }
+.marca { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--tinta); }
+.marca svg { width: 44px; height: 40px; flex: none; }
+.marca-nome { display: flex; flex-direction: column; line-height: 1; }
+.marca-nome b { font-family: var(--f-display); font-weight: 800; font-size: 24px; letter-spacing: -0.02em; }
+.marca-nome span { font-size: 10px; font-weight: 700; letter-spacing: 0.22em; color: var(--madeira); margin-top: 3px; }
+.menu { display: flex; gap: 22px; align-items: center; }
+.menu a { color: var(--tinta); text-decoration: none; font-weight: 600; font-size: 15px; }
+.menu a:hover { color: var(--madeira); }
+.botao { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 24px; border-radius: 999px; border: 2px solid var(--madeira); background: var(--madeira); color: var(--sobre-madeira); font: 700 16px var(--f-texto); text-decoration: none; cursor: pointer; }
+.botao:hover { background: var(--madeira-forte); border-color: var(--madeira-forte); }
+.botao.vazado { background: transparent; color: var(--tinta); border-color: var(--tinta); }
+.botao.vazado:hover { background: var(--tinta); color: var(--papel); }
+.menu .botao { min-height: 44px; padding: 0 18px; color: var(--sobre-madeira); }
+@media (max-width: 860px) { .menu a:not(.botao) { display: none; } }
+
+/* Abertura */
+.abertura { padding-block: 64px 80px; }
+.abertura .wrap { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 56px; align-items: center; }
+.abertura h1 { font-size: clamp(44px, 7vw, 84px); font-weight: 800; letter-spacing: -0.035em; }
+.abertura h1 em { font-style: normal; color: var(--madeira); }
+.abertura-texto { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+.abertura-texto > p { font-size: 20px; color: var(--tinta-suave); max-width: 34em; }
+.acoes { display: flex; flex-wrap: wrap; gap: 12px; }
+.fatos { display: flex; flex-wrap: wrap; gap: 28px; padding-top: 8px; }
+.fato b { display: block; font-family: var(--f-display); font-size: 36px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.fato span { font-size: 14px; color: var(--tinta-suave); }
+@media (max-width: 860px) { .abertura .wrap { grid-template-columns: minmax(0, 1fr); gap: 40px; } }
+
+/* Teclado de funções */
+.harmonia { background: var(--papel-2); border: 1px solid var(--linha); border-radius: 22px; padding: 26px; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.harmonia-cab { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.harmonia-cab h3 { font-size: 20px; }
+.harmonia-cab small { color: var(--tinta-suave); font-size: 14px; }
+.teclado { width: 100%; height: auto; display: block; }
+.teclado .branca { fill: var(--tecla-branca); stroke: var(--tinta); stroke-width: 1.5; transition: fill .15s; }
+.teclado .preta { fill: var(--tecla-preta); }
+.teclado .acesa { fill: var(--madeira); }
+.teclado .nome { font: 600 12px var(--f-texto); fill: var(--tinta-suave); text-anchor: middle; }
+.teclado .nome.acesa-txt { fill: var(--sobre-madeira); }
+.funcoes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.funcao { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-height: 74px; padding: 12px 14px; border-radius: 12px; border: 2px solid var(--linha); background: var(--papel); color: var(--tinta); font-family: var(--f-texto); cursor: pointer; text-align: left; }
+.funcao b { font-family: var(--f-display); font-size: 24px; line-height: 1; }
+.funcao span { font-size: 13px; color: var(--tinta-suave); }
+.funcao[aria-pressed="true"] { border-color: var(--madeira); background: var(--madeira); color: var(--sobre-madeira); }
+.funcao[aria-pressed="true"] span { color: var(--sobre-madeira); }
+.harmonia-nota { font-size: 15px; color: var(--tinta-suave); min-height: 3.2em; }
+
+/* Aulas */
+.aulas { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.aula { display: flex; flex-direction: column; gap: 10px; padding: 26px; border: 1px solid var(--linha); border-radius: var(--raio); background: var(--papel); }
+.aula p { color: var(--tinta-suave); font-size: 16px; }
+.aula .tag { align-self: flex-start; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ceu); }
+
+/* Concursos */
+.concursos { background: var(--madeira-forte); color: #FBFAF7; }
+.concursos .rotulo { color: #F0C7A8; }
+.concursos .secao-cab p { color: #EADFD6; }
+.concursos .wrap > .grade { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; align-items: start; }
+.materias { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.materias li { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 16px; align-items: baseline; padding-block: 16px; border-top: 1px solid rgba(251, 250, 247, 0.22); }
+.materias li:last-child { border-bottom: 1px solid rgba(251, 250, 247, 0.22); }
+.materias .cifra { font-family: var(--f-display); font-weight: 800; font-size: 20px; color: #F0C7A8; }
+.materias b { display: block; font-size: 19px; }
+.materias span { color: #EADFD6; font-size: 15px; }
+.concursos .botao { background: #FBFAF7; border-color: #FBFAF7; color: #6E3A1E; }
+.concursos .botao:hover { background: #F0C7A8; border-color: #F0C7A8; }
+.chamada-concurso { display: flex; flex-direction: column; gap: 20px; }
+.chamada-concurso p { font-size: 19px; color: #EADFD6; }
+@media (max-width: 860px) { .concursos .wrap > .grade { grid-template-columns: minmax(0, 1fr); gap: 32px; } }
+
+/* Coral */
+.coral .wrap { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 40px; align-items: center; }
+.agenda { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 220px; padding: 28px 36px; border: 2px solid var(--tinta); border-radius: 22px; text-align: center; }
+.agenda .dia { font-size: 14px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--madeira); }
+.agenda .hora { font-family: var(--f-display); font-weight: 800; font-size: 72px; line-height: 1; font-variant-numeric: tabular-nums; }
+.agenda .obs { font-size: 14px; color: var(--tinta-suave); }
+.coral-texto { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.coral-texto p { color: var(--tinta-suave); font-size: 19px; max-width: 36em; }
+@media (max-width: 700px) { .coral .wrap { grid-template-columns: minmax(0, 1fr); } .agenda { min-width: 0; } }
+
+/* Professor */
+.professor { background: var(--papel-2); }
+.professor .wrap { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 56px; align-items: start; }
+.prof-cab { display: flex; flex-direction: column; gap: 18px; }
+.prof-cab p { font-size: 19px; color: var(--tinta-suave); }
+.linha-tempo { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0; }
+.linha-tempo li { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 18px; padding-block: 18px; border-top: 1px solid var(--linha); }
+.linha-tempo li:last-child { border-bottom: 1px solid var(--linha); }
+.linha-tempo .quando { font-weight: 700; color: var(--madeira); font-size: 15px; }
+.linha-tempo b { display: block; font-size: 18px; }
+.linha-tempo span { color: var(--tinta-suave); font-size: 15px; }
+.bandas { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 6px; }
+.bandas span { padding: 6px 12px; border-radius: 999px; background: var(--papel); border: 1px solid var(--linha); color: var(--tinta); font-size: 14px; font-weight: 600; }
+@media (max-width: 860px) { .professor .wrap { grid-template-columns: minmax(0, 1fr); gap: 36px; } .linha-tempo li { grid-template-columns: minmax(0, 1fr); gap: 4px; } }
+
+/* Área do aluno */
+.aluno-grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.aluno-item { display: flex; flex-direction: column; gap: 8px; padding-block: 20px; border-top: 3px solid var(--tinta); }
+.aluno-item p { color: var(--tinta-suave); font-size: 16px; }
+
+/* Matrícula */
+.matricula .wrap { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 56px; align-items: start; }
+.form { display: flex; flex-direction: column; gap: 18px; padding: 28px; border: 1px solid var(--linha); border-radius: 22px; background: var(--papel-2); }
+.campo { display: flex; flex-direction: column; gap: 6px; }
+.campo label, .campo legend { font-weight: 700; font-size: 15px; padding: 0; }
+.campo input, .campo select { min-height: 48px; padding: 10px 14px; border-radius: 10px; border: 1.5px solid var(--linha); background: var(--papel); color: var(--tinta); font: 16px var(--f-texto); width: 100%; }
+fieldset.campo { border: 0; margin: 0; padding: 0; }
+.opcoes { display: flex; flex-wrap: wrap; gap: 8px; }
+.opcoes label { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border: 1.5px solid var(--linha); border-radius: 999px; background: var(--papel); font-weight: 600; font-size: 15px; cursor: pointer; }
+.opcoes input { accent-color: var(--madeira); width: 18px; height: 18px; }
+.form .aviso { font-size: 14px; color: var(--tinta-suave); }
+.resultado { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 12px; border: 1.5px dashed var(--madeira); }
+.resultado p { font-size: 15px; }
+.contato { display: flex; flex-direction: column; gap: 16px; }
+.contato p { font-size: 19px; color: var(--tinta-suave); }
+.contato dl { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 10px 18px; }
+.contato dt { font-weight: 700; }
+.contato dd { margin: 0; color: var(--tinta-suave); overflow-wrap: anywhere; }
+@media (max-width: 860px) { .matricula .wrap { grid-template-columns: minmax(0, 1fr); gap: 36px; } }
+
+.rodape { padding-block: 40px; border-top: 1px solid var(--linha); color: var(--tinta-suave); font-size: 14px; }
+.rodape .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="wrap">
+    <a class="marca" href="#inicio" aria-label="Amaral Escola de Música, início">
+      <svg viewBox="0 0 220 200" aria-hidden="true">
+        <polygon points="52,118 6,92 14,146" fill="#6E3A1E"/>
+        <circle cx="100" cy="115" r="62" fill="#8A4B2A"/>
+        <circle cx="156" cy="72" r="34" fill="#8A4B2A"/>
+        <polygon points="186,63 214,74 186,85" fill="currentColor"/>
+        <circle cx="165" cy="66" r="6.5" fill="#FBFAF7"/>
+        <circle cx="166.5" cy="66" r="3.2" fill="#1C1A17"/>
+        <rect x="58" y="98" width="92" height="54" rx="10" fill="#FBFAF7"/>
+        <path d="M81 100V150M104 100V150M127 100V150" stroke="#1C1A17" stroke-width="2"/>
+        <rect x="74" y="98" width="14" height="32" rx="2" fill="#1C1A17"/>
+        <rect x="97" y="98" width="14" height="32" rx="2" fill="#1C1A17"/>
+        <rect x="120" y="98" width="14" height="32" rx="2" fill="#1C1A17"/>
+        <path d="M88 176L84 196M114 176L118 196" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+      </svg>
+      <span class="marca-nome"><b>amaral</b><span>ESCOLA DE MÚSICA</span></span>
+    </a>
+    <nav class="menu" aria-label="Seções">
+      <a href="#aulas">Aulas</a>
+      <a href="#concursos">Concursos</a>
+      <a href="#coral">Coral</a>
+      <a href="#professor">Professor</a>
+      <a href="aluno.html">Área do aluno</a>
+      <a class="botao" href="#matricula">Matricule-se</a>
+    </nav>
+  </div>
+</header>
+
+<main id="inicio">
+  <section class="abertura">
+    <div class="wrap">
+      <div class="abertura-texto">
+        <span class="rotulo">Wenceslau Braz · Paraná</span>
+        <h1>Aprenda a tocar <em>entendendo</em> a música.</h1>
+        <p>Aulas de teclado, piano, violão e guitarra, turma de canto coral e teoria de verdade. E preparação para quem quer passar em concursos públicos e de orquestras.</p>
+        <div class="acoes">
+          <a class="botao" href="#matricula">Quero me matricular</a>
+          <a class="botao vazado" href="#concursos">Preparação para concursos</a>
+        </div>
+        <div class="fatos">
+          <div class="fato"><b>15+</b><span>anos de palco</span></div>
+          <div class="fato"><b>10+</b><span>anos dando aula</span></div>
+          <div class="fato"><b>4</b><span>instrumentos + coral</span></div>
+        </div>
+      </div>
+
+      <div class="harmonia" aria-labelledby="harmonia-titulo">
+        <div class="harmonia-cab">
+          <h3 id="harmonia-titulo">Funções dos acordes em Dó maior</h3>
+          <small>Toque em uma função</small>
+        </div>
+        <svg class="teclado" id="teclado" viewBox="0 0 400 150" role="img" aria-label="Teclado de uma oitava e meia com as notas do acorde escolhido destacadas"></svg>
+        <div class="funcoes" role="group" aria-label="Funções harmônicas">
+          <button class="funcao" type="button" data-f="T" aria-pressed="true"><b>T · I</b><span>Tônica · Dó</span></button>
+          <button class="funcao" type="button" data-f="S" aria-pressed="false"><b>S · IV</b><span>Subdominante · Fá</span></button>
+          <button class="funcao" type="button" data-f="D" aria-pressed="false"><b>D · V</b><span>Dominante · Sol</span></button>
+        </div>
+        <p class="harmonia-nota" id="harmonia-nota" aria-live="polite">Tônica: o ponto de repouso. Dó, Mi e Sol. É para onde a música quer voltar.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="secao" id="aulas" style="padding-top: 24px">
+    <div class="wrap">
+      <div class="secao-cab">
+        <span class="rotulo">Aulas</span>
+        <h2>Escolha o seu instrumento</h2>
+        <p>No ritmo de cada aluno, do primeiro acorde ao repertório de banda. Todas incluem leitura e teoria aplicada ao instrumento.</p>
+      </div>
+      <div class="aulas">
+        <article class="aula"><span class="tag">Teclas</span><h3>Teclado</h3><p>Acordes, levadas, timbres e acompanhamento, do louvor ao sertanejo.</p></article>
+        <article class="aula"><span class="tag">Teclas</span><h3>Piano</h3><p>Técnica, leitura de partitura e repertório, com base sólida desde o início.</p></article>
+        <article class="aula"><span class="tag">Cordas</span><h3>Violão</h3><p>Batidas, dedilhados, cifras e harmonia para tocar e acompanhar a voz.</p></article>
+        <article class="aula"><span class="tag">Cordas</span><h3>Guitarra</h3><p>Riffs, escalas, solos e timbre, pensando no palco e no trabalho em banda.</p></article>
+        <article class="aula"><span class="tag">Voz · quintas 19h</span><h3>Canto coral</h3><p>Turma semanal com professor formado em Canto. Afinação e canto a várias vozes.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="secao concursos" id="concursos">
+    <div class="wrap">
+      <div class="grade">
+        <div class="chamada-concurso">
+          <span class="rotulo">Nosso foco</span>
+          <h2>Preparação para concursos de música</h2>
+          <p>Para quem vai prestar concurso público na área de música ou audição de orquestra. Estudamos o conteúdo que cai na prova, com exercícios e rotina de estudo para fazer em casa.</p>
+          <div><a class="botao" href="#matricula">Quero me preparar</a></div>
+        </div>
+        <ul class="materias">
+          <li><span class="cifra">𝄞</span><div><b>Leitura musical e partitura</b><span>Claves, figuras, compassos e leitura à primeira vista</span></div></li>
+          <li><span class="cifra">T·S·D</span><div><b>Funções dos acordes</b><span>Tônica, subdominante, dominante e suas substitutas</span></div></li>
+          <li><span class="cifra">I–V</span><div><b>Harmonia básica e avançada</b><span>Campo harmônico, cadências, empréstimos e modulação</span></div></li>
+          <li><span class="cifra">4/4</span><div><b>Teoria geral</b><span>Intervalos, escalas, tonalidades e tudo o que o edital pedir</span></div></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="secao coral" id="coral">
+    <div class="wrap">
+      <div class="coral-texto">
+        <span class="rotulo">Canto coral</span>
+        <h2>Uma turma que canta junto toda semana</h2>
+        <p>Técnica vocal, afinação e canto a várias vozes, em grupo. Para quem canta na igreja, em banda ou só quer começar a cantar.</p>
+        <div><a class="botao vazado" href="#matricula">Quero entrar no coral</a></div>
+      </div>
+      <div class="agenda" aria-label="Horário do coral: quintas-feiras às 19 horas">
+        <span class="dia">Toda quinta</span>
+        <span class="hora">19h</span>
+        <span class="obs">turma de canto coral</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="secao professor" id="professor">
+    <div class="wrap">
+      <div class="prof-cab">
+        <span class="rotulo">Quem ensina</span>
+        <h2>Alison Barbosa do Amaral</h2>
+        <p>Músico há mais de 15 anos e professor há mais de 10. Ensina teclado, violão e guitarra, e é formado em Canto pela Belas Artes, em Curitiba. Leva para a sala de aula o que aprendeu na estrada, tocando com bandas grandes do meio secular e cristão.</p>
+        <div class="bandas" aria-label="Bandas e artistas com quem já tocou">
+          <span>Renascer Praise</span><span>Banda Oz</span><span>Pedro Paulo &amp; Alex</span><span>Guilherme &amp; Benuto</span><span>Lucas Lucco</span>
+        </div>
+      </div>
+      <ol class="linha-tempo">
+        <li><span class="quando">15+ anos</span><div><b>Músico na estrada</b><span>Passagem por bandas grandes do meio secular e cristão</span></div></li>
+        <li><span class="quando">Formação</span><div><b>Canto, Belas Artes</b><span>Curitiba, Paraná</span></div></li>
+        <li><span class="quando">10+ anos</span><div><b>Professor de música</b><span>Teclado, violão, guitarra e teoria musical</span></div></li>
+        <li><span class="quando">Hoje</span><div><b>Amaral Escola de Música</b><span>Escola própria em Wenceslau Braz, com área do aluno online</span></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="secao" id="aluno">
+    <div class="wrap">
+      <div class="secao-cab">
+        <span class="rotulo">Área do aluno</span>
+        <h2>A aula continua em casa</h2>
+        <p>Cada aluno tem acesso a uma comunidade online da escola, onde o professor publica as rotinas de estudo da semana.</p>
+        <div><a class="botao vazado" href="aluno.html">Entrar na área do aluno</a></div>
+      </div>
+      <div class="aluno-grade">
+        <div class="aluno-item"><h3>Rotinas de estudo</h3><p>Exercícios da semana por instrumento e nível, com o tempo de cada um.</p></div>
+        <div class="aluno-item"><h3>Progresso</h3><p>O aluno marca o que estudou e vê a própria evolução semana a semana.</p></div>
+        <div class="aluno-item"><h3>Comunidade</h3><p>Alunos postam dúvidas e vídeos tocando, e trocam experiência entre si.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="secao matricula" id="matricula" style="padding-top: 24px">
+    <div class="wrap">
+      <div class="contato">
+        <span class="rotulo">Matrícula</span>
+        <h2>Comece agora</h2>
+        <p>Preencha e envie pelo WhatsApp. A gente responde com horários e valores.</p>
+        <dl>
+          <dt>WhatsApp</dt><dd id="zap-exibido">[SEU WHATSAPP]</dd>
+          <dt>Instagram</dt><dd>[SEU @INSTAGRAM]</dd>
+          <dt>Endereço</dt><dd>[ENDEREÇO], Wenceslau Braz – PR</dd>
+        </dl>
+      </div>
+      <form class="form" id="form-matricula" novalidate>
+        <div class="campo">
+          <label for="nome">Seu nome</label>
+          <input id="nome" name="nome" autocomplete="name" required>
+        </div>
+        <div class="campo">
+          <label for="instrumento">Instrumento</label>
+          <select id="instrumento" name="instrumento">
+            <option>Teclado</option><option>Piano</option><option>Violão</option><option>Guitarra</option><option>Canto coral (quintas, 19h)</option><option>Preparação para concurso</option>
+          </select>
+        </div>
+        <fieldset class="campo">
+          <legend>Objetivo</legend>
+          <div class="opcoes">
+            <label><input type="radio" id="obj-comecar" name="objetivo" value="Começar do zero" checked>Começar do zero</label>
+            <label><input type="radio" id="obj-evoluir" name="objetivo" value="Evoluir no que já toco">Evoluir</label>
+            <label><input type="radio" id="obj-concurso" name="objetivo" value="Concurso público ou de orquestra">Concurso</label>
+            <label><input type="radio" id="obj-igreja" name="objetivo" value="Tocar na igreja ou em banda">Igreja / banda</label>
+          </div>
+        </fieldset>
+        <button class="botao" type="submit">Enviar pelo WhatsApp</button>
+        <p class="aviso">Abre o WhatsApp com a mensagem pronta. Nada é enviado sem você confirmar.</p>
+        <div class="resultado" id="resultado" hidden>
+          <p id="resultado-texto"></p>
+          <a class="botao vazado" id="resultado-link" href="#" target="_blank" rel="noopener">Abrir WhatsApp</a>
+        </div>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer class="rodape">
+  <div class="wrap">
+    <span>Amaral Escola de Música · Wenceslau Braz – PR</span>
+    <span>Toque todo dia, como quem canta.</span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  // Número com DDI e DDD, só dígitos. Ex.: '5543999999999'
+  var WHATSAPP = '';
+
+  // Teclado: Dó a Mi da oitava seguinte (10 brancas)
+  var brancas = ['Dó','Ré','Mi','Fá','Sol','Lá','Si','Dó','Ré','Mi'];
+  var midiBrancas = [60,62,64,65,67,69,71,72,74,76];
+  var pretasApos = [0,1,3,4,5,7,8];
+  var acordes = {
+    T: { teclas: [0,2,4], nota: 'Tônica: o ponto de repouso. Dó, Mi e Sol. É para onde a música quer voltar.' },
+    S: { teclas: [3,5,7], nota: 'Subdominante: o afastamento. Fá, Lá e Dó. Prepara o caminho, sem tensão forte.' },
+    D: { teclas: [4,6,8], nota: 'Dominante: a tensão. Sol, Si e Ré. Pede resolução na tônica.' }
+  };
+  var svg = document.getElementById('teclado');
+  var NS = 'http://www.w3.org/2000/svg';
+  var L = 40, H = 150;
+  var rects = [], textos = [];
+  brancas.forEach(function (n, i) {
+    var r = document.createElementNS(NS, 'rect');
+    r.setAttribute('x', i * L + 0.75); r.setAttribute('y', 0.75);
+    r.setAttribute('width', L - 1.5); r.setAttribute('height', H - 1.5); r.setAttribute('rx', 4);
+    r.setAttribute('class', 'branca');
+    svg.appendChild(r); rects.push(r);
+    var t = document.createElementNS(NS, 'text');
+    t.setAttribute('x', i * L + L / 2); t.setAttribute('y', H - 12);
+    t.setAttribute('class', 'nome'); t.textContent = n;
+    svg.appendChild(t); textos.push(t);
+  });
+  pretasApos.forEach(function (i) {
+    var r = document.createElementNS(NS, 'rect');
+    r.setAttribute('x', (i + 1) * L - 12); r.setAttribute('y', 0.75);
+    r.setAttribute('width', 24); r.setAttribute('height', 90); r.setAttribute('rx', 3);
+    r.setAttribute('class', 'preta');
+    svg.appendChild(r);
+  });
+
+  var ctx = null;
+  function tocar(teclas) {
+    try {
+      ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+      var agora = ctx.currentTime;
+      teclas.forEach(function (i, k) {
+        var o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = 'triangle';
+        o.frequency.value = 440 * Math.pow(2, (midiBrancas[i] - 69) / 12);
+        g.gain.setValueAtTime(0.0001, agora + k * 0.06);
+        g.gain.exponentialRampToValueAtTime(0.18, agora + k * 0.06 + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, agora + 1.6);
+        o.connect(g); g.connect(ctx.destination);
+        o.start(agora + k * 0.06); o.stop(agora + 1.7);
+      });
+    } catch (e) { /* sem áudio: o destaque visual basta */ }
+  }
+
+  function mostrar(f, comSom) {
+    var a = acordes[f];
+    rects.forEach(function (r, i) { r.setAttribute('class', a.teclas.indexOf(i) >= 0 ? 'branca acesa' : 'branca'); });
+    textos.forEach(function (t, i) { t.setAttribute('class', a.teclas.indexOf(i) >= 0 ? 'nome acesa-txt' : 'nome'); });
+    document.querySelectorAll('.funcao').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.f === f ? 'true' : 'false'); });
+    document.getElementById('harmonia-nota').textContent = a.nota;
+    if (comSom) tocar(a.teclas);
+  }
+  document.querySelectorAll('.funcao').forEach(function (b) {
+    b.addEventListener('click', function () { mostrar(b.dataset.f, true); });
+  });
+  mostrar('T', false);
+
+  // Matrícula: monta a mensagem para o WhatsApp
+  if (WHATSAPP) document.getElementById('zap-exibido').textContent = '+' + WHATSAPP;
+  var form = document.getElementById('form-matricula');
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var nome = document.getElementById('nome');
+    if (!nome.value.trim()) { nome.focus(); nome.setAttribute('aria-invalid', 'true'); return; }
+    nome.removeAttribute('aria-invalid');
+    var obj = form.querySelector('input[name="objetivo"]:checked');
+    var msg = 'Olá! Sou ' + nome.value.trim() + ' e quero me matricular na Amaral Escola de Música.\n' +
+      'Instrumento: ' + document.getElementById('instrumento').value + '\n' +
+      'Objetivo: ' + (obj ? obj.value : '');
+    var caixa = document.getElementById('resultado');
+    var link = document.getElementById('resultado-link');
+    var txt = document.getElementById('resultado-texto');
+    caixa.hidden = false;
+    if (WHATSAPP) {
+      link.hidden = false;
+      link.href = 'https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(msg);
+      txt.textContent = 'Mensagem pronta. Toque no botão para abrir o WhatsApp e enviar.';
+      window.open(link.href, '_blank', 'noopener');
+    } else {
+      link.hidden = true;
+      txt.textContent = 'O número de WhatsApp da escola ainda não foi configurado nesta página.';
+    }
+  });
+})();
+</script>
+</body>
+</html>
