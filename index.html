@@ -91,9 +91,14 @@ p { margin: 0; }
 .harmonia-cab h3 { font-size: 20px; }
 .harmonia-cab small { color: var(--tinta-suave); font-size: 14px; }
 .teclado { width: 100%; height: auto; display: block; }
+.teclado { touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+.teclado .branca, .teclado .preta { cursor: pointer; }
 .teclado .branca { fill: var(--tecla-branca); stroke: var(--tinta); stroke-width: 1.5; transition: fill .15s; }
-.teclado .preta { fill: var(--tecla-preta); }
+.teclado .preta { fill: var(--tecla-preta); transition: fill .15s; }
 .teclado .acesa { fill: var(--madeira); }
+.teclado .tocando { fill: var(--ceu); transition: none; }
+.teclado rect:focus-visible { outline: none; stroke: var(--ceu); stroke-width: 3; }
+.teclado .nome { pointer-events: none; }
 .teclado .nome { font: 600 12px var(--f-texto); fill: var(--tinta-suave); text-anchor: middle; }
 .teclado .nome.acesa-txt { fill: var(--sobre-madeira); }
 .funcoes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
@@ -233,7 +238,7 @@ fieldset.campo { border: 0; margin: 0; padding: 0; }
       <div class="harmonia" aria-labelledby="harmonia-titulo">
         <div class="harmonia-cab">
           <h3 id="harmonia-titulo">Funções dos acordes em Dó maior</h3>
-          <small>Toque em uma função</small>
+          <small>Toque nas teclas ou em uma função</small>
         </div>
         <svg class="teclado" id="teclado" viewBox="0 0 400 150" role="img" aria-label="Teclado de uma oitava e meia com as notas do acorde escolhido destacadas"></svg>
         <div class="funcoes" role="group" aria-label="Funções harmônicas">
@@ -340,9 +345,9 @@ fieldset.campo { border: 0; margin: 0; padding: 0; }
         <h2>Comece agora</h2>
         <p>Preencha e envie pelo WhatsApp. A gente responde com horários e valores.</p>
         <dl>
-          <dt>WhatsApp</dt><dd id="zap-exibido">[SEU WHATSAPP]</dd>
-          <dt>Instagram</dt><dd>[SEU @INSTAGRAM]</dd>
-          <dt>Endereço</dt><dd>[ENDEREÇO], Wenceslau Braz – PR</dd>
+          <dt data-contato="zap" hidden>WhatsApp</dt><dd data-contato="zap" id="zap-exibido" hidden></dd>
+          <dt data-contato="insta" hidden>Instagram</dt><dd data-contato="insta" hidden><a id="insta-link" href="#" target="_blank" rel="noopener"></a></dd>
+          <dt>Cidade</dt><dd id="endereco-exibido">Wenceslau Braz – PR</dd>
         </dl>
       </div>
       <form class="form" id="form-matricula" novalidate>
@@ -385,13 +390,23 @@ fieldset.campo { border: 0; margin: 0; padding: 0; }
 
 <script>
 (function () {
-  // Número com DDI e DDD, só dígitos. Ex.: '5543999999999'
-  var WHATSAPP = '';
+  // ===== Contatos da escola (preencha aqui) =====
+  var WHATSAPP = '';   // DDI + DDD + número, só dígitos. Ex.: '5543999999999'
+  var INSTAGRAM = '';  // sem @. Ex.: 'amaralescolademusica'
+  var ENDERECO = '';   // Ex.: 'Rua Tal, 123 – Centro'
+  function mostrarContato(nome) { document.querySelectorAll('[data-contato="' + nome + '"]').forEach(function (e) { e.hidden = false; }); }
+  if (INSTAGRAM) {
+    var il = document.getElementById('insta-link');
+    il.textContent = '@' + INSTAGRAM; il.href = 'https://instagram.com/' + INSTAGRAM;
+    mostrarContato('insta');
+  }
+  if (ENDERECO) document.getElementById('endereco-exibido').textContent = ENDERECO + ', Wenceslau Braz – PR';
 
-  // Teclado: Dó a Mi da oitava seguinte (10 brancas)
+  // Teclado: Dó a Mi da oitava seguinte (10 brancas + 7 pretas), cada tecla toca
   var brancas = ['Dó','Ré','Mi','Fá','Sol','Lá','Si','Dó','Ré','Mi'];
   var midiBrancas = [60,62,64,65,67,69,71,72,74,76];
   var pretasApos = [0,1,3,4,5,7,8];
+  var nomesPretas = { 0: 'Dó sustenido', 1: 'Ré sustenido', 3: 'Fá sustenido', 4: 'Sol sustenido', 5: 'Lá sustenido', 7: 'Dó sustenido', 8: 'Ré sustenido' };
   var acordes = {
     T: { teclas: [0,2,4], nota: 'Tônica: o ponto de repouso. Dó, Mi e Sol. É para onde a música quer voltar.' },
     S: { teclas: [3,5,7], nota: 'Subdominante: o afastamento. Fá, Lá e Dó. Prepara o caminho, sem tensão forte.' },
@@ -400,59 +415,107 @@ fieldset.campo { border: 0; margin: 0; padding: 0; }
   var svg = document.getElementById('teclado');
   var NS = 'http://www.w3.org/2000/svg';
   var L = 40, H = 150;
-  var rects = [], textos = [];
-  brancas.forEach(function (n, i) {
+  var rects = [], textos = [], porMidi = {};
+
+  function criarTecla(x, w, h, classe, midi, rotulo) {
     var r = document.createElementNS(NS, 'rect');
-    r.setAttribute('x', i * L + 0.75); r.setAttribute('y', 0.75);
-    r.setAttribute('width', L - 1.5); r.setAttribute('height', H - 1.5); r.setAttribute('rx', 4);
-    r.setAttribute('class', 'branca');
-    svg.appendChild(r); rects.push(r);
+    r.setAttribute('x', x); r.setAttribute('y', 0.75);
+    r.setAttribute('width', w); r.setAttribute('height', h); r.setAttribute('rx', classe === 'preta' ? 3 : 4);
+    r.setAttribute('class', classe);
+    r.setAttribute('role', 'button'); r.setAttribute('tabindex', '0');
+    r.setAttribute('aria-label', 'Tocar ' + rotulo);
+    r.dataset.midi = midi;
+    r.addEventListener('pointerdown', function (e) { e.preventDefault(); tocarTecla(midi); });
+    r.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tocarTecla(midi); } });
+    svg.appendChild(r); porMidi[midi] = r;
+    return r;
+  }
+  brancas.forEach(function (n, i) {
+    rects.push(criarTecla(i * L + 0.75, L - 1.5, H - 1.5, 'branca', midiBrancas[i], n));
     var t = document.createElementNS(NS, 'text');
     t.setAttribute('x', i * L + L / 2); t.setAttribute('y', H - 12);
-    t.setAttribute('class', 'nome'); t.textContent = n;
+    t.setAttribute('class', 'nome'); t.setAttribute('aria-hidden', 'true'); t.textContent = n;
     svg.appendChild(t); textos.push(t);
   });
-  pretasApos.forEach(function (i) {
-    var r = document.createElementNS(NS, 'rect');
-    r.setAttribute('x', (i + 1) * L - 12); r.setAttribute('y', 0.75);
-    r.setAttribute('width', 24); r.setAttribute('height', 90); r.setAttribute('rx', 3);
-    r.setAttribute('class', 'preta');
-    svg.appendChild(r);
-  });
+  pretasApos.forEach(function (i) { criarTecla((i + 1) * L - 12, 24, 90, 'preta', midiBrancas[i] + 1, nomesPretas[i]); });
 
-  var ctx = null;
-  function tocar(teclas) {
-    try {
-      ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
-      var agora = ctx.currentTime;
-      teclas.forEach(function (i, k) {
-        var o = ctx.createOscillator(), g = ctx.createGain();
-        o.type = 'triangle';
-        o.frequency.value = 440 * Math.pow(2, (midiBrancas[i] - 69) / 12);
-        g.gain.setValueAtTime(0.0001, agora + k * 0.06);
-        g.gain.exponentialRampToValueAtTime(0.18, agora + k * 0.06 + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.0001, agora + 1.6);
-        o.connect(g); g.connect(ctx.destination);
-        o.start(agora + k * 0.06); o.stop(agora + 1.7);
-      });
-    } catch (e) { /* sem áudio: o destaque visual basta */ }
+  // Som: síntese com harmônicos e decaimento, parecido com piano (sem arquivos externos)
+  var ctx = null, saida = null;
+  function audio() {
+    if (!ctx) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      ctx = new AC();
+      var comp = ctx.createDynamicsCompressor();
+      saida = ctx.createGain(); saida.gain.value = 0.8;
+      saida.connect(comp); comp.connect(ctx.destination);
+    }
+    if (ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  }
+  function nota(midi, quando) {
+    var c = audio(); if (!c) return;
+    var t0 = (quando || c.currentTime) + 0.005;
+    var f = 440 * Math.pow(2, (midi - 69) / 12);
+    var dur = 2.4 - (midi - 60) * 0.03;
+    var filtro = c.createBiquadFilter();
+    filtro.type = 'lowpass';
+    filtro.frequency.setValueAtTime(Math.min(f * 8, 9000), t0);
+    filtro.frequency.exponentialRampToValueAtTime(Math.max(f * 1.5, 400), t0 + dur);
+    var env = c.createGain();
+    env.gain.setValueAtTime(0.0001, t0);
+    env.gain.exponentialRampToValueAtTime(0.32, t0 + 0.008);
+    env.gain.exponentialRampToValueAtTime(0.12, t0 + 0.35);
+    env.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    filtro.connect(env); env.connect(saida);
+    [[1, 1], [2, 0.45], [3, 0.2], [4, 0.1], [5, 0.05]].forEach(function (p) {
+      var o = c.createOscillator(), g = c.createGain();
+      o.type = 'sine';
+      o.frequency.value = f * p[0] * (1 + (p[0] - 1) * 0.0008);
+      g.gain.value = p[1];
+      o.connect(g); g.connect(filtro);
+      o.start(t0); o.stop(t0 + dur + 0.05);
+    });
+  }
+  function acender(midi) {
+    var r = porMidi[midi]; if (!r) return;
+    r.classList.add('tocando');
+    clearTimeout(r._t); r._t = setTimeout(function () { r.classList.remove('tocando'); }, 220);
+  }
+  function tocarTecla(midi) { nota(midi); acender(midi); }
+  function tocarAcorde(teclas) {
+    var c = audio(); if (!c) return;
+    teclas.forEach(function (i, k) {
+      nota(midiBrancas[i], c.currentTime + k * 0.05);
+      setTimeout(function () { acender(midiBrancas[i]); }, k * 50);
+    });
   }
 
   function mostrar(f, comSom) {
     var a = acordes[f];
-    rects.forEach(function (r, i) { r.setAttribute('class', a.teclas.indexOf(i) >= 0 ? 'branca acesa' : 'branca'); });
+    rects.forEach(function (r, i) { r.classList.toggle('acesa', a.teclas.indexOf(i) >= 0); });
     textos.forEach(function (t, i) { t.setAttribute('class', a.teclas.indexOf(i) >= 0 ? 'nome acesa-txt' : 'nome'); });
     document.querySelectorAll('.funcao').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.f === f ? 'true' : 'false'); });
     document.getElementById('harmonia-nota').textContent = a.nota;
-    if (comSom) tocar(a.teclas);
+    if (comSom) tocarAcorde(a.teclas);
   }
   document.querySelectorAll('.funcao').forEach(function (b) {
     b.addEventListener('click', function () { mostrar(b.dataset.f, true); });
   });
   mostrar('T', false);
 
+  // Teclado do computador: A W S E D F T G Y H U J K O L P Ç (como num piano)
+  var mapa = { a: 60, w: 61, s: 62, e: 63, d: 64, f: 65, t: 66, g: 67, y: 68, h: 69, u: 70, j: 71, k: 72, o: 73, l: 74, p: 75, 'ç': 76, ';': 76 };
+  document.addEventListener('keydown', function (e) {
+    if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+    var alvo = e.target;
+    if (alvo && (alvo.tagName === 'INPUT' || alvo.tagName === 'TEXTAREA' || alvo.tagName === 'SELECT' || alvo.isContentEditable)) return;
+    var m = mapa[(e.key || '').toLowerCase()];
+    if (m) tocarTecla(m);
+  });
+
   // Matrícula: monta a mensagem para o WhatsApp
-  if (WHATSAPP) document.getElementById('zap-exibido').textContent = '+' + WHATSAPP;
+  if (WHATSAPP) { document.getElementById('zap-exibido').textContent = '+' + WHATSAPP; mostrarContato('zap'); }
   var form = document.getElementById('form-matricula');
   form.addEventListener('submit', function (e) {
     e.preventDefault();
@@ -474,7 +537,7 @@ fieldset.campo { border: 0; margin: 0; padding: 0; }
       window.open(link.href, '_blank', 'noopener');
     } else {
       link.hidden = true;
-      txt.textContent = 'O número de WhatsApp da escola ainda não foi configurado nesta página.';
+      txt.textContent = 'As matrículas online abrem em breve. Enquanto isso, fale com o professor Alison pessoalmente ou pelas redes da escola.';
     }
   });
 })();
