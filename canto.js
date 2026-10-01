@@ -1,15 +1,21 @@
-// Canto: piano na tela, metrônomo e tocador de vocalizes da área do aluno.
-// Um exercício com piano fica guardado no item da rotina, no campo "vocalize":
-//   { tipo: 'notas', silaba, padrao: [[semitom|null, tempos], ...], de, ate, direcao, bpm, acorde }
+// Tocador da área do aluno: piano na tela, braço do violão, metrônomo, vocalizes e acordes.
+// Um exercício com som fica guardado no item da rotina, no campo "vocalize":
+//   { tipo: 'notas', silaba, padrao: [[semitom|null, tempos, rótulo?], ...], de, ate, direcao, bpm, acorde }
+//       vocalize: sobe de meio em meio tom de "de" até "ate" (tons da voz feminina; a masculina toca uma oitava abaixo)
+//       com demo: true é uma demonstração fixa em "de" (escala, melodia, afinação), repetida "repeticoes" vezes
+//   { tipo: 'acordes', acordes: [[cifra, tempos, midis?], ...], repeticoes, bpm, braco: true (desenho no braço) }
+//   { tipo: 'metronomo', bpm, tempos (por compasso), compassos, texto }
 //   { tipo: 'respiracao', fases: [[texto, tempos], ...], repeticoes, bpm }
-//   { tipo: 'piano', de, ate }
-// Os tons (de/ate) são da voz feminina; a voz masculina toca uma oitava abaixo.
+//   { tipo: 'piano', de, ate, demo }
+// Opcionais: semPiano (não mostra o piano), diagrama (desenho no braço: cifra ou { nome, inicio, pontos }), texto (instrução fixa),
+//   ocultar (ditado: não mostra nomes de notas nem de acordes).
 (function () {
   'use strict';
 
   var NOMES = ['Dó', 'Dó♯', 'Ré', 'Ré♯', 'Mi', 'Fá', 'Fá♯', 'Sol', 'Sol♯', 'Lá', 'Lá♯', 'Si'];
-  function nomeNota(midi) { return NOMES[((midi % 12) + 12) % 12] + (Math.floor(midi / 12) - 1); }
-  function ehPreta(midi) { return [1, 3, 6, 8, 10].indexOf(((midi % 12) + 12) % 12) >= 0; }
+  function pc(midi) { return ((midi % 12) + 12) % 12; }
+  function nomeNota(midi) { return NOMES[pc(midi)] + (Math.floor(midi / 12) - 1); }
+  function ehPreta(midi) { return [1, 3, 6, 8, 10].indexOf(pc(midi)) >= 0; }
 
   // ---------- Padrões prontos (semitom a partir da tônica, duração em tempos) ----------
   function seq(semitons, dur, ultimo) {
@@ -33,101 +39,80 @@
     longa8: { nome: 'Nota longa (8 tempos)', padrao: [[0, 8]] },
     eco: { nome: 'Ouça e repita (eco)', padrao: [[0, 2], [null, 2], [2, 2], [null, 2], [4, 2], [null, 2], [2, 2], [null, 2], [0, 2], [null, 2]] },
     staccato: { nome: 'Staccato no arpejo (1-3-5-8-5-3-1 curto)', padrao: curto([0, 4, 7, 12, 7, 4, 0]) },
-    intervalos: { nome: 'Intervalos (1-3, 1-5, 1-8)', padrao: [[0, 1], [4, 1], [0, 1], [7, 1], [0, 1], [12, 2]] }
+    intervalos: { nome: 'Intervalos (1-3, 1-5, 1-8)', padrao: [[0, 1], [4, 1], [0, 1], [7, 1], [0, 1], [12, 2]] },
+    oitavaSalto: { nome: 'Salto de oitava (1-8-1)', padrao: [[0, 1], [12, 2], [0, 2]] },
+    escala: { nome: 'Escala maior (1 ao 8 e volta)', padrao: seq([0, 2, 4, 5, 7, 9, 11, 12, 11, 9, 7, 5, 4, 2, 0], 1, 2) },
+    terca: { nome: 'Terças (1-3-2-4-3-5-4-2-1)', padrao: seq([0, 4, 2, 5, 4, 7, 5, 2, 0], 1, 2) }
   };
 
-  // ---------- As 4 aulas de canto prontas ----------
-  function notas(padrao, silaba, de, ate, direcao, bpm) {
-    return { tipo: 'notas', padrao: PADROES[padrao].padrao, silaba: silaba, de: de, ate: ate, direcao: direcao, bpm: bpm, acorde: true };
+  // ---------- Cifras ----------
+  var PC_LETRA = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+  var QUALIDADE = {
+    '': [0, 4, 7], 'm': [0, 3, 7], '7': [0, 4, 7, 10], 'm7': [0, 3, 7, 10], '7M': [0, 4, 7, 11], 'maj7': [0, 4, 7, 11],
+    'dim': [0, 3, 6], '°': [0, 3, 6], 'aug': [0, 4, 8], '+': [0, 4, 8], 'm7(b5)': [0, 3, 6, 10], 'ø': [0, 3, 6, 10],
+    '5': [0, 7, 12], 'sus4': [0, 5, 7], 'sus2': [0, 2, 7], '6': [0, 4, 7, 9], 'm6': [0, 3, 7, 9], '9': [0, 4, 7, 10, 14], 'add9': [0, 4, 7, 14]
+  };
+  function pcDe(txt) { var x = txt.match(/^([A-G])([#b]?)/); return x ? (PC_LETRA[x[1]] + (x[2] === '#' ? 1 : x[2] === 'b' ? -1 : 0) + 12) % 12 : null; }
+  // Voz de teclado: baixo na mão esquerda (Sol1 a Fá♯2) + acorde na direita (Sol3 a Fá♯4)
+  function notasDaCifra(cifra) {
+    var x = String(cifra).match(/^([A-G][#b]?)(.*?)(?:\/([A-G][#b]?))?$/);
+    if (!x) return [];
+    var r = pcDe(x[1]), q = QUALIDADE[x[2]] || QUALIDADE[''];
+    var raiz = 55 + ((r - 7 + 12) % 12);
+    var baixo = x[3] != null ? pcDe(x[3]) : r;
+    return [43 + ((baixo - 7 + 12) % 12)].concat(q.map(function (s) { return raiz + s; }));
   }
-  function resp(fases, repeticoes, bpm) { return { tipo: 'respiracao', fases: fases, repeticoes: repeticoes, bpm: bpm }; }
 
-  var AULAS = [
-    {
-      titulo: 'Canto · Aula 1: Respiração e apoio', instrumento: 'Canto coral', nivel: 'Iniciante',
-      observacao: 'Faça em pé, com calma. O metrônomo marca o tempo de cada fase: siga a contagem na tela.',
-      itens: [
-        { texto: 'Postura: pés na largura dos ombros, joelhos soltos, ombros baixos. Mão na barriga: ao inspirar a barriga sai e os ombros não sobem.', minutos: 3 },
-        { texto: 'Respiração 4-4-8: inspire, segure e solte em "sss" bem controlado', minutos: 4,
-          vocalize: resp([['Inspire pelo nariz', 4], ['Segure, sem travar a garganta', 4], ['Solte em "sss" contínuo', 8]], 6, 60) },
-        { texto: 'Pulsos de apoio: um "ts" curto em cada tempo, a barriga empurra o ar', minutos: 3,
-          vocalize: resp([['Inspire', 4], ['"Ts" a cada tempo', 8], ['Descanse', 4]], 5, 72) },
-        { texto: 'Respiração 4-4-12: a saída fica mais longa', minutos: 3,
-          vocalize: resp([['Inspire pelo nariz', 4], ['Segure', 4], ['Solte em "fff" bem devagar', 12]], 4, 60) },
-        { texto: 'Vibração de lábios (brrr) em 5 notas, sem empurrar o ar', minutos: 4,
-          vocalize: notas('cinco', 'Brrr (lábios)', 60, 65, 'subir-descer', 92) },
-        { texto: 'Nota longa em "u" com apoio: segure até o fim sem a voz tremer', minutos: 3,
-          vocalize: notas('longa', 'Uuu', 60, 67, 'subir', 66) }
-      ]
-    },
-    {
-      titulo: 'Canto · Aula 2: Afinação', instrumento: 'Canto coral', nivel: 'Iniciante',
-      observacao: 'Ouça antes de cantar. Se a nota não "encaixar", pare, toque a tecla na tela e tente de novo.',
-      itens: [
-        { texto: 'Ouça e repita: o piano toca, você canta a mesma nota no silêncio', minutos: 4,
-          vocalize: notas('eco', 'Lá', 60, 65, 'subir', 84) },
-        { texto: '3 notas em "Lu", devagar, junto com o piano', minutos: 4,
-          vocalize: notas('tres', 'Lu', 60, 67, 'subir-descer', 76) },
-        { texto: 'Arpejo 1-3-5-3-1 em "Mi"', minutos: 4,
-          vocalize: notas('arpejo', 'Mi', 60, 67, 'subir-descer', 80) },
-        { texto: 'Intervalos: terça, quinta e oitava em "Ná"', minutos: 4,
-          vocalize: notas('intervalos', 'Ná', 60, 64, 'subir', 72) },
-        { texto: 'Grave no celular você cantando o arpejo e compare com o piano. Anote onde a nota ficou baixa ou alta.', minutos: 3 },
-        { texto: 'Teclado livre: toque uma nota, cante e confira se encaixou', minutos: 2,
-          vocalize: { tipo: 'piano', de: 53, ate: 76 } }
-      ]
-    },
-    {
-      titulo: 'Canto · Aula 3: Resistência', instrumento: 'Canto coral', nivel: 'Intermediário',
-      observacao: 'Resistência vem do apoio, não da garganta. Se arranhar ou cansar, pare e beba água.',
-      itens: [
-        { texto: 'Vibração de lábios na escala de 9 notas', minutos: 4,
-          vocalize: notas('nove', 'Brrr (lábios)', 60, 65, 'subir-descer', 80) },
-        { texto: 'Staccato no arpejo em "Ha": curto, com a barriga', minutos: 4,
-          vocalize: notas('staccato', 'Ha (curto)', 60, 65, 'subir', 96) },
-        { texto: 'Arpejo com oitava em "Nó", ligado', minutos: 4,
-          vocalize: notas('oitava', 'Nó', 60, 67, 'subir-descer', 88) },
-        { texto: 'Nota longa em "Ah": comece fraco, cresça e volte a diminuir (messa di voce)', minutos: 4,
-          vocalize: notas('longa8', 'Ah (fraco → forte → fraco)', 60, 65, 'subir', 60) },
-        { texto: '5 notas rápidas em "Mi-é-á" (agilidade)', minutos: 4,
-          vocalize: notas('rapido', 'Mi-é-á', 60, 67, 'subir-descer', 112) },
-        { texto: 'Desaquecer: 2 minutos de vibração de lábios no grave e um copo de água.', minutos: 2 }
-      ]
-    },
-    {
-      titulo: 'Canto · Aula 4: Tessitura e extensão', instrumento: 'Canto coral', nivel: 'Intermediário',
-      observacao: 'Extensão se ganha aos poucos. Vá só até onde a voz sai sem apertar; em "Até o tom" você ajusta o limite.',
-      itens: [
-        { texto: 'Sirene em "u": deslize do grave ao agudo e volte, como uma sirene, sem forçar', minutos: 2 },
-        { texto: 'Salto de quinta em "Ná", ligando as notas', minutos: 4,
-          vocalize: notas('quinta', 'Ná-á-á', 55, 67, 'subir', 80) },
-        { texto: 'Arpejo com oitava em "Ia" subindo de meio em meio tom', minutos: 5,
-          vocalize: notas('oitava', 'Ia', 57, 65, 'subir', 92) },
-        { texto: 'Descendo do 5 em "Ah" para explorar o grave', minutos: 4,
-          vocalize: notas('desce', 'Ah', 62, 55, 'descer', 84) },
-        { texto: 'Ache sua extensão: no teclado, encontre a nota mais grave e a mais aguda que você canta confortável', minutos: 3,
-          vocalize: { tipo: 'piano', de: 48, ate: 79 } },
-        { texto: 'Conte na Comunidade sua nota mais grave e a mais aguda. Repita todo mês e compare.', minutos: 2 }
-      ]
-    }
-  ];
+  // Desenhos no braço (cordas da 6ª para a 1ª; x = não tocar). d = dedos.
+  var DIAGRAMAS = {
+    C: { f: 'x32010', d: '-32-1-' }, G: { f: '320003', d: '21---3' }, D: { f: 'xx0232', d: '---132' },
+    A: { f: 'x02220', d: '--123-' }, E: { f: '022100', d: '-231--' }, Am: { f: 'x02210', d: '--231-' },
+    Em: { f: '022000', d: '-23---' }, Dm: { f: 'xx0231', d: '---231' }, A7: { f: 'x02020', d: '--2-3-' },
+    D7: { f: 'xx0212', d: '---213' }, E7: { f: '020100', d: '-2-1--' }, B7: { f: 'x21202', d: '-213-4' },
+    G7: { f: '320001', d: '32---1' }, C7: { f: 'x32310', d: '-3241-' }, Fmaj7: { f: 'xx3210', d: '--321-' },
+    F: { f: '133211', d: '134211', pestana: 1 }, Bm: { f: 'x24432', d: '-13421', pestana: 2 },
+    E5: { f: '022xxx', d: '-12---' }, A5: { f: 'x022xx', d: '--12--' }, D5: { f: 'x577xx', d: '-134--' },
+    G5: { f: '355xxx', d: '134---' }, C5: { f: 'x355xx', d: '-134--' }, F5: { f: '133xxx', d: '134---' }
+  };
+  var CORDAS_SOLTAS = [40, 45, 50, 55, 59, 64]; // Mi2 Lá2 Ré3 Sol3 Si3 Mi4
+  function diagramaDe(c) {
+    if (!c) return null;
+    if (typeof c === 'object') return c;
+    var d = DIAGRAMAS[c]; if (!d) return null;
+    var pontos = [], abafadas = [], soltas = [];
+    d.f.split('').forEach(function (ch, i) {
+      var corda = 6 - i;
+      if (ch === 'x') abafadas.push(corda);
+      else if (ch === '0') soltas.push(corda);
+      else if (!(d.pestana && Number(ch) === d.pestana && d.d[i] === '1')) pontos.push([corda, Number(ch), d.d[i] === '-' ? '' : d.d[i]]);
+    });
+    return { nome: c, pontos: pontos, abafadas: abafadas, soltas: soltas, pestana: d.pestana };
+  }
+  function notasDoBraco(c) {
+    var d = DIAGRAMAS[c]; if (!d) return null;
+    var n = [];
+    d.f.split('').forEach(function (ch, i) { if (ch !== 'x') n.push(CORDAS_SOLTAS[i] + Number(ch)); });
+    return n;
+  }
 
   // ---------- Som (síntese, sem arquivos externos) ----------
   var ctx = null, saida = null;
+  function novaSaida() {
+    var comp = ctx.createDynamicsCompressor();
+    saida = ctx.createGain(); saida.gain.value = 0.8;
+    saida.connect(comp); comp.connect(ctx.destination);
+  }
   function audio() {
     if (!ctx) {
       var AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return null;
-      ctx = new AC();
-      var comp = ctx.createDynamicsCompressor();
-      saida = ctx.createGain(); saida.gain.value = 0.8;
-      saida.connect(comp); comp.connect(ctx.destination);
+      ctx = new AC(); novaSaida();
     }
     if (ctx.state === 'suspended') ctx.resume();
     return ctx;
   }
-  // Piano com harmônicos + uma voz-guia suave que sustenta a nota enquanto o aluno canta
-  function somNota(midi, quando, dur, volume) {
+  // Piano com harmônicos + uma voz-guia suave que sustenta a nota (ajuda quem canta junto)
+  function somNota(midi, quando, dur, volume, semGuia) {
     var c = audio(); if (!c) return;
     var t0 = Math.max(quando || 0, c.currentTime) + 0.005, v = volume || 1;
     var f = 440 * Math.pow(2, (midi - 69) / 12);
@@ -151,7 +136,7 @@
       o.connect(g); g.connect(filtro);
       o.start(t0); o.stop(t0 + queda + 0.05);
     });
-    if (dur) {
+    if (dur && !semGuia) {
       var guia = c.createOscillator(), gg = c.createGain();
       guia.type = 'triangle'; guia.frequency.value = f;
       gg.gain.setValueAtTime(0.0001, t0);
@@ -179,7 +164,7 @@
 
   // ---------- DOM ----------
   var SVG = 'http://www.w3.org/2000/svg';
-  function svgEl(tag, attrs) { var e = document.createElementNS(SVG, tag); Object.keys(attrs || {}).forEach(function (k) { e.setAttribute(k, attrs[k]); }); return e; }
+  function svgEl(tag, attrs, texto) { var e = document.createElementNS(SVG, tag); Object.keys(attrs || {}).forEach(function (k) { e.setAttribute(k, attrs[k]); }); if (texto != null) e.textContent = texto; return e; }
   function h(tag, attrs) {
     var e = document.createElement(tag);
     Object.keys(attrs || {}).forEach(function (k) {
@@ -213,11 +198,7 @@
     }
     brancas.forEach(function (m, i) {
       svg.appendChild(tecla(i * L + 0.75, L - 1.5, H, 'branca', m));
-      if (todosNomes || m % 12 === 0) {
-        var t = svgEl('text', { x: i * L + L / 2, y: H - 8, class: 'nome' });
-        t.textContent = todosNomes ? NOMES[m % 12] : nomeNota(m);
-        svg.appendChild(t);
-      }
+      if (todosNomes || pc(m) === 0) svg.appendChild(svgEl('text', { x: i * L + L / 2, y: H - 8, class: 'nome' }, todosNomes ? NOMES[pc(m)] : nomeNota(m)));
       if (ehPreta(m + 1) && m + 1 <= hi) pretas.appendChild(tecla((i + 1) * L - 8, 16, 70, 'preta', m + 1));
     });
     svg.appendChild(pretas);
@@ -237,6 +218,33 @@
     };
   }
 
+  // Desenho do braço: 6 cordas na vertical (6ª à esquerda), 5 casas
+  function desenharBraco(d) {
+    var casas = d.pontos.map(function (p) { return p[1]; }).concat(d.pestana ? [d.pestana] : []);
+    var maior = Math.max.apply(null, casas.concat([1]));
+    var inicio = d.inicio || (maior > 5 ? Math.min.apply(null, casas.filter(function (c) { return c > 0; })) : 1);
+    var X0 = 22, Y0 = 36, DX = 14, DY = 20, N = 5;
+    var svg = svgEl('svg', { viewBox: '0 0 112 ' + (Y0 + N * DY + 8), class: 'braco', role: 'img', 'aria-label': 'Desenho de ' + (d.nome || 'posição') + ' no braço' });
+    svg.appendChild(svgEl('text', { x: X0 + 2.5 * DX, y: 12, class: 'braco-nome' + (String(d.nome || '').length > 6 ? ' longo' : '') }, d.nome || ''));
+    if (inicio === 1) svg.appendChild(svgEl('rect', { x: X0 - 1, y: Y0 - 4, width: DX * 5 + 2, height: 4, class: 'braco-pestana-fixa' }));
+    else svg.appendChild(svgEl('text', { x: X0 - 6, y: Y0 + DY / 2 + 4, class: 'braco-casa' }, inicio + 'ª'));
+    for (var c = 0; c < 6; c++) svg.appendChild(svgEl('line', { x1: X0 + c * DX, y1: Y0, x2: X0 + c * DX, y2: Y0 + N * DY, class: 'braco-linha' }));
+    for (var k = 0; k <= N; k++) svg.appendChild(svgEl('line', { x1: X0, y1: Y0 + k * DY, x2: X0 + 5 * DX, y2: Y0 + k * DY, class: 'braco-linha' }));
+    function xCorda(corda) { return X0 + (6 - corda) * DX; }
+    (d.abafadas || []).forEach(function (corda) { svg.appendChild(svgEl('text', { x: xCorda(corda), y: Y0 - 5, class: 'braco-marca' }, '×')); });
+    (d.soltas || []).forEach(function (corda) { svg.appendChild(svgEl('circle', { cx: xCorda(corda), cy: Y0 - 9, r: 4, class: 'braco-solta' })); });
+    if (d.pestana) {
+      var yP = Y0 + (d.pestana - inicio + 0.5) * DY;
+      svg.appendChild(svgEl('rect', { x: X0 - 5, y: yP - 6, width: DX * 5 + 10, height: 12, rx: 6, class: 'braco-ponto' }));
+    }
+    d.pontos.forEach(function (p) {
+      var y = Y0 + (p[1] - inicio + 0.5) * DY;
+      svg.appendChild(svgEl('circle', { cx: xCorda(p[0]), cy: y, r: 6.5, class: 'braco-ponto' }));
+      if (p[2]) svg.appendChild(svgEl('text', { x: xCorda(p[0]), y: y + 3.5, class: 'braco-dedo' }, String(p[2])));
+    });
+    return svg;
+  }
+
   // ---------- Montagem da sequência (em tempos) ----------
   function tonicas(de, ate, direcao) {
     var l = [], m;
@@ -245,34 +253,49 @@
     if (direcao === 'subir-descer') for (m = ate - 1; m >= de; m--) l.push(m);
     return l;
   }
+  function notasDoAcorde(v, a) { return a[2] || (v.braco && notasDoBraco(a[0])) || notasDaCifra(a[0]); }
   function montar(v, de, ate) {
-    var ev = [], b = 0, i;
-    for (i = 0; i < 4; i++) { ev.push({ b: i, tipo: 'clique', forte: i === 0 }); ev.push({ b: i, tipo: 'texto', txt: 'Prepare-se… ' + (4 - i) }); }
-    b = 4;
+    var ev = [], b = 0, i, porCompasso = Math.max(1, Number(v.tempos) || 4);
+    var conta = v.tipo === 'metronomo' ? porCompasso : 4;
+    for (i = 0; i < conta; i++) { ev.push({ b: i, tipo: 'clique', forte: i === 0 }); ev.push({ b: i, tipo: 'texto', txt: 'Prepare-se… ' + (conta - i) }); }
+    b = conta;
+    var reps = Math.max(1, Number(v.repeticoes) || 1), r;
     if (v.tipo === 'respiracao') {
-      var reps = Math.max(1, Number(v.repeticoes) || 1);
-      for (var r = 0; r < reps; r++) {
+      for (r = 0; r < reps; r++) {
         (v.fases || []).forEach(function (f) {
           var n = Math.max(1, Number(f[1]) || 1);
           for (var j = 0; j < n; j++) {
             ev.push({ b: b, tipo: 'clique', forte: j === 0 });
-            ev.push({ b: b, tipo: 'fase', txt: f[0], n: j + 1, total: n, rep: r + 1, reps: reps });
+            ev.push({ b: b, tipo: 'fase', txt: f[0], n: j + 1, rep: r + 1, reps: reps });
             b++;
           }
         });
       }
+    } else if (v.tipo === 'metronomo') {
+      var total = Math.max(1, Number(v.compassos) || 32) * porCompasso;
+      for (i = 0; i < total; i++) { ev.push({ b: b, tipo: 'clique', forte: i % porCompasso === 0 }); ev.push({ b: b, tipo: 'batida', n: i % porCompasso + 1, compasso: Math.floor(i / porCompasso) + 1 }); b++; }
+    } else if (v.tipo === 'acordes') {
+      var lista = v.acordes || [];
+      for (r = 0; r < reps; r++) {
+        lista.forEach(function (a, k) {
+          var tempos = Math.max(1, Number(a[1]) || 4), prox = lista[k + 1] || (r < reps - 1 ? lista[0] : null);
+          ev.push({ b: b, tipo: 'acorde', midis: notasDoAcorde(v, a), dur: tempos * 0.92, nome: a[0], k: k, prox: prox ? prox[0] : '', rep: r + 1, reps: reps });
+          for (var j = 0; j < tempos; j++) { ev.push({ b: b + j, tipo: 'clique', forte: j === 0 }); ev.push({ b: b + j, tipo: 'batida', n: j + 1 }); }
+          b += tempos;
+        });
+      }
     } else {
-      var ts = tonicas(de, ate, v.direcao);
+      var ts = v.demo ? Array.apply(null, Array(reps)).map(function () { return de; }) : tonicas(de, ate, v.direcao);
       ts.forEach(function (t, k) {
         var ini = b, notasTom = [];
         (v.padrao || []).forEach(function (p) { if (p[0] != null) notasTom.push(t + p[0]); });
         ev.push({ b: b, tipo: 'tom', tonica: t, k: k + 1, total: ts.length, notas: notasTom });
-        if (v.acorde !== false) { ev.push({ b: b, tipo: 'acorde', midis: [t - 12, t, t + 4, t + 7], dur: 1.6 }); b += 2; }
+        if (v.acorde !== false && !v.demo) { ev.push({ b: b, tipo: 'acordeTom', midis: [t - 12, t, t + 4, t + 7], dur: 1.6 }); b += 2; }
         (v.padrao || []).forEach(function (p) {
-          if (p[0] != null) ev.push({ b: b, tipo: 'nota', midi: t + p[0], dur: p[1] });
+          if (p[0] != null) ev.push({ b: b, tipo: 'nota', midi: t + p[0], dur: p[1], rotulo: p[2] });
           b += Number(p[1]) || 1;
         });
-        b = Math.ceil(b + 1); // um tempo para respirar
+        b = Math.ceil(b + (v.demo ? 0 : 1)); // no vocalize, um tempo para respirar
         for (var x = ini; x < b; x++) ev.push({ b: x, tipo: 'clique', forte: x === ini });
       });
     }
@@ -287,22 +310,27 @@
   function criarPlayer(v) {
     v = v || {};
     var tipo = v.tipo || 'notas';
+    var vocal = tipo === 'notas' && !v.demo;            // vocalize: tem voz e faixa de tons
+    var temPiano = !v.semPiano && !v.ocultar && (tipo === 'notas' || tipo === 'piano' || (tipo === 'acordes' && !v.braco));
     var voz = lerPref('voz', 'f');
-    var desloc = function () { return voz === 'm' ? -12 : 0; };
-    var bpm = Math.min(200, Math.max(30, Number(v.bpm) || 80));
+    var desloc = function () { return (vocal || (tipo === 'piano' && !v.demo)) && voz === 'm' ? -12 : 0; };
+    var bpm = Math.min(220, Math.max(30, Number(v.bpm) || 80));
     var metro = lerPref('metronomo', '1') === '1';
     var de = Number(v.de) || 60, ate = Number(v.ate) || 65;
     var ref = { de: de, ate: ate };
-    var tocando = false, eventos = [], idx = 0, ancB = 0, ancT = 0, timer = null, raf = null, visuais = [], piano = null;
+    var tocando = false, eventos = [], idx = 0, ancB = 0, ancT = 0, timer = null, raf = null, visuais = [], piano = null, bracos = [];
 
-    var caixa = h('div', { class: 'voc' });
+    var caixa = h('div', { class: 'voc voc-' + tipo });
     var tomEl = h('b', { class: 'voc-tom', text: '' });
-    var silEl = h('span', { class: 'voc-silaba', text: v.silaba ? 'Cante: ' + v.silaba : '' });
-    var grande = h('div', { class: 'voc-grande', 'aria-live': 'polite', text: tipo === 'piano' ? 'Toque nas teclas para ouvir' : 'Toque em Começar' });
+    var silEl = h('span', { class: 'voc-silaba', text: v.silaba ? (vocal ? 'Cante: ' : '') + v.silaba : (v.texto || '') });
+    var inicial = tipo === 'piano' ? 'Toque nas teclas para ouvir' : 'Toque em Começar';
+    var grande = h('div', { class: 'voc-grande', 'aria-live': 'polite', text: inicial });
+    var contador = h('span', { class: 'voc-contador', 'aria-hidden': 'true' });
     var pulso = h('span', { class: 'voc-pulso', 'aria-hidden': 'true' });
     var areaPiano = h('div', { class: 'voc-piano' });
+    var areaBraco = h('div', { class: 'voc-bracos' });
     var btn = h('button', { type: 'button', class: 'botao mini', text: '▶ Começar' });
-    var bpmIn = h('input', { type: 'range', min: '40', max: '160', step: '2', value: String(bpm), 'aria-label': 'Andamento' });
+    var bpmIn = h('input', { type: 'range', min: '40', max: '200', step: '2', value: String(bpm), 'aria-label': 'Andamento' });
     var bpmTxt = h('span', { class: 'pequeno', text: bpm + ' bpm' });
     var metroIn = h('input', { type: 'checkbox', checked: metro });
     var vozSel = h('select', { 'aria-label': 'Tipo de voz' },
@@ -310,54 +338,83 @@
       h('option', { value: 'm', text: 'Voz masculina (oitava abaixo)', selected: voz === 'm' }));
     var deSel = h('select', { 'aria-label': 'Começar no tom' }), ateSel = h('select', { 'aria-label': 'Ir até o tom' });
 
-    function faixaTons() { return { lo: 43 + desloc(), hi: 79 + desloc() }; }
     function preencherTons() {
-      var f = faixaTons();
-      opcoesNotas(deSel, f.lo, f.hi, ref.de + desloc());
-      opcoesNotas(ateSel, f.lo, f.hi, ref.ate + desloc());
+      opcoesNotas(deSel, 43 + desloc(), 79 + desloc(), ref.de + desloc());
+      opcoesNotas(ateSel, 43 + desloc(), 79 + desloc(), ref.ate + desloc());
+    }
+    function faixaDoExercicio() {
+      var todas = [];
+      if (tipo === 'piano') return [de + desloc(), ate + desloc()];
+      if (tipo === 'acordes') (v.acordes || []).forEach(function (a) { todas = todas.concat(notasDoAcorde(v, a)); });
+      else {
+        var ts = v.demo ? [de] : tonicas(ref.de + desloc(), ref.ate + desloc(), v.direcao);
+        ts.forEach(function (t) { todas.push(t); (v.padrao || []).forEach(function (p) { if (p[0] != null) todas.push(t + p[0]); }); });
+      }
+      var lo = Math.min.apply(null, todas), hi = Math.max.apply(null, todas);
+      if (hi - lo < 16) hi = lo + 16;
+      return [lo, hi];
     }
     function desenharPiano() {
-      var lo, hi;
-      if (tipo === 'piano') { lo = de + desloc(); hi = ate + desloc(); }
-      else if (tipo === 'notas') {
-        var tons = tonicas(ref.de + desloc(), ref.ate + desloc(), v.direcao), offs = (v.padrao || []).map(function (p) { return p[0]; }).filter(function (s) { return s != null; });
-        var minO = Math.min.apply(null, offs.concat([0])), maxO = Math.max.apply(null, offs.concat([0]));
-        lo = Math.min.apply(null, tons) + minO; hi = Math.max.apply(null, tons) + maxO;
-        if (hi - lo < 16) hi = lo + 16;
-      } else { lo = 60 + desloc(); hi = 76 + desloc(); }
-      piano = criarTeclado(lo, hi, function (m) { somNota(m, 0, 0.6); piano.acender(m, 0.4); }, tipo === 'piano');
+      if (!temPiano) return;
+      var f = faixaDoExercicio();
+      piano = criarTeclado(f[0], f[1], function (m) { somNota(m, 0, 0.6, 1, true); piano.acender(m, 0.4); }, tipo === 'piano' || !!v.demo || tipo === 'acordes');
       areaPiano.replaceChildren(piano.el);
     }
+    function desenharBracos() {
+      bracos = [];
+      var lista = [];
+      if (tipo === 'acordes' && v.braco) (v.acordes || []).forEach(function (a) { if (lista.indexOf(a[0]) < 0) lista.push(a[0]); });
+      if (v.diagrama) lista = [v.diagrama];
+      lista.forEach(function (c) {
+        var d = diagramaDe(c); if (!d) return;
+        var el = h('div', { class: 'voc-braco' + (v.diagrama ? ' unico' : '') }); el.appendChild(desenharBraco(d));
+        bracos.push({ nome: typeof c === 'string' ? c : '', el: el });
+        areaBraco.appendChild(el);
+      });
+    }
+    function destacarBraco(nome) { bracos.forEach(function (b) { b.el.classList.toggle('atual', b.nome === nome); }); }
 
     // --- agendamento (lookahead de 0,12 s) ---
     function tempoDe(b) { return ancT + (b - ancB) * 60 / bpm; }
     function agendar(e) {
       var t = tempoDe(e.b), seg = 60 / bpm;
+      function vis(f, atraso) { visuais.push({ t: t + (atraso || 0), f: f }); }
       if (e.tipo === 'clique') {
         if (metro) clique(t, e.forte);
-        visuais.push({ t: t, f: function () { pulso.classList.remove('bate'); void pulso.offsetWidth; pulso.classList.add('bate'); pulso.classList.toggle('forte', e.forte); } });
+        vis(function () { pulso.classList.remove('bate'); void pulso.offsetWidth; pulso.classList.add('bate'); pulso.classList.toggle('forte', e.forte); });
       } else if (e.tipo === 'nota') {
-        somNota(e.midi, t, e.dur * seg);
-        visuais.push({ t: t, f: function () { piano.acender(e.midi, e.dur * 60 / bpm); } });
-      } else if (e.tipo === 'acorde') {
+        somNota(e.midi, t, e.dur * seg, 1, !!v.demo);
+        vis(function () {
+          if (piano) piano.acender(e.midi, e.dur * 60 / bpm);
+          if (v.demo) grande.textContent = v.ocultar ? '♪' : e.rotulo || NOMES[pc(e.midi)];
+        });
+      } else if (e.tipo === 'acordeTom') {
         e.midis.forEach(function (m) { somNota(m, t, e.dur * seg, 0.55); });
-        visuais.push({ t: t, f: function () { e.midis.forEach(function (m) { piano.acender(m, e.dur * 60 / bpm); }); grande.textContent = 'Respire…'; } });
+        vis(function () { e.midis.forEach(function (m) { if (piano) piano.acender(m, e.dur * 60 / bpm); }); grande.textContent = 'Respire…'; });
+      } else if (e.tipo === 'acorde') {
+        e.midis.forEach(function (m, i) { somNota(m, t + (v.braco ? i * 0.018 : 0), e.dur * seg, 0.5, true); });
+        vis(function () {
+          grande.textContent = v.ocultar ? 'Acorde ' + (e.k + 1) : e.nome;
+          silEl.textContent = e.prox && !v.ocultar ? 'Próximo: ' + e.prox : (v.texto || '');
+          tomEl.textContent = e.reps > 1 ? 'Volta ' + e.rep + ' de ' + e.reps : '';
+          if (piano) { piano.marcar(e.midis); e.midis.forEach(function (m) { piano.acender(m, 0.3); }); }
+          destacarBraco(e.nome);
+        });
+      } else if (e.tipo === 'batida') {
+        vis(function () { contador.textContent = String(e.n); if (tipo === 'metronomo') { grande.textContent = String(e.n); tomEl.textContent = 'Compasso ' + e.compasso; } });
       } else if (e.tipo === 'tom') {
-        visuais.push({ t: t, f: function () {
-          tomEl.textContent = 'Tom: ' + nomeNota(e.tonica) + ' · ' + e.k + ' de ' + e.total;
-          piano.marcar(e.notas);
-          if (v.acorde === false) grande.textContent = v.silaba || 'Cante';
-        } });
-        if (v.acorde !== false) visuais.push({ t: t + 2 * seg, f: function () { grande.textContent = v.silaba || 'Cante'; } });
+        vis(function () {
+          tomEl.textContent = v.demo ? (e.total > 1 ? 'Vez ' + e.k + ' de ' + e.total : '') : 'Tom: ' + nomeNota(e.tonica) + ' · ' + e.k + ' de ' + e.total;
+          if (piano) piano.marcar(e.notas);
+          if (!v.demo && v.acorde === false) grande.textContent = v.silaba || 'Cante';
+        });
+        if (!v.demo && v.acorde !== false) vis(function () { grande.textContent = v.silaba || 'Cante'; }, 2 * seg);
       } else if (e.tipo === 'texto') {
-        visuais.push({ t: t, f: function () { grande.textContent = e.txt; } });
+        vis(function () { grande.textContent = e.txt; });
       } else if (e.tipo === 'fase') {
-        visuais.push({ t: t, f: function () {
-          grande.textContent = e.txt + ' · ' + e.n;
-          tomEl.textContent = 'Repetição ' + e.rep + ' de ' + e.reps;
-        } });
+        vis(function () { grande.textContent = e.txt + ' · ' + e.n; tomEl.textContent = 'Repetição ' + e.rep + ' de ' + e.reps; });
       } else if (e.tipo === 'fim') {
-        visuais.push({ t: t, f: function () { parar(); grande.textContent = 'Muito bem! Marque o exercício como feito.'; } });
+        vis(function () { parar(); grande.textContent = 'Muito bem! Marque o exercício como feito.'; });
       }
     }
     function laco() {
@@ -386,10 +443,11 @@
       tocando = false; clearInterval(timer); cancelAnimationFrame(raf); visuais = [];
       btn.textContent = '▶ Começar'; caixa.classList.remove('ativo');
       if (piano) piano.marcar([]);
-      grande.textContent = 'Toque em Começar'; tomEl.textContent = '';
-      if (ctx && saida) { // corta o que já estava agendado
-        var antiga = saida; saida = ctx.createGain(); saida.gain.value = 0.8;
-        var comp = ctx.createDynamicsCompressor(); saida.connect(comp); comp.connect(ctx.destination);
+      destacarBraco(null);
+      grande.textContent = inicial; tomEl.textContent = ''; contador.textContent = '';
+      silEl.textContent = v.silaba ? (vocal ? 'Cante: ' : '') + v.silaba : (v.texto || '');
+      if (ctx && saida) { // corta o som que já estava agendado
+        var antiga = saida; novaSaida();
         antiga.gain.setTargetAtTime(0, ctx.currentTime, 0.02);
         setTimeout(function () { antiga.disconnect(); }, 400);
       }
@@ -416,26 +474,29 @@
 
     // --- layout ---
     if (tipo !== 'piano') caixa.appendChild(h('div', { class: 'voc-topo' }, tomEl, silEl));
-    caixa.appendChild(h('div', { class: 'voc-visor' }, tipo !== 'piano' ? pulso : null, grande));
-    if (tipo !== 'respiracao') caixa.appendChild(areaPiano);
+    caixa.appendChild(h('div', { class: 'voc-visor' }, tipo !== 'piano' ? pulso : null, grande, tipo === 'acordes' ? contador : null));
+    if (tipo === 'acordes' || v.diagrama) { caixa.appendChild(areaBraco); desenharBracos(); }
+    if (temPiano) { caixa.appendChild(areaPiano); desenharPiano(); }
     var ctrl = h('div', { class: 'voc-controles' });
     if (tipo !== 'piano') {
       ctrl.appendChild(btn);
       ctrl.appendChild(h('label', { class: 'voc-campo' }, h('span', { text: 'Andamento' }), bpmIn, bpmTxt));
-      ctrl.appendChild(h('label', { class: 'voc-check' }, metroIn, ' Metrônomo'));
+      if (tipo !== 'metronomo') ctrl.appendChild(h('label', { class: 'voc-check' }, metroIn, ' Metrônomo'));
     }
-    if (tipo !== 'respiracao') ctrl.appendChild(h('label', { class: 'voc-campo' }, h('span', { text: 'Voz' }), vozSel));
-    if (tipo === 'notas') {
+    if (vocal || (tipo === 'piano' && !v.demo)) ctrl.appendChild(h('label', { class: 'voc-campo' }, h('span', { text: 'Voz' }), vozSel));
+    if (vocal) {
       preencherTons();
       ctrl.appendChild(h('label', { class: 'voc-campo' }, h('span', { text: v.direcao === 'descer' ? 'Começar em' : 'Do tom' }), deSel));
       ctrl.appendChild(h('label', { class: 'voc-campo' }, h('span', { text: 'Até o tom' }), ateSel));
     }
-    caixa.appendChild(ctrl);
-    if (tipo !== 'respiracao') desenharPiano();
+    if (ctrl.children.length) caixa.appendChild(ctrl);
 
     var api = { el: caixa, parar: function () { if (tocando) parar(); } };
     return api;
   }
 
-  window.AmaralCanto = { criarPlayer: criarPlayer, AULAS: AULAS, PADROES: PADROES, nomeNota: nomeNota, pararTudo: function () { if (ativo) ativo.parar(); } };
+  window.AmaralCanto = {
+    criarPlayer: criarPlayer, PADROES: PADROES, nomeNota: nomeNota, notasDaCifra: notasDaCifra,
+    DIAGRAMAS: DIAGRAMAS, pararTudo: function () { if (ativo) ativo.parar(); }
+  };
 })();

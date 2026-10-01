@@ -5,7 +5,8 @@ Site e área do aluno da Amaral Escola de Música (Wenceslau Braz, PR).
 - `index.html`: site de vendas (aulas, concursos, coral, professor, matrícula pelo WhatsApp)
 - `aluno.html`: área do aluno (rotinas de estudo, progresso, comunidade e painel do professor)
 - `config.js`: endereço e chave pública do projeto Supabase
-- `canto.js`: piano na tela, metrônomo, tocador de vocalizes e as 4 aulas de canto prontas
+- `canto.js`: tocador da área do aluno (piano na tela, braço do violão, metrônomo, vocalizes e acordes)
+- `cursos.js`: cursos básicos prontos, 8 aulas por instrumento
 - `supabase/schema.sql`: tabelas e regras de segurança do banco
 
 ## Ligar a área do aluno (uma vez)
@@ -33,12 +34,13 @@ Site e área do aluno da Amaral Escola de Música (Wenceslau Braz, PR).
 - Alunos não veem o progresso uns dos outros; o professor vê o de todos.
 - A comunidade aceita texto e links `https://` (YouTube, Drive) para vídeos e áudios.
 
-## Canto: vocalizes com piano
+## Cursos básicos e exercícios com som
 
-- Um exercício pode ter piano e metrônomo: vocalize (o piano toca o desenho e sobe de meio em meio
-  tom), respiração com contagem ou teclado livre. Ele fica guardado no item da rotina, no campo
-  `vocalize`, sem mudar o banco.
-- No painel do professor: **Aulas de canto prontas → Adicionar as aulas** cadastra Respiração,
-  Afinação, Resistência e Tessitura. Para montar outras, use **Exercícios com piano e metrônomo**
-  no formulário da rotina.
-- O aluno escolhe voz feminina ou masculina (uma oitava abaixo), o andamento e até onde subir.
+- `cursos.js` traz 8 aulas para cada instrumento do cadastro: Canto coral, Teclado, Piano, Violão,
+  Guitarra e Concurso (teoria e percepção). No painel do professor, **Cursos básicos prontos**
+  cadastra cada curso com um clique. Cada aluno vê só as aulas do instrumento dele, na ordem.
+- Um exercício pode ter som, guardado no item da rotina no campo `vocalize`, sem mudar o banco:
+  vocalize (sobe de meio em meio tom), demonstração (escala, melodia, afinação), progressão de
+  acordes (com desenho no braço para violão e guitarra), metrônomo, respiração com contagem ou
+  teclado livre. Os tipos estão descritos no topo do `canto.js`.
+- Para montar exercícios novos, use **Exercícios com piano e metrônomo** no formulário da rotina.

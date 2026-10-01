@@ -161,6 +161,23 @@ main.wrap { padding-block: 24px 64px; }
 .piano .tocando, .piano .preta.tocando { fill: var(--ceu); transition: none; }
 .piano rect:focus-visible { outline: none; stroke: var(--ceu); stroke-width: 3; }
 .piano .nome { pointer-events: none; font: 600 10px var(--f-texto); fill: #5A534B; text-anchor: middle; }
+/* Desenhos no braço (violão e guitarra) */
+.voc-bracos { display: flex; flex-wrap: wrap; gap: 8px; }
+.voc-braco { width: 96px; padding: 4px; border-radius: 12px; border: 2px solid transparent; }
+.voc-braco.atual { border-color: var(--madeira); background: var(--papel); }
+.voc-braco.unico { width: 150px; }
+.braco { width: 100%; height: auto; display: block; }
+.braco-linha { stroke: var(--tinta); stroke-width: 1.2; }
+.braco-pestana-fixa { fill: var(--tinta); }
+.braco-ponto { fill: var(--madeira); }
+.braco-dedo { fill: var(--sobre-madeira); font: 700 9px var(--f-texto); text-anchor: middle; }
+.braco-nome { font: 800 14px var(--f-display); fill: var(--tinta); text-anchor: middle; }
+.braco-nome.longo { font-size: 8px; }
+.braco-casa { font: 600 9px var(--f-texto); fill: var(--tinta-suave); text-anchor: end; }
+.braco-marca { font: 700 11px var(--f-texto); fill: var(--tinta-suave); text-anchor: middle; }
+.braco-solta { fill: none; stroke: var(--tinta); stroke-width: 1.2; }
+.voc-acordes .voc-grande, .voc-metronomo .voc-grande { font-size: 36px; }
+.voc-contador { font: 800 18px var(--f-display); color: var(--tinta-suave); font-variant-numeric: tabular-nums; }
 .voc-controles { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
 .voc-campo { display: flex; align-items: center; gap: 8px; font-size: 14px; }
 .voc-campo span:first-child { font-weight: 700; }
@@ -168,6 +185,16 @@ main.wrap { padding-block: 24px 64px; }
 .voc-campo input[type="range"] { width: 120px; accent-color: var(--madeira); }
 .voc-check { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; }
 .voc-check input { width: 18px; height: 18px; accent-color: var(--madeira); }
+.filtro { display: flex; gap: 8px; align-items: center; }
+.filtro span { font-weight: 700; }
+.filtro select { min-height: 40px; padding: 6px 10px; border: 1.5px solid var(--linha); border-radius: 10px; background: var(--papel); max-width: 100%; }
+details.rotina > summary { list-style: none; cursor: pointer; }
+details.rotina > summary::-webkit-details-marker { display: none; }
+details.rotina > summary .rotina-cab::after { content: '▾'; font-size: 20px; color: var(--tinta-suave); transition: transform .2s; }
+details.rotina:not([open]) > summary .rotina-cab::after { transform: rotate(-90deg); }
+@media (prefers-reduced-motion: reduce) { details.rotina > summary .rotina-cab::after { transition: none; } }
+.chip.ok { background: var(--ok); border-color: var(--ok); color: var(--papel); }
+.curso-linha { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding-block: 10px; border-top: 1px solid var(--linha); }
 .prontas { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .construtor { border: 1.5px dashed var(--linha); border-radius: 14px; padding: 16px; }
 .voc-lista-item { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; padding-block: 8px; border-top: 1px solid var(--linha); }
@@ -292,7 +319,8 @@ td.num { font-variant-numeric: tabular-nums; }
         <p class="suave" id="hoje-resumo">Marque cada exercício quando terminar.</p>
       </div>
       <div class="barra" aria-hidden="true"><i id="barra-hoje"></i></div>
-      <label class="pequeno" style="display: flex; gap: 8px; align-items: center"><input type="checkbox" id="ver-todas"> Ver rotinas de todos os instrumentos</label>
+      <label class="filtro pequeno"><span>Mostrar</span>
+        <select id="filtro-instr"><option value="">Meu instrumento</option><option>Teclado</option><option>Piano</option><option>Violão</option><option>Guitarra</option><option>Canto coral</option><option>Concurso</option><option value="*">Todos os instrumentos</option></select></label>
       <div id="lista-rotinas" class="pilha"><div class="vazio">Carregando rotinas…</div></div>
     </section>
 
@@ -334,14 +362,17 @@ td.num { font-variant-numeric: tabular-nums; }
 
       <div class="separador"></div>
 
-      <div class="cartao prontas" id="bloco-prontas" hidden>
-        <div class="pilha" style="gap: 4px; min-width: 0">
-          <h2>Aulas de canto prontas</h2>
-          <p class="suave pequeno">4 aulas com vocalizes, piano na tela e metrônomo: Respiração, Afinação, Resistência e Tessitura.</p>
+      <div class="cartao pilha" id="bloco-prontas">
+        <div class="prontas">
+          <div class="pilha" style="gap: 4px; min-width: 0">
+            <h2>Cursos básicos prontos</h2>
+            <p class="suave pequeno">8 aulas por instrumento, com piano na tela, desenhos no braço e metrônomo. Cada aluno vê só o curso do instrumento dele.</p>
+          </div>
+          <button class="botao" type="button" id="btn-prontas">Adicionar todos</button>
         </div>
-        <button class="botao" type="button" id="btn-prontas">Adicionar as aulas</button>
+        <div id="lista-cursos"></div>
+        <p class="msg" id="msg-prontas" role="status" hidden></p>
       </div>
-      <p class="msg" id="msg-prontas" role="status" hidden></p>
 
       <form id="form-rotina" class="cartao pilha" novalidate>
         <h2>Publicar rotina</h2>
@@ -402,6 +433,7 @@ td.num { font-variant-numeric: tabular-nums; }
 
 <script src="config.js"></script>
 <script src="canto.js"></script>
+<script src="cursos.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
 (function () {
@@ -542,7 +574,20 @@ td.num { font-variant-numeric: tabular-nums; }
 
   // ---------- Rotinas ----------
   var players = {};   // tocadores abertos, por rotina:item (sobrevivem ao recarregar a lista)
-  $('ver-todas').addEventListener('change', carregarRotinas);
+  $('filtro-instr').addEventListener('change', carregarRotinas);
+  // Cartões abertos ficam lembrados neste aparelho
+  var abertas = (function () { try { return JSON.parse(localStorage.getItem('amaral-abertas') || 'null'); } catch (e) { return null; } })();
+  function gravarAbertas() { try { localStorage.setItem('amaral-abertas', JSON.stringify(abertas)); } catch (e) { /* sem armazenamento */ } }
+  // Rotinas avulsas (mais novas) primeiro; depois os cursos, na ordem das aulas
+  function ordenar(rotinas) {
+    function chave(r) { var m = String(r.titulo).match(/^(.*) · Aula (\d+):/); return m ? { curso: m[1], n: Number(m[2]) } : null; }
+    return rotinas.slice().sort(function (a, b) {
+      var ka = chave(a), kb = chave(b);
+      if (!ka && !kb) return String(b.criado_em).localeCompare(String(a.criado_em));
+      if (!ka) return -1; if (!kb) return 1;
+      return ka.curso.localeCompare(kb.curso) || ka.n - kb.n;
+    });
+  }
   function areaVocalize(chave, voc) {
     var area = el('div', { class: 'voc-area', hidden: !(players[chave] && players[chave].aberto) });
     if (players[chave]) area.appendChild(players[chave].el);
@@ -559,21 +604,28 @@ td.num { font-variant-numeric: tabular-nums; }
   }
   async function carregarRotinas() {
     var q = sb.from('rotinas').select('*').eq('ativa', true).order('criado_em', { ascending: false });
-    if (!$('ver-todas').checked && eu.papel !== 'professor') q = q.in('instrumento', ['Todos', eu.instrumento]);
+    var filtro = $('filtro-instr').value, instr = filtro === '*' ? null : filtro || eu.instrumento;
+    $('filtro-instr').options[0].textContent = 'Meu instrumento (' + eu.instrumento + ')';
+    if (instr) q = q.in('instrumento', ['Todos', instr]);
     var rs = await Promise.all([q, sb.from('progresso').select('rotina_id,item,minutos').eq('aluno_id', eu.id).eq('dia', hojeISO())]);
-    var rotinas = rs[0].data || [], feitos = rs[1].data || [];
+    var rotinas = ordenar(rs[0].data || []), feitos = rs[1].data || [];
+    // Se nenhuma aula desta lista estiver aberta, abre a primeira
+    if (!abertas) abertas = [];
+    if (rotinas.length && !rotinas.some(function (r) { return abertas.indexOf(r.id) >= 0; })) { abertas.push(rotinas[0].id); gravarAbertas(); }
     var marcado = {}; feitos.forEach(function (f) { marcado[f.rotina_id + ':' + f.item] = true; });
     var lista = $('lista-rotinas'); lista.replaceChildren();
     if (!rotinas.length) {
-      lista.appendChild(el('div', { class: 'vazio', text: 'Ainda não há rotina publicada para ' + eu.instrumento + '. Quando o professor publicar, ela aparece aqui.' }));
+      lista.appendChild(el('div', { class: 'vazio', text: 'Ainda não há rotina publicada para ' + (instr || 'nenhum instrumento') + '. Quando o professor publicar, ela aparece aqui.' }));
     }
-    var totalMin = 0, feitoMin = 0;
+    var contas = [];   // minutos por rotina, para o resumo do dia
     rotinas.forEach(function (r) {
       var itens = Array.isArray(r.itens) ? r.itens : [];
       var ul = el('ul', { class: 'itens' });
+      var conta = { id: r.id, total: 0, feito: 0, feitos: 0 };
+      contas.push(conta);
       itens.forEach(function (it, i) {
         var chave = r.id + ':' + i, feito = !!marcado[chave], min = Number(it.minutos) || 0;
-        totalMin += min; if (feito) feitoMin += min;
+        conta.total += min; if (feito) { conta.feito += min; conta.feitos++; }
         var id = 'it-' + r.id + '-' + i;
         var voc = it.vocalize && window.AmaralCanto ? areaVocalize(chave, it.vocalize) : null;
         var li = el('li', { class: 'item' + (feito ? ' feito' : '') },
@@ -583,14 +635,29 @@ td.num { font-variant-numeric: tabular-nums; }
           voc && voc.area);
         ul.appendChild(li);
       });
-      lista.appendChild(el('article', { class: 'rotina' },
-        el('div', { class: 'rotina-cab' },
+      var cartao = el('details', { class: 'rotina', open: abertas.indexOf(r.id) >= 0 },
+        el('summary', null, el('div', { class: 'rotina-cab' },
           el('div', { class: 'pilha', style: 'gap: 6px' }, el('h3', { text: r.titulo }),
-            el('div', { class: 'chips' }, el('span', { class: 'chip', text: r.instrumento }), el('span', { class: 'chip', text: r.nivel })))),
+            el('div', { class: 'chips' }, el('span', { class: 'chip', text: r.instrumento }), el('span', { class: 'chip', text: r.nivel }),
+              el('span', { class: 'chip', text: itens.length + ' exercícios · ' + conta.total + ' min' }),
+              conta.feitos ? el('span', { class: 'chip ok', text: '✓ ' + conta.feitos + ' de ' + itens.length + ' hoje' }) : null)))),
         r.observacao ? el('p', { class: 'suave pequeno', text: r.observacao }) : null,
-        ul));
+        ul);
+      cartao.addEventListener('toggle', function () {
+        var i = abertas.indexOf(r.id);
+        if (cartao.open && i < 0) abertas.push(r.id);
+        if (!cartao.open && i >= 0) { abertas.splice(i, 1); if (window.AmaralCanto) window.AmaralCanto.pararTudo(); }
+        gravarAbertas(); resumir();
+      });
+      lista.appendChild(cartao);
     });
-    atualizarResumo(feitoMin, totalMin);
+    // O resumo conta as aulas abertas e as que já tiveram exercício feito hoje
+    function resumir() {
+      var total = 0, feito = 0;
+      contas.forEach(function (c) { if (abertas.indexOf(c.id) >= 0 || c.feitos) { total += c.total; feito += c.feito; } });
+      atualizarResumo(feito, total);
+    }
+    resumir();
   }
   function atualizarResumo(feito, total) {
     $('hoje-resumo').textContent = total ? feito + ' de ' + total + ' minutos estudados hoje.' : 'Marque cada exercício quando terminar.';
@@ -754,16 +821,33 @@ td.num { font-variant-numeric: tabular-nums; }
     });
   }
 
-  $('btn-prontas').addEventListener('click', async function () {
-    $('btn-prontas').disabled = true;
-    // uma por vez, da última para a primeira: a lista mostra as mais novas em cima, então a Aula 1 fica no topo
-    var faltam = C.AULAS.filter(function (a) { return titulosProf.indexOf(a.titulo) < 0; }).reverse(), r = { error: null };
-    for (var i = 0; i < faltam.length && !r.error; i++) r = await sb.from('rotinas').insert(faltam[i]);
-    $('btn-prontas').disabled = false;
+  var CURSOS = window.AmaralCursos || [];
+  function faltando(curso) { return curso.aulas.filter(function (a) { return titulosProf.indexOf(a.titulo) < 0; }); }
+  async function adicionarCursos(cursos, botao) {
+    var novas = [];
+    cursos.forEach(function (c) { novas = novas.concat(faltando(c)); });
+    if (!novas.length) return;
+    botao.disabled = true;
+    var r = await sb.from('rotinas').insert(novas);
+    botao.disabled = false;
     if (r.error) return aviso('msg-prontas', 'Não foi possível adicionar: ' + r.error.message, 'erro');
-    aviso('msg-prontas', 'Pronto! As 4 aulas de canto já aparecem para os alunos de Canto coral.', 'ok');
+    aviso('msg-prontas', novas.length + ' aulas adicionadas. Os alunos já podem ver.', 'ok');
     carregarProfessor();
-  });
+  }
+  function listarCursos() {
+    var l = $('lista-cursos'); l.replaceChildren();
+    var algumFalta = false;
+    CURSOS.forEach(function (c) {
+      var falta = faltando(c).length, tem = c.aulas.length - falta;
+      if (falta) algumFalta = true;
+      var b = el('button', { class: 'botao mini' + (falta ? '' : ' vazado'), type: 'button', disabled: !falta, text: falta ? (tem ? 'Adicionar as ' + falta + ' que faltam' : 'Adicionar') : '✓ Cadastrado' });
+      b.addEventListener('click', function () { adicionarCursos([c], b); });
+      l.appendChild(el('div', { class: 'curso-linha' },
+        el('div', null, el('b', { text: c.instrumento }), el('span', { class: 'pequeno suave', text: ' · ' + c.aulas.length + ' aulas' + (tem && falta ? ' (' + tem + ' já cadastradas)' : '') })), b));
+    });
+    $('btn-prontas').hidden = !algumFalta;
+  }
+  $('btn-prontas').addEventListener('click', function () { adicionarCursos(CURSOS, $('btn-prontas')); });
 
   $('form-rotina').addEventListener('submit', async function (e) {
     e.preventDefault();
@@ -789,7 +873,8 @@ td.num { font-variant-numeric: tabular-nums; }
     ]);
     var perfis = rs[0].data || [], rotinas = rs[1].data || [], prog = rs[2].data || [];
     titulosProf = rotinas.map(function (r) { return r.titulo; });
-    $('bloco-prontas').hidden = !C || C.AULAS.every(function (a) { return titulosProf.indexOf(a.titulo) >= 0; });
+    $('bloco-prontas').hidden = !CURSOS.length;
+    listarCursos();
 
     var pend = $('lista-pendentes'); pend.replaceChildren();
     var pendentes = perfis.filter(function (p) { return !p.aprovado; });
