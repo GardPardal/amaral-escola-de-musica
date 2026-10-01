@@ -137,6 +137,41 @@ main.wrap { padding-block: 24px 64px; }
 .form-coment { display: flex; gap: 8px; }
 .form-coment input { flex: 1; min-width: 0; min-height: 40px; padding: 8px 12px; border: 1.5px solid var(--linha); border-radius: 999px; background: var(--papel); }
 
+/* Canto: piano, metrônomo e vocalizes */
+.item-texto { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; min-width: 0; }
+.item .voc-area { grid-column: 1 / -1; }
+.voc { display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 14px; background: var(--papel-2); border: 1px solid var(--linha); }
+.voc.ativo { border-color: var(--madeira); }
+.voc-topo { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 14px; }
+.voc-silaba { color: var(--madeira); font-weight: 700; }
+.voc-visor { display: flex; align-items: center; gap: 12px; min-height: 44px; }
+.voc-grande { font-family: var(--f-display); font-size: 22px; font-weight: 800; line-height: 1.15; overflow-wrap: anywhere; }
+.voc-pulso { width: 18px; height: 18px; border-radius: 50%; background: var(--linha); flex: none; }
+.voc-pulso.bate { animation: bate .28s ease-out; }
+.voc-pulso.bate.forte { animation-name: bate-forte; }
+@keyframes bate { from { background: var(--ceu); transform: scale(1.25); } to { background: var(--linha); transform: scale(1); } }
+@keyframes bate-forte { from { background: var(--madeira); transform: scale(1.45); } to { background: var(--linha); transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .voc-pulso.bate { animation-duration: .01s; } }
+.voc-piano { overflow-x: auto; }
+.piano { width: 100%; height: auto; display: block; margin-inline: auto; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+.piano .branca { fill: #FFFFFF; stroke: var(--tinta); stroke-width: 1.2; cursor: pointer; transition: fill .15s; }
+.piano .preta { fill: #1C1A17; stroke: #1C1A17; cursor: pointer; transition: fill .15s; }
+.piano .acesa { fill: #E2B99C; }
+.piano .preta.acesa { fill: #8A4B2A; }
+.piano .tocando, .piano .preta.tocando { fill: var(--ceu); transition: none; }
+.piano rect:focus-visible { outline: none; stroke: var(--ceu); stroke-width: 3; }
+.piano .nome { pointer-events: none; font: 600 10px var(--f-texto); fill: #5A534B; text-anchor: middle; }
+.voc-controles { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+.voc-campo { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.voc-campo span:first-child { font-weight: 700; }
+.voc-campo select { min-height: 36px; padding: 4px 8px; border: 1.5px solid var(--linha); border-radius: 8px; background: var(--papel); max-width: 100%; }
+.voc-campo input[type="range"] { width: 120px; accent-color: var(--madeira); }
+.voc-check { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; }
+.voc-check input { width: 18px; height: 18px; accent-color: var(--madeira); }
+.prontas { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.construtor { border: 1.5px dashed var(--linha); border-radius: 14px; padding: 16px; }
+.voc-lista-item { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; padding-block: 8px; border-top: 1px solid var(--linha); }
+
 /* Professor */
 .tabela-caixa { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 15px; }
@@ -299,6 +334,15 @@ td.num { font-variant-numeric: tabular-nums; }
 
       <div class="separador"></div>
 
+      <div class="cartao prontas" id="bloco-prontas" hidden>
+        <div class="pilha" style="gap: 4px; min-width: 0">
+          <h2>Aulas de canto prontas</h2>
+          <p class="suave pequeno">4 aulas com vocalizes, piano na tela e metrônomo: Respiração, Afinação, Resistência e Tessitura.</p>
+        </div>
+        <button class="botao" type="button" id="btn-prontas">Adicionar as aulas</button>
+      </div>
+      <p class="msg" id="msg-prontas" role="status" hidden></p>
+
       <form id="form-rotina" class="cartao pilha" novalidate>
         <h2>Publicar rotina</h2>
         <div class="campo"><label for="r-titulo">Título</label><input id="r-titulo" maxlength="120" placeholder="Semana 1: campo harmônico de Dó maior"></div>
@@ -306,8 +350,38 @@ td.num { font-variant-numeric: tabular-nums; }
           <div class="campo"><label for="r-instr">Para</label><select id="r-instr"><option>Todos</option><option>Teclado</option><option>Piano</option><option>Violão</option><option>Guitarra</option><option>Canto coral</option><option>Concurso</option></select></div>
           <div class="campo"><label for="r-nivel">Nível</label><select id="r-nivel"><option>Todos os níveis</option><option>Iniciante</option><option>Intermediário</option><option>Avançado</option></select></div>
         </div>
-        <div class="campo"><label for="r-itens">Exercícios (um por linha: exercício | minutos)</label>
+        <div class="campo"><label for="r-itens">Exercícios de texto (um por linha: exercício | minutos)</label>
           <textarea id="r-itens" rows="6" placeholder="Escala de Dó maior, mãos separadas, 60 bpm | 10&#10;Tríades do campo harmônico de Dó | 15&#10;Leitura: lição 3 da apostila | 10"></textarea></div>
+
+        <div class="construtor pilha">
+          <h3>Exercícios com piano e metrônomo</h3>
+          <p class="suave pequeno">Vocalizes, respiração com contagem ou teclado livre. O aluno pratica em casa com o piano tocando na tela.</p>
+          <div id="vocs-lista"></div>
+          <div class="linha2">
+            <div class="campo"><label for="v-tipo">Tipo</label><select id="v-tipo"><option value="notas">Vocalize com piano</option><option value="respiracao">Respiração com metrônomo</option><option value="piano">Teclado livre</option></select></div>
+            <div class="campo"><label for="v-min">Minutos</label><input id="v-min" type="number" min="0" max="600" value="4" inputmode="numeric"></div>
+          </div>
+          <div class="campo"><label for="v-nome">Texto que o aluno vê</label><input id="v-nome" maxlength="200" placeholder="Arpejo 1-3-5-3-1 em &quot;Mi&quot;, ligado"></div>
+          <div class="pilha" data-vtipo="notas">
+            <div class="linha2">
+              <div class="campo"><label for="v-padrao">Desenho</label><select id="v-padrao"></select></div>
+              <div class="campo"><label for="v-silaba">Sílaba ou vogal</label><input id="v-silaba" maxlength="40" placeholder="Mi, Lu, Brrr…"></div>
+            </div>
+            <div class="linha2">
+              <div class="campo"><label for="v-de">Do tom</label><select id="v-de"></select></div>
+              <div class="campo"><label for="v-ate">Até o tom</label><select id="v-ate"></select></div>
+            </div>
+            <div class="campo"><label for="v-dir">Caminho</label><select id="v-dir"><option value="subir-descer">Sobe de meio em meio tom e volta</option><option value="subir">Só sobe</option><option value="descer">Só desce (do primeiro tom até o segundo)</option></select></div>
+            <p class="suave pequeno">Tons da voz feminina. Quem escolher voz masculina ouve uma oitava abaixo.</p>
+          </div>
+          <div class="pilha" data-vtipo="respiracao" hidden>
+            <div class="campo"><label for="v-fases">Fases (texto e tempos, separados por vírgula)</label><input id="v-fases" maxlength="300" placeholder="Inspire 4, Segure 4, Solte em sss 8"></div>
+            <div class="campo"><label for="v-reps">Repetições</label><input id="v-reps" type="number" min="1" max="30" value="6" inputmode="numeric"></div>
+          </div>
+          <div class="campo" data-vtipo="notas respiracao"><label for="v-bpm">Andamento (bpm)</label><input id="v-bpm" type="number" min="40" max="160" value="80" inputmode="numeric"></div>
+          <div><button class="botao mini vazado" type="button" id="v-add">+ Adicionar à rotina</button></div>
+          <p class="msg" id="msg-voc" role="status" hidden></p>
+        </div>
         <div class="campo"><label for="r-obs">Observação (opcional)</label><input id="r-obs" maxlength="300" placeholder="Use o metrônomo. Na próxima aula, tocamos juntos."></div>
         <div><button class="botao" type="submit">Publicar rotina</button></div>
         <p class="msg" id="msg-rotina" role="status" hidden></p>
@@ -327,6 +401,7 @@ td.num { font-variant-numeric: tabular-nums; }
 </div>
 
 <script src="config.js"></script>
+<script src="canto.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
 (function () {
@@ -459,13 +534,29 @@ td.num { font-variant-numeric: tabular-nums; }
   document.querySelectorAll('[data-aba]').forEach(function (b) { b.addEventListener('click', function () { abrir(b.dataset.aba); }); });
   function abrir(aba) {
     abaAtual = aba;
+    if (window.AmaralCanto) window.AmaralCanto.pararTudo();
     document.querySelectorAll('[data-aba]').forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.aba === aba)); });
     ['rotinas', 'progresso', 'comunidade', 'professor'].forEach(function (a) { $('painel-' + a).hidden = a !== aba; });
     ({ rotinas: carregarRotinas, progresso: carregarProgresso, comunidade: carregarFeed, professor: carregarProfessor })[aba]();
   }
 
   // ---------- Rotinas ----------
+  var players = {};   // tocadores abertos, por rotina:item (sobrevivem ao recarregar a lista)
   $('ver-todas').addEventListener('change', carregarRotinas);
+  function areaVocalize(chave, voc) {
+    var area = el('div', { class: 'voc-area', hidden: !(players[chave] && players[chave].aberto) });
+    if (players[chave]) area.appendChild(players[chave].el);
+    var rotulo = voc.tipo === 'piano' ? 'Abrir teclado' : voc.tipo === 'respiracao' ? 'Praticar com metrônomo' : 'Praticar com piano';
+    var botao = el('button', { class: 'botao mini vazado', type: 'button', 'aria-expanded': String(!area.hidden),
+      text: (area.hidden ? '♪ ' + rotulo : 'Fechar'), onclick: function () {
+        if (!players[chave]) { players[chave] = window.AmaralCanto.criarPlayer(voc); area.appendChild(players[chave].el); }
+        var abrir = area.hidden;
+        area.hidden = !abrir; players[chave].aberto = abrir;
+        if (!abrir) players[chave].parar();
+        botao.textContent = abrir ? 'Fechar' : '♪ ' + rotulo; botao.setAttribute('aria-expanded', String(abrir));
+      } });
+    return { botao: botao, area: area };
+  }
   async function carregarRotinas() {
     var q = sb.from('rotinas').select('*').eq('ativa', true).order('criado_em', { ascending: false });
     if (!$('ver-todas').checked && eu.papel !== 'professor') q = q.in('instrumento', ['Todos', eu.instrumento]);
@@ -484,10 +575,12 @@ td.num { font-variant-numeric: tabular-nums; }
         var chave = r.id + ':' + i, feito = !!marcado[chave], min = Number(it.minutos) || 0;
         totalMin += min; if (feito) feitoMin += min;
         var id = 'it-' + r.id + '-' + i;
+        var voc = it.vocalize && window.AmaralCanto ? areaVocalize(chave, it.vocalize) : null;
         var li = el('li', { class: 'item' + (feito ? ' feito' : '') },
           el('input', { type: 'checkbox', id: id, checked: feito, onchange: function (e) { marcar(r.id, i, min, e.target.checked, li); } }),
-          el('label', { for: id, text: String(it.texto || '') }),
-          el('span', { class: 'min', text: min ? min + ' min' : '' }));
+          el('div', { class: 'item-texto' }, el('label', { for: id, text: String(it.texto || '') }), voc && voc.botao),
+          el('span', { class: 'min', text: min ? min + ' min' : '' }),
+          voc && voc.area);
         ul.appendChild(li);
       });
       lista.appendChild(el('article', { class: 'rotina' },
@@ -601,17 +694,89 @@ td.num { font-variant-numeric: tabular-nums; }
   }
 
   // ---------- Professor ----------
+  var vocs = [];   // exercícios com piano montados no formulário
+  var titulosProf = [];
+  var C = window.AmaralCanto;
+  if (C) {
+    Object.keys(C.PADROES).forEach(function (k) { $('v-padrao').appendChild(el('option', { value: k, text: C.PADROES[k].nome })); });
+    for (var m = 43; m <= 79; m++) {
+      $('v-de').appendChild(el('option', { value: String(m), text: C.nomeNota(m), selected: m === 60 }));
+      $('v-ate').appendChild(el('option', { value: String(m), text: C.nomeNota(m), selected: m === 65 }));
+    }
+  }
+  function mostrarCamposVoc() {
+    var t = $('v-tipo').value;
+    document.querySelectorAll('[data-vtipo]').forEach(function (d) { d.hidden = d.dataset.vtipo.split(' ').indexOf(t) < 0; });
+  }
+  $('v-tipo').addEventListener('change', mostrarCamposVoc);
+  mostrarCamposVoc();
+
+  $('v-add').addEventListener('click', function () {
+    var tipo = $('v-tipo').value, texto = $('v-nome').value.trim();
+    var min = Math.min(600, Math.max(0, parseInt($('v-min').value, 10) || 0));
+    var bpm = Math.min(160, Math.max(40, parseInt($('v-bpm').value, 10) || 80));
+    var voc;
+    if (tipo === 'notas') {
+      var de = Number($('v-de').value), ate = Number($('v-ate').value), dir = $('v-dir').value;
+      if (dir === 'descer' ? de < ate : de > ate) return aviso('msg-voc', dir === 'descer' ? 'Para descer, o primeiro tom precisa ser mais agudo que o segundo.' : 'O primeiro tom precisa ser mais grave que o segundo.', 'erro');
+      voc = { tipo: 'notas', padrao: C.PADROES[$('v-padrao').value].padrao, silaba: $('v-silaba').value.trim(), de: de, ate: ate, direcao: dir, bpm: bpm, acorde: true };
+      if (!texto) texto = C.PADROES[$('v-padrao').value].nome + (voc.silaba ? ' em "' + voc.silaba + '"' : '');
+    } else if (tipo === 'respiracao') {
+      var fases = $('v-fases').value.split(',').map(function (f) {
+        var x = f.trim().match(/^(.*?)\s*(\d+)$/); return x && x[1] ? [x[1].trim(), Math.min(60, Number(x[2]))] : null;
+      }).filter(Boolean);
+      if (!fases.length) return aviso('msg-voc', 'Escreva as fases assim: Inspire 4, Segure 4, Solte em sss 8', 'erro');
+      voc = { tipo: 'respiracao', fases: fases, repeticoes: Math.min(30, Math.max(1, parseInt($('v-reps').value, 10) || 1)), bpm: bpm };
+      if (!texto) texto = 'Respiração: ' + fases.map(function (f) { return f[0] + ' ' + f[1]; }).join(', ');
+    } else {
+      voc = { tipo: 'piano', de: 48, ate: 79 };
+      if (!texto) texto = 'Teclado livre';
+    }
+    vocs.push({ texto: texto, minutos: min, vocalize: voc });
+    $('v-nome').value = ''; $('v-silaba').value = '';
+    aviso('msg-voc', '');
+    listarVocs();
+  });
+  function listarVocs() {
+    var l = $('vocs-lista'); l.replaceChildren();
+    vocs.forEach(function (it, i) {
+      var area = el('div', { class: 'voc-area', hidden: true }), player = null;
+      l.appendChild(el('div', null,
+        el('div', { class: 'voc-lista-item' },
+          el('span', null, el('b', { text: it.texto }), el('span', { class: 'pequeno suave', text: ' · ' + it.minutos + ' min' })),
+          el('span', { style: 'display: flex; gap: 6px' },
+            el('button', { class: 'botao mini vazado', type: 'button', text: 'Testar', onclick: function () {
+              if (!player) { player = C.criarPlayer(it.vocalize); area.appendChild(player.el); }
+              area.hidden = !area.hidden; if (area.hidden) player.parar();
+            } }),
+            el('button', { class: 'link-botao', type: 'button', text: 'Remover', onclick: function () { if (player) player.parar(); vocs.splice(i, 1); listarVocs(); } }))),
+        area));
+    });
+  }
+
+  $('btn-prontas').addEventListener('click', async function () {
+    $('btn-prontas').disabled = true;
+    // uma por vez, da última para a primeira: a lista mostra as mais novas em cima, então a Aula 1 fica no topo
+    var faltam = C.AULAS.filter(function (a) { return titulosProf.indexOf(a.titulo) < 0; }).reverse(), r = { error: null };
+    for (var i = 0; i < faltam.length && !r.error; i++) r = await sb.from('rotinas').insert(faltam[i]);
+    $('btn-prontas').disabled = false;
+    if (r.error) return aviso('msg-prontas', 'Não foi possível adicionar: ' + r.error.message, 'erro');
+    aviso('msg-prontas', 'Pronto! As 4 aulas de canto já aparecem para os alunos de Canto coral.', 'ok');
+    carregarProfessor();
+  });
+
   $('form-rotina').addEventListener('submit', async function (e) {
     e.preventDefault();
     var titulo = $('r-titulo').value.trim();
     var itens = $('r-itens').value.split('\n').map(function (l) { return l.trim(); }).filter(Boolean).map(function (l) {
       var partes = l.split('|'), min = parseInt((partes[1] || '').replace(/\D/g, ''), 10);
       return { texto: partes[0].trim(), minutos: isNaN(min) ? 0 : Math.min(min, 600) };
-    });
-    if (!titulo || !itens.length) return aviso('msg-rotina', 'Dê um título e escreva pelo menos um exercício.', 'erro');
+    }).concat(vocs);
+    if (!titulo || !itens.length) return aviso('msg-rotina', 'Dê um título e coloque pelo menos um exercício.', 'erro');
     var r = await sb.from('rotinas').insert({ titulo: titulo, instrumento: $('r-instr').value, nivel: $('r-nivel').value, itens: itens, observacao: $('r-obs').value.trim() });
     if (r.error) return aviso('msg-rotina', 'Não foi possível publicar: ' + r.error.message, 'erro');
     $('r-titulo').value = ''; $('r-itens').value = ''; $('r-obs').value = '';
+    vocs = []; listarVocs();
     aviso('msg-rotina', 'Rotina publicada. Os alunos de ' + $('r-instr').value + ' já podem ver.', 'ok');
     carregarProfessor();
   });
@@ -623,6 +788,8 @@ td.num { font-variant-numeric: tabular-nums; }
       sb.from('progresso').select('aluno_id,dia,minutos').gte('dia', diasAtras(6))
     ]);
     var perfis = rs[0].data || [], rotinas = rs[1].data || [], prog = rs[2].data || [];
+    titulosProf = rotinas.map(function (r) { return r.titulo; });
+    $('bloco-prontas').hidden = !C || C.AULAS.every(function (a) { return titulosProf.indexOf(a.titulo) >= 0; });
 
     var pend = $('lista-pendentes'); pend.replaceChildren();
     var pendentes = perfis.filter(function (p) { return !p.aprovado; });
