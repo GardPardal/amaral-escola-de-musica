@@ -242,7 +242,7 @@
         t('Afinação: ouça cada nota e afine a corda até soar igual', 5, demo(AFINACAO, 40, 60, 'Afine cada corda até soar igual à nota de referência', { repeticoes: 2, semPiano: true })),
         t('Mão direita: polegar (p) nas cordas 6, 5 e 4; indicador (i), médio (m) e anelar (a) nas cordas 3, 2 e 1', 5, demo([[0, 1, 'p · 6ª corda'], [5, 1, 'p · 5ª corda'], [10, 1, 'p · 4ª corda'], [15, 1, 'i · 3ª corda'], [19, 1, 'm · 2ª corda'], [24, 1, 'a · 1ª corda']], 40, 60, 'Uma corda solta por tempo', { repeticoes: 4, semPiano: true }))
       ]],
-      ['Primeiros acordes: Em e Am', 'Iniciante', 'No desenho: linhas verticais são as cordas (6ª à esquerda); bolinha é onde apertar; número é o dedo; × não toca; ○ é corda solta.', [
+      ['Primeiros acordes: Em e Am', 'Iniciante', 'No braço da tela, as linhas deitadas são as cordas (Mi grave embaixo). Bolinha com número = dedo que aperta; × = não toca; ○ = corda solta; pontilhado = próximo acorde.', [
         t('Troque entre Em e Am', 6, acordes('Em:4 Am:4', 60, { braco: true, repeticoes: 4 })),
         t('Toque corda por corda: todas precisam soar limpas. Se alguma abafar, ajuste o dedo.', 3),
         t('Mais rápido, sem parar antes do tempo 1', 5, acordes('Em:4 Am:4', 76, { braco: true, repeticoes: 6 }))

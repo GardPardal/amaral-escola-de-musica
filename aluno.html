@@ -215,11 +215,35 @@ main.wrap { padding-block: 24px 64px; }
 .filtro { display: flex; gap: 8px; align-items: center; }
 .filtro span { font-weight: 700; }
 .filtro select { min-height: 40px; padding: 6px 10px; border: 1.5px solid var(--linha); border-radius: 10px; background: var(--papel); max-width: 100%; }
-details.rotina > summary { list-style: none; cursor: pointer; }
-details.rotina > summary::-webkit-details-marker { display: none; }
-details.rotina > summary .rotina-cab::after { content: '▾'; font-size: 20px; color: var(--tinta-suave); transition: transform .2s; }
-details.rotina:not([open]) > summary .rotina-cab::after { transform: rotate(-90deg); }
-@media (prefers-reduced-motion: reduce) { details.rotina > summary .rotina-cab::after { transition: none; } }
+/* Lista de aulas */
+.curso-titulo { margin-top: 8px; }
+.aulas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: 12px; }
+.aula-card { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; text-align: left; padding: 16px; border-radius: 16px; border: 1.5px solid var(--linha); background: var(--papel); cursor: pointer; min-width: 0; }
+.aula-card:hover { border-color: var(--madeira); }
+.aula-card:focus-visible { outline: 3px solid var(--ceu); outline-offset: 2px; }
+.aula-card.proxima { border: 2px solid var(--madeira); background: var(--papel-2); }
+.aula-card.concluida { background: var(--papel-2); }
+.aula-num { font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--madeira); }
+.aula-nome { font-family: var(--f-display); font-size: 18px; font-weight: 800; line-height: 1.2; overflow-wrap: anywhere; }
+.aula-meta { font-size: 13px; color: var(--tinta-suave); }
+.aula-status { font-size: 13px; font-weight: 800; padding: 3px 10px; border-radius: 999px; background: var(--papel-2); border: 1px solid var(--linha); }
+.aula-status.ok { background: var(--ok); border-color: var(--ok); color: var(--papel); }
+.aula-status.vai { background: var(--madeira); border-color: var(--madeira); color: var(--sobre-madeira); }
+/* Aula aberta */
+.voltar { align-self: flex-start; }
+.passos { display: flex; flex-wrap: wrap; gap: 6px; }
+.passos button { width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid var(--linha); background: var(--papel); font-weight: 800; cursor: pointer; }
+.passos button.feito { background: var(--ok); border-color: var(--ok); color: var(--papel); }
+.passos button[aria-current="step"] { border: 2.5px solid var(--madeira); }
+.exercicio { display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: 16px; border: 1px solid var(--linha); background: var(--papel); }
+.exercicio-num { font-size: 13px; font-weight: 800; color: var(--tinta-suave); }
+.exercicio-texto { font-size: 19px; font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
+.feito-hoje { color: var(--ok); font-weight: 800; font-size: 14px; }
+.nav-aula { position: sticky; bottom: 0; display: flex; justify-content: space-between; gap: 10px; padding: 12px 0 calc(12px + env(safe-area-inset-bottom, 0px)); background: var(--papel); border-top: 1px solid var(--linha); z-index: 4; }
+.nav-aula .botao { flex: 1; }
+.nav-aula .botao.vazado { flex: 0 0 auto; }
+.fim-aula { text-align: center; align-items: center; padding: 28px 18px; }
+.fim-aula .selo { font-size: 44px; line-height: 1; }
 .chip.ok { background: var(--ok); border-color: var(--ok); color: var(--papel); }
 .curso-linha { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding-block: 10px; border-top: 1px solid var(--linha); }
 .prontas { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -330,7 +354,7 @@ td.num { font-variant-numeric: tabular-nums; }
         </div>
       </div>
       <nav class="abas" role="tablist" aria-label="Seções">
-        <button type="button" role="tab" data-aba="rotinas" aria-selected="true">Rotinas</button>
+        <button type="button" role="tab" data-aba="rotinas" aria-selected="true">Aulas</button>
         <button type="button" role="tab" data-aba="progresso" aria-selected="false">Meu progresso</button>
         <button type="button" role="tab" data-aba="comunidade" aria-selected="false">Comunidade</button>
         <button type="button" role="tab" data-aba="professor" aria-selected="false" id="aba-professor" hidden>Professor</button>
@@ -341,14 +365,19 @@ td.num { font-variant-numeric: tabular-nums; }
   <main class="wrap">
     <!-- Rotinas -->
     <section id="painel-rotinas" class="pilha">
-      <div class="pilha" style="gap: 6px">
-        <h1>Estudo de hoje</h1>
-        <p class="suave" id="hoje-resumo">Marque cada exercício quando terminar.</p>
+      <!-- Lista de aulas: o aluno toca em uma para abrir -->
+      <div id="vista-lista" class="pilha">
+        <div class="pilha" style="gap: 6px">
+          <h1>Minhas aulas</h1>
+          <p class="suave" id="hoje-resumo">Toque em uma aula para começar.</p>
+        </div>
+        <div class="barra" aria-hidden="true"><i id="barra-hoje"></i></div>
+        <label class="filtro pequeno"><span>Mostrar</span>
+          <select id="filtro-instr"><option value="">Meu instrumento</option><option>Teclado</option><option>Piano</option><option>Violão</option><option>Guitarra</option><option>Canto coral</option><option>Concurso</option><option value="*">Todos os instrumentos</option></select></label>
+        <div id="lista-rotinas" class="pilha"><div class="vazio">Carregando aulas…</div></div>
       </div>
-      <div class="barra" aria-hidden="true"><i id="barra-hoje"></i></div>
-      <label class="filtro pequeno"><span>Mostrar</span>
-        <select id="filtro-instr"><option value="">Meu instrumento</option><option>Teclado</option><option>Piano</option><option>Violão</option><option>Guitarra</option><option>Canto coral</option><option>Concurso</option><option value="*">Todos os instrumentos</option></select></label>
-      <div id="lista-rotinas" class="pilha"><div class="vazio">Carregando rotinas…</div></div>
+      <!-- Aula aberta: um exercício por vez -->
+      <div id="vista-aula" class="pilha" hidden></div>
     </section>
 
     <!-- Progresso -->
@@ -599,107 +628,178 @@ td.num { font-variant-numeric: tabular-nums; }
     ({ rotinas: carregarRotinas, progresso: carregarProgresso, comunidade: carregarFeed, professor: carregarProfessor })[aba]();
   }
 
-  // ---------- Rotinas ----------
-  var players = {};   // tocadores abertos, por rotina:item (sobrevivem ao recarregar a lista)
-  $('filtro-instr').addEventListener('change', carregarRotinas);
-  // Cartões abertos ficam lembrados neste aparelho
-  var abertas = (function () { try { return JSON.parse(localStorage.getItem('amaral-abertas') || 'null'); } catch (e) { return null; } })();
-  function gravarAbertas() { try { localStorage.setItem('amaral-abertas', JSON.stringify(abertas)); } catch (e) { /* sem armazenamento */ } }
+  // ---------- Aulas ----------
+  // A lista mostra as aulas como cartões. O aluno toca em uma, faz os exercícios um por vez e finaliza.
+  var players = {};          // tocadores por rotina:item (o som continua igual ao voltar para o exercício)
+  var aulas = [], feitosHoje = {}, feitosSempre = {}, minutosHoje = 0;
+  var aulaAtual = null, passo = 0, instrAtual = null;
+  $('filtro-instr').addEventListener('change', function () { aulaAtual = null; carregarRotinas(); });
+  function infoAula(r) {
+    var m = String(r.titulo).match(/^(.*) · Aula (\d+): (.*)$/);
+    return m ? { curso: m[1], n: Number(m[2]), nome: m[3] } : { curso: '', n: 0, nome: r.titulo };
+  }
   // Rotinas avulsas (mais novas) primeiro; depois os cursos, na ordem das aulas
   function ordenar(rotinas) {
-    function chave(r) { var m = String(r.titulo).match(/^(.*) · Aula (\d+):/); return m ? { curso: m[1], n: Number(m[2]) } : null; }
     return rotinas.slice().sort(function (a, b) {
-      var ka = chave(a), kb = chave(b);
-      if (!ka && !kb) return String(b.criado_em).localeCompare(String(a.criado_em));
-      if (!ka) return -1; if (!kb) return 1;
+      var ka = infoAula(a), kb = infoAula(b);
+      if (!ka.n && !kb.n) return String(b.criado_em).localeCompare(String(a.criado_em));
+      if (!ka.n) return -1; if (!kb.n) return 1;
       return ka.curso.localeCompare(kb.curso) || ka.n - kb.n;
     });
   }
-  // O botão diz com o que o aluno vai praticar
-  var COM_O = { 'Violão': 'com o violão', 'Guitarra': 'com a guitarra', 'Teclado': 'com o teclado', 'Piano': 'com o piano', 'Canto coral': 'com o piano', 'Concurso': 'ouvindo' };
-  function areaVocalize(chave, voc, instrumento) {
-    var area = el('div', { class: 'voc-area', hidden: !(players[chave] && players[chave].aberto) });
-    if (players[chave]) area.appendChild(players[chave].el);
-    var rotulo = voc.tipo === 'piano' ? 'Abrir teclado'
-      : voc.tipo === 'respiracao' || voc.tipo === 'metronomo' ? 'Praticar com metrônomo'
-      : 'Praticar ' + (COM_O[instrumento] || 'com piano');
-    var botao = el('button', { class: 'botao mini vazado', type: 'button', 'aria-expanded': String(!area.hidden),
-      text: (area.hidden ? '♪ ' + rotulo : 'Fechar'), onclick: function () {
-        if (!players[chave]) { players[chave] = window.AmaralCanto.criarPlayer(voc, { instrumento: instrumento }); area.appendChild(players[chave].el); }
-        var abrir = area.hidden;
-        area.hidden = !abrir; players[chave].aberto = abrir;
-        if (!abrir) players[chave].parar();
-        botao.textContent = abrir ? 'Fechar' : '♪ ' + rotulo; botao.setAttribute('aria-expanded', String(abrir));
-      } });
-    return { botao: botao, area: area };
+  function itensDe(r) { return Array.isArray(r.itens) ? r.itens : []; }
+  function estadoDe(r) {
+    var its = itensDe(r), e = { total: its.length, sempre: 0, hoje: 0, minutos: 0 };
+    its.forEach(function (it, i) { e.minutos += Number(it.minutos) || 0; if (feitosSempre[r.id + ':' + i]) e.sempre++; if (feitosHoje[r.id + ':' + i]) e.hoje++; });
+    e.concluida = e.total > 0 && e.sempre === e.total;
+    return e;
   }
+  // O botão do tocador diz com o que o aluno vai praticar
+  var COM_O = { 'Violão': 'com o violão', 'Guitarra': 'com a guitarra', 'Teclado': 'com o teclado', 'Piano': 'com o piano', 'Canto coral': 'com o piano', 'Concurso': 'ouvindo' };
+
   async function carregarRotinas() {
     var q = sb.from('rotinas').select('*').eq('ativa', true).order('criado_em', { ascending: false });
-    var filtro = $('filtro-instr').value, instr = filtro === '*' ? null : filtro || eu.instrumento;
+    var filtro = $('filtro-instr').value; instrAtual = filtro === '*' ? null : filtro || eu.instrumento;
     $('filtro-instr').options[0].textContent = 'Meu instrumento (' + eu.instrumento + ')';
-    if (instr) q = q.in('instrumento', ['Todos', instr]);
-    var rs = await Promise.all([q, sb.from('progresso').select('rotina_id,item,minutos').eq('aluno_id', eu.id).eq('dia', hojeISO())]);
-    var rotinas = ordenar(rs[0].data || []), feitos = rs[1].data || [];
-    // Se nenhuma aula desta lista estiver aberta, abre a primeira
-    if (!abertas) abertas = [];
-    if (rotinas.length && !rotinas.some(function (r) { return abertas.indexOf(r.id) >= 0; })) { abertas.push(rotinas[0].id); gravarAbertas(); }
-    var marcado = {}; feitos.forEach(function (f) { marcado[f.rotina_id + ':' + f.item] = true; });
-    var lista = $('lista-rotinas'); lista.replaceChildren();
-    if (!rotinas.length) {
-      lista.appendChild(el('div', { class: 'vazio', text: 'Ainda não há rotina publicada para ' + (instr || 'nenhum instrumento') + '. Quando o professor publicar, ela aparece aqui.' }));
-    }
-    var contas = [];   // minutos por rotina, para o resumo do dia
-    rotinas.forEach(function (r) {
-      var itens = Array.isArray(r.itens) ? r.itens : [];
-      var ul = el('ul', { class: 'itens' });
-      var conta = { id: r.id, total: 0, feito: 0, feitos: 0 };
-      contas.push(conta);
-      itens.forEach(function (it, i) {
-        var chave = r.id + ':' + i, feito = !!marcado[chave], min = Number(it.minutos) || 0;
-        conta.total += min; if (feito) { conta.feito += min; conta.feitos++; }
-        var id = 'it-' + r.id + '-' + i;
-        var voc = it.vocalize && window.AmaralCanto ? areaVocalize(chave, it.vocalize, r.instrumento) : null;
-        var li = el('li', { class: 'item' + (feito ? ' feito' : '') },
-          el('input', { type: 'checkbox', id: id, checked: feito, onchange: function (e) { marcar(r.id, i, min, e.target.checked, li); } }),
-          el('div', { class: 'item-texto' }, el('label', { for: id, text: String(it.texto || '') }), voc && voc.botao),
-          el('span', { class: 'min', text: min ? min + ' min' : '' }),
-          voc && voc.area);
-        ul.appendChild(li);
-      });
-      var cartao = el('details', { class: 'rotina', open: abertas.indexOf(r.id) >= 0 },
-        el('summary', null, el('div', { class: 'rotina-cab' },
-          el('div', { class: 'pilha', style: 'gap: 6px' }, el('h3', { text: r.titulo }),
-            el('div', { class: 'chips' }, el('span', { class: 'chip', text: r.instrumento }), el('span', { class: 'chip', text: r.nivel }),
-              el('span', { class: 'chip', text: itens.length + ' exercícios · ' + conta.total + ' min' }),
-              conta.feitos ? el('span', { class: 'chip ok', text: '✓ ' + conta.feitos + ' de ' + itens.length + ' hoje' }) : null)))),
-        r.observacao ? el('p', { class: 'suave pequeno', text: r.observacao }) : null,
-        ul);
-      cartao.addEventListener('toggle', function () {
-        var i = abertas.indexOf(r.id);
-        if (cartao.open && i < 0) abertas.push(r.id);
-        if (!cartao.open && i >= 0) { abertas.splice(i, 1); if (window.AmaralCanto) window.AmaralCanto.pararTudo(); }
-        gravarAbertas(); resumir();
-      });
-      lista.appendChild(cartao);
+    if (instrAtual) q = q.in('instrumento', ['Todos', instrAtual]);
+    var rs = await Promise.all([q, sb.from('progresso').select('rotina_id,item,minutos,dia').eq('aluno_id', eu.id)]);
+    aulas = ordenar(rs[0].data || []);
+    feitosHoje = {}; feitosSempre = {}; minutosHoje = 0;
+    var hoje = hojeISO();
+    (rs[1].data || []).forEach(function (f) {
+      var k = f.rotina_id + ':' + f.item; feitosSempre[k] = true;
+      if (f.dia === hoje) { feitosHoje[k] = true; minutosHoje += f.minutos || 0; }
     });
-    // O resumo conta as aulas abertas e as que já tiveram exercício feito hoje
-    function resumir() {
-      var total = 0, feito = 0;
-      contas.forEach(function (c) { if (abertas.indexOf(c.id) >= 0 || c.feitos) { total += c.total; feito += c.feito; } });
-      atualizarResumo(feito, total);
+    var r = aulaAtual != null && aulas.filter(function (a) { return a.id === aulaAtual; })[0];
+    if (r) mostrarAula(); else { aulaAtual = null; mostrarLista(); }
+  }
+
+  function mostrarLista() {
+    $('vista-lista').hidden = false; $('vista-aula').hidden = true;
+    var lista = $('lista-rotinas'); lista.replaceChildren();
+    var concluidas = aulas.filter(function (r) { return estadoDe(r).concluida; }).length;
+    $('hoje-resumo').textContent = (minutosHoje ? 'Hoje você estudou ' + minutosHoje + ' min. ' : '') +
+      (aulas.length ? concluidas + ' de ' + aulas.length + ' aulas concluídas.' : '');
+    $('barra-hoje').style.width = aulas.length ? Math.round(100 * concluidas / aulas.length) + '%' : '0';
+    if (!aulas.length) {
+      lista.appendChild(el('div', { class: 'vazio', text: 'Ainda não há aulas para ' + (instrAtual || 'nenhum instrumento') + '. Quando o professor publicar, elas aparecem aqui.' }));
+      return;
     }
-    resumir();
+    var proxima = aulas.filter(function (r) { return !estadoDe(r).concluida; })[0];
+    var grade = null, cursoAtual = null;
+    aulas.forEach(function (r) {
+      var info = infoAula(r), e = estadoDe(r);
+      var grupo = info.curso || 'Rotinas extras';
+      if (grupo !== cursoAtual) {
+        cursoAtual = grupo;
+        lista.appendChild(el('h2', { class: 'curso-titulo', text: grupo === 'Teoria' ? 'Teoria (Concurso)' : grupo }));
+        grade = el('div', { class: 'aulas-grid' }); lista.appendChild(grade);
+      }
+      var status = e.concluida ? el('span', { class: 'aula-status ok', text: '✓ Concluída' })
+        : r === proxima ? el('span', { class: 'aula-status vai', text: e.sempre ? '▶ Continuar · ' + e.sempre + ' de ' + e.total : '▶ Começar aqui' })
+        : e.sempre ? el('span', { class: 'aula-status', text: 'Em andamento · ' + e.sempre + ' de ' + e.total })
+        : el('span', { class: 'aula-status', text: 'Nova' });
+      grade.appendChild(el('button', { type: 'button', class: 'aula-card' + (e.concluida ? ' concluida' : '') + (r === proxima ? ' proxima' : ''),
+        onclick: function () { abrirAula(r.id); } },
+        el('span', { class: 'aula-num', text: info.n ? 'Aula ' + info.n : 'Rotina' }),
+        el('b', { class: 'aula-nome', text: info.nome }),
+        el('span', { class: 'aula-meta', text: e.total + ' exercícios · ' + e.minutos + ' min' + (info.n ? '' : ' · ' + r.instrumento) }),
+        status));
+    });
   }
-  function atualizarResumo(feito, total) {
-    $('hoje-resumo').textContent = total ? feito + ' de ' + total + ' minutos estudados hoje.' : 'Marque cada exercício quando terminar.';
-    $('barra-hoje').style.width = total ? Math.round(100 * feito / total) + '%' : '0';
+
+  // Abrir e fechar a aula usam o histórico: o botão "voltar" do celular volta para a lista
+  function abrirAula(id) {
+    var r = aulas.filter(function (a) { return a.id === id; })[0]; if (!r) return;
+    aulaAtual = id;
+    var its = itensDe(r), primeiro = 0;
+    while (primeiro < its.length && feitosHoje[id + ':' + primeiro]) primeiro++;
+    passo = primeiro < its.length ? primeiro : 0;
+    try { history.pushState({ aula: id }, ''); } catch (e) { /* sem histórico */ }
+    mostrarAula(); window.scrollTo(0, 0);
   }
-  async function marcar(rotinaId, item, minutos, feito, li) {
-    li.classList.toggle('feito', feito);
-    var r = feito
-      ? await sb.from('progresso').insert({ rotina_id: rotinaId, item: item, minutos: minutos })
-      : await sb.from('progresso').delete().match({ aluno_id: eu.id, rotina_id: rotinaId, item: item, dia: hojeISO() });
-    if (r.error && !/duplicate/i.test(r.error.message)) { li.classList.toggle('feito', !feito); li.querySelector('input').checked = !feito; }
+  function fecharAula() {
+    if (window.AmaralCanto) window.AmaralCanto.pararTudo();
+    if (history.state && history.state.aula) { history.back(); return; }  // o popstate mostra a lista
+    aulaAtual = null; mostrarLista(); window.scrollTo(0, 0);
+  }
+  window.addEventListener('popstate', function () {
+    if (aulaAtual == null) return;
+    if (window.AmaralCanto) window.AmaralCanto.pararTudo();
+    aulaAtual = null; carregarRotinas(); window.scrollTo(0, 0);
+  });
+  function irPara(n) {
+    if (window.AmaralCanto) window.AmaralCanto.pararTudo();
+    passo = n; mostrarAula(); window.scrollTo(0, 0);
+  }
+
+  function mostrarAula() {
+    var r = aulas.filter(function (a) { return a.id === aulaAtual; })[0]; if (!r) return mostrarLista();
+    var info = infoAula(r), its = itensDe(r), v = $('vista-aula');
+    $('vista-lista').hidden = true; v.hidden = false; v.replaceChildren();
+    v.appendChild(el('button', { type: 'button', class: 'link-botao voltar', text: '← Todas as aulas', onclick: fecharAula }));
+    v.appendChild(el('div', { class: 'pilha', style: 'gap: 6px' },
+      el('span', { class: 'rotulo', text: (info.curso === 'Teoria' ? 'Teoria' : info.curso || r.instrumento) + (info.n ? ' · Aula ' + info.n : '') }),
+      el('h1', { text: info.nome }),
+      r.observacao ? el('p', { class: 'suave', text: r.observacao }) : null));
+    var passos = el('nav', { class: 'passos', 'aria-label': 'Exercícios da aula' });
+    its.forEach(function (it, i) {
+      passos.appendChild(el('button', { type: 'button', class: feitosHoje[r.id + ':' + i] ? 'feito' : null, 'aria-current': i === passo ? 'step' : null,
+        'aria-label': 'Exercício ' + (i + 1) + (feitosHoje[r.id + ':' + i] ? ', feito hoje' : ''), text: String(i + 1), onclick: function () { irPara(i); } }));
+    });
+    v.appendChild(passos);
+
+    if (passo >= its.length) return mostrarFim(r, v);
+
+    var it = its[passo], chave = r.id + ':' + passo, feito = !!feitosHoje[chave], min = Number(it.minutos) || 0;
+    var cartao = el('article', { class: 'exercicio' },
+      el('span', { class: 'exercicio-num', text: 'Exercício ' + (passo + 1) + ' de ' + its.length + (min ? ' · ' + min + ' min' : '') }),
+      el('p', { class: 'exercicio-texto', text: String(it.texto || '') }));
+    if (it.vocalize && window.AmaralCanto) {
+      if (!players[chave]) players[chave] = window.AmaralCanto.criarPlayer(it.vocalize, { instrumento: r.instrumento });
+      cartao.appendChild(players[chave].el);
+    }
+    if (feito) cartao.appendChild(el('div', { class: 'feito-hoje' }, '✓ Feito hoje ',
+      el('button', { type: 'button', class: 'link-botao', text: 'desmarcar', onclick: function () { desmarcar(r, passo); } })));
+    v.appendChild(cartao);
+    v.appendChild(el('p', { class: 'msg erro', id: 'msg-aula', role: 'status', hidden: true }));
+
+    var ultimo = passo === its.length - 1;
+    v.appendChild(el('div', { class: 'nav-aula' },
+      el('button', { type: 'button', class: 'botao vazado', disabled: passo === 0, text: '← Anterior', onclick: function () { irPara(passo - 1); } }),
+      el('button', { type: 'button', class: 'botao', text: ultimo ? 'Finalizar aula ✓' : (feito ? 'Próximo →' : 'Feito, próximo →'),
+        onclick: async function (e) {
+          e.currentTarget.disabled = true;
+          if (ultimo) { for (var i = 0; i < its.length; i++) await marcarFeito(r, i); }   // finalizar conta a aula inteira
+          else await marcarFeito(r, passo);
+          irPara(passo + 1);
+        } })));
+  }
+
+  function mostrarFim(r, v) {
+    var e = estadoDe(r), idx = aulas.indexOf(r);
+    var prox = aulas.slice(idx + 1).filter(function (a) { return !estadoDe(a).concluida && infoAula(a).curso === infoAula(r).curso; })[0];
+    v.appendChild(el('div', { class: 'cartao pilha fim-aula' },
+      el('div', { class: 'selo', 'aria-hidden': 'true', text: '🎉' }),
+      el('h2', { text: 'Aula concluída!' }),
+      el('p', { class: 'suave', text: 'Você fez os ' + e.total + ' exercícios (' + e.minutos + ' min). Bom estudo!' }),
+      prox ? el('button', { type: 'button', class: 'botao', text: 'Próxima: ' + infoAula(prox).nome + ' →', onclick: function () {
+        if (history.state && history.state.aula) { try { history.replaceState({ aula: prox.id }, ''); } catch (er) { /* sem histórico */ } }
+        aulaAtual = prox.id; passo = 0; mostrarAula(); window.scrollTo(0, 0);
+      } }) : null,
+      el('button', { type: 'button', class: 'botao vazado', text: 'Refazer esta aula', onclick: function () { irPara(0); } }),
+      el('button', { type: 'button', class: 'link-botao', text: 'Voltar para todas as aulas', onclick: fecharAula })));
+  }
+
+  async function marcarFeito(r, i) {
+    var k = r.id + ':' + i; if (feitosHoje[k]) return;
+    var min = Number(itensDe(r)[i].minutos) || 0;
+    var res = await sb.from('progresso').insert({ rotina_id: r.id, item: i, minutos: min });
+    if (res.error && !/duplicate/i.test(res.error.message)) { var m = $('msg-aula'); if (m) { m.textContent = 'Não foi possível salvar: ' + res.error.message; m.hidden = false; } return; }
+    feitosHoje[k] = feitosSempre[k] = true; minutosHoje += min;
+  }
+  async function desmarcar(r, i) {
+    await sb.from('progresso').delete().match({ aluno_id: eu.id, rotina_id: r.id, item: i, dia: hojeISO() });
     carregarRotinas();
   }
 

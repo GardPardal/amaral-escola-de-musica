@@ -106,11 +106,41 @@
     if (!ctx) {
       var AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return null;
+      try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { /* navegador antigo */ }
       ctx = new AC(); novaSaida();
     }
-    if (ctx.state === 'suspended') ctx.resume();
+    if (ctx.state !== 'running') ctx.resume();
     return ctx;
   }
+
+  // ---------- Liberar o som no celular ----------
+  // iPhone/iPad: o navegador só libera o som dentro de um toque, e no modo silencioso o Web Audio fica mudo.
+  // Tocar um <audio> em silêncio no primeiro toque faz o iPhone tratar a página como música (toca mesmo no silencioso).
+  var silencio = null;
+  function wavSilencioso() {
+    var sr = 8000, n = 800, buf = new ArrayBuffer(44 + n), v = new DataView(buf);
+    function txt(o, s) { for (var i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); }
+    txt(0, 'RIFF'); v.setUint32(4, 36 + n, true); txt(8, 'WAVE'); txt(12, 'fmt ');
+    v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, sr, true); v.setUint32(28, sr, true); v.setUint16(32, 1, true); v.setUint16(34, 8, true);
+    txt(36, 'data'); v.setUint32(40, n, true);
+    for (var i = 0; i < n; i++) v.setUint8(44 + i, 128);
+    return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+  }
+  function liberarSom() {
+    var c = audio(); if (!c) return;
+    try { // um "clique" mudo destrava o Web Audio no iOS antigo
+      var b = c.createBuffer(1, 1, 22050), src = c.createBufferSource();
+      src.buffer = b; src.connect(c.destination); src.start(0);
+    } catch (e) { /* ignora */ }
+    try {
+      if (!silencio) { silencio = new Audio(wavSilencioso()); silencio.loop = true; silencio.setAttribute('playsinline', ''); silencio.volume = 0.01; }
+      var pr = silencio.play(); if (pr && pr.catch) pr.catch(function () {});
+    } catch (e) { /* ignora */ }
+  }
+  ['touchend', 'click', 'keydown'].forEach(function (ev) { document.addEventListener(ev, liberarSom, { capture: true, passive: true }); });
+  // ao voltar para a página (o iOS suspende o som ao trocar de app)
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && ctx && ctx.state !== 'running') ctx.resume(); });
   // Piano com harmônicos + uma voz-guia suave que sustenta a nota (ajuda quem canta junto)
   function somNota(midi, quando, dur, volume, semGuia) {
     var c = audio(); if (!c) return;
@@ -706,6 +736,6 @@
 
   window.AmaralCanto = {
     criarPlayer: criarPlayer, PADROES: PADROES, nomeNota: nomeNota, notasDaCifra: notasDaCifra,
-    DIAGRAMAS: DIAGRAMAS, pararTudo: function () { if (ativo) ativo.parar(); }
+    DIAGRAMAS: DIAGRAMAS, liberarSom: liberarSom, pararTudo: function () { if (ativo) ativo.parar(); }
   };
 })();
