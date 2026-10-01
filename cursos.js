@@ -15,6 +15,26 @@
     return p;
   }
   var MAIOR = [0, 2, 4, 5, 7, 9, 11, 12, 11, 9, 7, 5, 4, 2, 0];
+  var MENOR_NAT = [0, 2, 3, 5, 7, 8, 10, 12, 10, 8, 7, 5, 3, 2, 0];
+  var MENOR_HAR = [0, 2, 3, 5, 7, 8, 11, 12, 11, 8, 7, 5, 3, 2, 0];
+  var ARP = [0, 4, 7, 12, 7, 4, 0], ARPm = [0, 3, 7, 12, 7, 3, 0];
+  var ARP2 = [0, 4, 7, 12, 16, 19, 24, 19, 16, 12, 7, 4, 0], ARP2m = [0, 3, 7, 12, 15, 19, 24, 19, 15, 12, 7, 3, 0];
+  var BLUES = [0, 3, 5, 6, 7, 10, 12, 10, 7, 6, 5, 3, 0];
+  // Digitação (dedos de cada nota, na ordem). D = mão direita, E = mão esquerda.
+  var D5 = '1 2 3 4 5 4 3 2 1', E5 = '5 4 3 2 1 2 3 4 5';
+  var D_ESC = '1 2 3 1 2 3 4 5 4 3 2 1 3 2 1', E_ESC = '5 4 3 2 1 3 2 1 2 3 1 2 3 4 5';
+  var D_FA = '1 2 3 4 1 2 3 4 3 2 1 4 3 2 1';
+  var D_ARP = '1 2 3 5 3 2 1', E_ARP = '5 4 2 1 2 4 5';
+  var D_ARP2 = '1 2 3 1 2 3 5 3 2 1 3 2 1', E_ARP2 = '5 4 2 1 4 2 1 2 4 1 2 4 5';
+  var D_BLUES = '1 2 1 2 3 4 5 4 3 2 1 2 1';
+  function repete(lista, n) { var r = []; for (var i = 0; i < n; i++) r = r.concat(lista); return r; }
+  function dedosRep(txt, n) { return repete([txt], n).join(' '); }
+  // exercício com as duas mãos ao mesmo tempo: cada mão tem a sua nota de partida, o seu ritmo e os seus dedos
+  function duas(esq, dir, bpm, instrucao, extra) {
+    var v = { tipo: 'notas', demo: true, maos: { E: esq, D: dir }, de: esq.raiz, ate: esq.raiz, bpm: bpm, silaba: instrucao, repeticoes: 1 };
+    Object.keys(extra || {}).forEach(function (k) { v[k] = extra[k]; });
+    return v;
+  }
   var CINCO = [0, 2, 4, 5, 7, 5, 4, 2, 0];
 
   // vocalize: sobe de meio em meio tom
@@ -56,9 +76,10 @@
              [4, 1], [4, 1], [5, 1], [7, 1], [7, 1], [5, 1], [4, 1], [2, 1], [0, 1], [0, 1], [2, 1], [4, 1], [2, 1.5], [0, 0.5], [0, 2]];
   var DO_RE_MI_FA = [[0, 1], [2, 1], [4, 1], [5, 1], [5, 1], [5, 2], [0, 1], [2, 1], [0, 1], [2, 1], [2, 1], [2, 2],
                      [0, 1], [7, 1], [5, 1], [4, 1], [4, 1], [4, 2], [0, 1], [2, 1], [4, 1], [5, 1], [5, 1], [5, 2]];
-  function pares(semitons, baixo, alto) { // duas mãos, uma oitava de distância
+  function pares(semitons, baixo, alto, dedosE, dedosD) { // duas mãos, uma oitava de distância
     var n = ['Dó', 'Dó♯', 'Ré', 'Mi♭', 'Mi', 'Fá', 'Fá♯', 'Sol', 'Lá♭', 'Lá', 'Si♭', 'Si'];
-    return semitons.map(function (s) { return [n[(s % 12 + 12) % 12], 1, [baixo + s, alto + s]]; });
+    var e = dedosE.split(' '), d = dedosD.split(' ');
+    return semitons.map(function (s, i) { return [n[(s % 12 + 12) % 12], 1, [baixo + s, alto + s], 'E' + e[i] + ' D' + d[i]]; });
   }
 
   function curso(instrumento, prefixo, aulas) {
@@ -141,12 +162,12 @@
         t('Postura: cotovelos na altura das teclas, punho reto e dedos curvados, como se segurasse uma laranja.', 3),
         t('Dedos: polegar 1, indicador 2, médio 3, anelar 4, mínimo 5 (nas duas mãos).', 2),
         t('Ache todos os Dós: o Dó fica logo à esquerda do grupo de 2 teclas pretas. Depois toque Ré, Mi, Fá, Sol, Lá e Si.', 4, teclado(48, 72)),
-        t('Mão direita de Dó a Sol: dedos 1-2-3-4-5-4-3-2-1', 5, demo(seq(CINCO, 1, 2), 60, 70, 'Mão direita: dedos 1-2-3-4-5-4-3-2-1', { repeticoes: 4 })),
-        t('Mão esquerda de Dó a Sol: dedos 5-4-3-2-1-2-3-4-5', 5, demo(seq(CINCO, 1, 2), 48, 70, 'Mão esquerda: dedos 5-4-3-2-1-2-3-4-5', { repeticoes: 4 }))
+        t('Mão direita de Dó a Sol: dedos 1-2-3-4-5-4-3-2-1', 5, demo(seq(CINCO, 1, 2), 60, 70, 'Mão direita: dedos 1-2-3-4-5-4-3-2-1', { mao: 'D', dedos: D5, repeticoes: 4 })),
+        t('Mão esquerda de Dó a Sol: dedos 5-4-3-2-1-2-3-4-5', 5, demo(seq(CINCO, 1, 2), 48, 70, 'Mão esquerda: dedos 5-4-3-2-1-2-3-4-5', { mao: 'E', dedos: E5, repeticoes: 4 }))
       ]],
       ['Escala de Dó maior', 'Iniciante', 'Suba o andamento de 4 em 4 bpm quando conseguir tocar 3 vezes seguidas sem erro.', [
-        t('Mão direita: 1-2-3-1-2-3-4-5 subindo e 5-4-3-2-1-3-2-1 descendo', 6, demo(seq(MAIOR, 1, 2), 60, 66, 'Mão direita: 1-2-3, polegar passa, 1-2-3-4-5', { repeticoes: 2 })),
-        t('Mão esquerda: 5-4-3-2-1-3-2-1 subindo e 1-2-3-1-2-3-4-5 descendo', 6, demo(seq(MAIOR, 1, 2), 48, 66, 'Mão esquerda: 5-4-3-2-1, o dedo 3 cruza, 3-2-1', { repeticoes: 2 })),
+        t('Mão direita: 1-2-3-1-2-3-4-5 subindo e 5-4-3-2-1-3-2-1 descendo', 6, demo(seq(MAIOR, 1, 2), 60, 66, 'Mão direita: 1-2-3, polegar passa, 1-2-3-4-5', { mao: 'D', dedos: D_ESC, repeticoes: 2 })),
+        t('Mão esquerda: 5-4-3-2-1-3-2-1 subindo e 1-2-3-1-2-3-4-5 descendo', 6, demo(seq(MAIOR, 1, 2), 48, 66, 'Mão esquerda: 5-4-3-2-1, o dedo 3 cruza, 3-2-1', { mao: 'E', dedos: E_ESC, repeticoes: 2 })),
         t('Passagem do polegar: só Mi-Fá (mão direita), 10 vezes, sem levantar o punho.', 3),
         t('Escala com metrônomo: uma nota por clique, mãos separadas', 4, metronomo(72, 4, 'Uma nota por clique', 16))
       ]],
@@ -182,6 +203,59 @@
         t('I - vi - ii - V', 5, acordes('C:4 Am:4 Dm:4 G:4', 76, { repeticoes: 4 })),
         t('IV - V - iii - vi', 5, acordes('F:4 G:4 Em:4 Am:4', 76, { repeticoes: 4 })),
         t('Escolha uma música que use C, G, Am e F (muitos louvores e músicas pop usam) e toque inteira com a levada da aula 6.', 8)
+      ]],
+      ['Escalas maiores: Sol, Ré e Fá', 'Intermediário', 'Digitação certa desde o começo: é ela que deixa a escala rápida depois. Os números nas teclas mostram o dedo de cada nota.', [
+        t('Sol maior, mão direita (Fá♯ com o dedo 4)', 5, demo(seq(MAIOR, 1, 2), 67, 66, 'Sol maior: 1-2-3, polegar passa, 1-2-3-4-5', { mao: 'D', dedos: D_ESC, repeticoes: 2 })),
+        t('Sol maior, mão esquerda', 5, demo(seq(MAIOR, 1, 2), 55, 66, 'Sol maior: 5-4-3-2-1, o 3 cruza, 3-2-1', { mao: 'E', dedos: E_ESC, repeticoes: 2 })),
+        t('Ré maior, mão direita (Fá♯ e Dó♯)', 5, demo(seq(MAIOR, 1, 2), 62, 66, 'Ré maior: mesma digitação de Dó', { mao: 'D', dedos: D_ESC, repeticoes: 2 })),
+        t('Fá maior, mão direita (Si♭ com o dedo 4)', 5, demo(seq(MAIOR, 1, 2), 65, 66, 'Fá maior: 1-2-3-4, polegar passa, 1-2-3-4', { mao: 'D', dedos: D_FA, repeticoes: 2 })),
+        t('Sol maior com as duas mãos', 6, duas({ raiz: 55, padrao: seq(MAIOR, 1, 2), dedos: E_ESC }, { raiz: 67, padrao: seq(MAIOR, 1, 2), dedos: D_ESC }, 56, 'Os polegares passam em lugares diferentes: preste atenção', { repeticoes: 2 }))
+      ]],
+      ['Escalas menores', 'Intermediário', 'Toda escala maior tem uma relativa menor (Dó maior → Lá menor). A harmônica sobe o 7º grau e dá o som "árabe".', [
+        t('Lá menor natural, mão direita', 5, demo(seq(MENOR_NAT, 1, 2), 69, 66, 'Lá menor: 1-2-3-1-2-3-4-5', { mao: 'D', dedos: D_ESC, repeticoes: 2 })),
+        t('Lá menor natural, mão esquerda', 5, demo(seq(MENOR_NAT, 1, 2), 57, 66, 'Lá menor: 5-4-3-2-1-3-2-1', { mao: 'E', dedos: E_ESC, repeticoes: 2 })),
+        t('Lá menor harmônica, mão direita (Sol♯ com o dedo 4)', 5, demo(seq(MENOR_HAR, 1, 2), 69, 66, 'Ouça o Sol♯ puxando para o Lá', { mao: 'D', dedos: D_ESC, repeticoes: 2 })),
+        t('Mi menor natural, mão direita (Fá♯)', 5, demo(seq(MENOR_NAT, 1, 2), 64, 66, 'Mi menor: 1-2-3-1-2-3-4-5', { mao: 'D', dedos: D_ESC, repeticoes: 2 })),
+        t('Lá menor harmônica com as duas mãos', 6, duas({ raiz: 57, padrao: seq(MENOR_HAR, 1, 2), dedos: E_ESC }, { raiz: 69, padrao: seq(MENOR_HAR, 1, 2), dedos: D_ESC }, 56, 'Duas mãos juntas, devagar', { repeticoes: 2 }))
+      ]],
+      ['Arpejos maiores e menores', 'Intermediário', 'Arpejo é o acorde tocado uma nota de cada vez. Mão direita 1-2-3-5; mão esquerda 5-4-2-1.', [
+        t('Arpejo de Dó maior, mão direita', 4, demo(seq(ARP, 1, 2), 60, 72, 'Dedos 1-2-3-5-3-2-1', { mao: 'D', dedos: D_ARP, repeticoes: 4 })),
+        t('Arpejo de Dó maior, mão esquerda', 4, demo(seq(ARP, 1, 2), 48, 72, 'Dedos 5-4-2-1-2-4-5', { mao: 'E', dedos: E_ARP, repeticoes: 4 })),
+        t('Arpejo de Sol maior, mão direita', 4, demo(seq(ARP, 1, 2), 67, 72, 'Dedos 1-2-3-5-3-2-1', { mao: 'D', dedos: D_ARP, repeticoes: 4 })),
+        t('Arpejo de Lá menor, mão direita', 4, demo(seq(ARPm, 1, 2), 69, 72, 'Menor: a nota do meio desce meio tom', { mao: 'D', dedos: D_ARP, repeticoes: 4 })),
+        t('Arpejo de Lá menor, mão esquerda', 4, demo(seq(ARPm, 1, 2), 57, 72, 'Dedos 5-4-2-1-2-4-5', { mao: 'E', dedos: E_ARP, repeticoes: 4 })),
+        t('Acorde na esquerda e arpejo na direita', 5, duas({ raiz: 48, padrao: [[[0, 4, 7], 4], [[0, 4, 7], 4]], dedos: '5+3+1 5+3+1' }, { raiz: 60, padrao: seq(ARP, 1, 2), dedos: D_ARP }, 66, 'Esquerda segura o acorde, direita faz o arpejo', { repeticoes: 4 }))
+      ]],
+      ['Arpejos em duas oitavas', 'Avançado', 'Subindo, o polegar passa por baixo depois do dedo 3. Descendo, o 3 cruza por cima do polegar. O punho não pula.', [
+        t('Dó maior em duas oitavas, mão direita', 6, demo(seq(ARP2, 1, 2), 60, 72, 'Dedos 1-2-3, polegar passa, 1-2-3-5', { mao: 'D', dedos: D_ARP2, repeticoes: 2 })),
+        t('Dó maior em duas oitavas, mão esquerda', 6, demo(seq(ARP2, 1, 2), 36, 72, 'Dedos 5-4-2-1, o 4 cruza, 4-2-1', { mao: 'E', dedos: E_ARP2, repeticoes: 2 })),
+        t('Lá menor em duas oitavas, mão direita', 5, demo(seq(ARP2m, 1, 2), 57, 72, 'Mesma digitação do Dó maior', { mao: 'D', dedos: D_ARP2, repeticoes: 2 })),
+        t('Dó maior em duas oitavas com as duas mãos', 6, duas({ raiz: 36, padrao: seq(ARP2, 1, 2), dedos: E_ARP2 }, { raiz: 60, padrao: seq(ARP2, 1, 2), dedos: D_ARP2 }, 56, 'Devagar: os polegares passam em momentos diferentes', { repeticoes: 2 }))
+      ]],
+      ['Blues: escala, baixo e 12 compassos', 'Intermediário', 'O blues tem 12 compassos e três acordes: C7, F7 e G7. A mão esquerda faz o "balanço" e a direita responde.', [
+        t('Escala blues de Dó, mão direita (Dó, Mi♭, Fá, Fá♯, Sol, Si♭)', 5, demo(seq(BLUES, 1, 2), 60, 72, 'Dedos 1-2-1-2-3-4-5', { mao: 'D', dedos: D_BLUES, repeticoes: 3 })),
+        t('Baixo do blues na mão esquerda: Dó-Sol-Lá-Sol', 4, demo(repete([[0, 1], [7, 1], [9, 1], [7, 1]], 2), 48, 84, 'Dedos 5-2-1-2, sem atrasar', { mao: 'E', dedos: dedosRep('5 2 1 2', 2), repeticoes: 4 })),
+        t('Os 12 compassos do blues com acordes', 6, acordes('C7:4 C7:4 C7:4 C7:4 F7:4 F7:4 C7:4 C7:4 G7:4 F7:4 C7:4 G7:4', 84, { texto: 'Conte os compassos: 4 de C7, 2 de F7, 2 de C7, G7, F7, C7, G7' })),
+        t('Baixo na esquerda e acorde na direita (tempos 2 e 4)', 6, duas({ raiz: 48, padrao: [[0, 1], [7, 1], [9, 1], [7, 1]], dedos: '5 2 1 2' }, { raiz: 60, padrao: [[null, 1], [[4, 7, 10], 1], [null, 1], [[4, 7, 10], 1]], dedos: '1+2+4 1+2+4' }, 80, 'Direita só no 2 e no 4', { repeticoes: 6 }))
+      ]],
+      ['Frases de blues', 'Intermediário', 'Frases curtas (licks) com a mão direita na posição de Dó: polegar no Dó, 5 no Sol. Toque junto até decorar e use no blues.', [
+        t('Frase 1: sobe pela escala blues e volta para o Dó', 5, demo([[0, 1], [3, 0.5], [5, 0.5], [6, 0.5], [7, 1.5], [3, 1], [0, 3]], 60, 80, 'Dedos 1-2-3-4-5-2-1', { mao: 'D', dedos: '1 2 3 4 5 2 1', repeticoes: 4 })),
+        t('Frase 2: desce do Sol até o Dó', 4, demo([[7, 0.5], [6, 0.5], [5, 0.5], [3, 0.5], [0, 2], [null, 2]], 60, 80, 'Dedos 5-4-3-2-1', { mao: 'D', dedos: '5 4 3 2 1', repeticoes: 4 })),
+        t('Frase 3: a "nota triste" (Mi♭ escorregando para o Mi)', 4, demo([[3, 0.5], [4, 1], [0, 0.5], [3, 0.5], [4, 0.5], [7, 3]], 60, 80, 'Dedos 2-3-1-2-3-5', { mao: 'D', dedos: '2 3 1 2 3 5', repeticoes: 4 })),
+        t('Use as três frases sobre o blues de 12 compassos', 6, acordes('C7:4 C7:4 C7:4 C7:4 F7:4 F7:4 C7:4 C7:4 G7:4 F7:4 C7:4 G7:4', 84, { repeticoes: 2, texto: 'Mão direita: frases 1, 2 e 3' }))
+      ]],
+      ['Jazz: tétrades e o ii-V-I', 'Avançado', 'O ii-V-I (Dm7 - G7 - C7M) é a frase-base do jazz. Colcheias com swing: longa-curta, longa-curta.', [
+        t('Ouça e toque o ii-V-I em Dó', 5, acordes('Dm7:4 G7:4 C7M:8', 60, { repeticoes: 4 })),
+        t('Condução de vozes: a mão direita quase não anda', 5, acordes([['Dm7', 4, [50, 65, 69, 72, 76], 'E5 D1 D2 D3 D5'], ['G7', 4, [43, 65, 67, 71, 74], 'E5 D1 D2 D3 D5'], ['C7M(9)', 8, [48, 64, 67, 71, 74], 'E5 D1 D2 D3 D5']], 66, { repeticoes: 4 })),
+        t('Frase bebop: arpejo de Dm7 subindo, escala descendo, resolve no Mi', 5, demo([[2, 2 / 3], [5, 1 / 3], [9, 2 / 3], [12, 1 / 3], [11, 2 / 3], [9, 1 / 3], [7, 2 / 3], [5, 1 / 3], [4, 2]], 60, 96, 'Swing: longa-curta', { mao: 'D', dedos: '1 2 3 5 4 3 2 1 3', repeticoes: 4 })),
+        t('Rodeio (enclosure): uma nota acima, uma abaixo, e chega no alvo', 3, demo([[5, 2 / 3], [3, 1 / 3], [4, 2], [null, 1]], 60, 90, 'Fá - Ré♯ - Mi', { mao: 'D', dedos: '4 2 3', repeticoes: 6 })),
+        t('Improvise sobre o ii-V-I com as frases', 5, acordes('Dm7:4 G7:4 C7M:8', 100, { repeticoes: 6, texto: 'Use a frase bebop e o rodeio' }))
+      ]],
+      ['Independência das mãos', 'Avançado', 'Comece bem devagar. Se travar, toque cada mão sozinha e junte de novo. A esquerda é a "bateria": não pode atrasar.', [
+        t('Esquerda em semínimas, direita em colcheias', 6, duas({ raiz: 48, padrao: repete([[0, 1], [7, 1]], 4), dedos: dedosRep('5 1', 4) }, { raiz: 60, padrao: seq([0, 2, 4, 5, 7, 5, 4, 2, 0, 2, 4, 5, 7, 5, 4, 2], 0.5), dedos: '1 2 3 4 5 4 3 2 1 2 3 4 5 4 3 2' }, 60, 'Esquerda: 1 por clique · Direita: 2 por clique', { repeticoes: 3 })),
+        t('Ostinato na esquerda e melodia na direita (Ode à Alegria)', 6, duas({ raiz: 48, padrao: repete(seq([0, 4, 7, 4], 0.5), 8), dedos: dedosRep('5 3 1 3', 8) }, { raiz: 60, padrao: ODE.slice(0, 15) }, 72, 'A esquerda repete Dó-Mi-Sol-Mi sem parar', { repeticoes: 2 })),
+        t('Contratempo: esquerda no tempo, direita no "e"', 5, duas({ raiz: 48, padrao: repete([[0, 1]], 8), dedos: dedosRep('5', 8) }, { raiz: 60, padrao: repete([[null, 0.5], [[4, 7], 0.5]], 8), dedos: dedosRep('3+5', 8) }, 72, 'Esquerda: 1 2 3 4 · Direita: "e" de cada tempo', { repeticoes: 3 })),
+        t('Acorde parado na esquerda, escala na direita', 5, duas({ raiz: 48, padrao: [[[0, 7], 4], [[0, 7], 4]], dedos: '5+1 5+1' }, { raiz: 60, padrao: seq(MAIOR, 0.5, 1), dedos: D_ESC }, 66, 'Esquerda segura, direita corre', { repeticoes: 3 }))
       ]]
     ]),
 
@@ -190,47 +264,47 @@
       ['Postura e o Dó central', 'Iniciante', 'Banco na altura em que o antebraço fica reto. Ombros soltos, dedos curvados.', [
         t('Postura: sente na metade do banco, pés no chão, cotovelos um pouco à frente do corpo.', 3),
         t('Dó central (Dó4): fica no meio do piano, à esquerda das 2 teclas pretas. Toque-o e ache os outros Dós.', 3, teclado(48, 72)),
-        t('Mão direita na posição de Dó, legato', 5, demo(seq(CINCO, 1, 2), 60, 60, 'Mão direita: dedos 1-2-3-4-5-4-3-2-1, uma nota ligada na outra', { repeticoes: 4 })),
-        t('Mão esquerda na posição de Dó', 5, demo(seq(CINCO, 1, 2), 48, 60, 'Mão esquerda: dedos 5-4-3-2-1-2-3-4-5', { repeticoes: 4 })),
+        t('Mão direita na posição de Dó, legato', 5, demo(seq(CINCO, 1, 2), 60, 60, 'Mão direita: dedos 1-2-3-4-5-4-3-2-1, uma nota ligada na outra', { mao: 'D', dedos: D5, repeticoes: 4 })),
+        t('Mão esquerda na posição de Dó', 5, demo(seq(CINCO, 1, 2), 48, 60, 'Mão esquerda: dedos 5-4-3-2-1-2-3-4-5', { mao: 'E', dedos: E5, repeticoes: 4 })),
         t('Entre um exercício e outro, solte os braços ao lado do corpo e respire.', 1)
       ]],
       ['Leitura: clave de sol e ritmo', 'Iniciante', 'Ler partitura é como ler um texto: devagar no começo, depois fica natural.', [
         t('Clave de sol: o Sol fica na 2ª linha. Linhas: Mi-Sol-Si-Ré-Fá. Espaços: Fá-Lá-Dó-Mi. O Dó central fica numa linha suplementar abaixo da pauta.', 4),
         t('Figuras: semibreve = 4 tempos, mínima = 2, semínima = 1, colcheia = meio tempo.', 3),
         t('Bata palmas: uma semibreve (segure 4), duas mínimas, quatro semínimas', 4, metronomo(60, 4, 'Palmas: 1 semibreve → 2 mínimas → 4 semínimas', 12)),
-        t('Leia e toque "Dó-ré-mi-fá" (mão direita na posição de Dó)', 5, demo(DO_RE_MI_FA, 60, 80, 'Dó-ré-mi-fá, fá-fá…', { repeticoes: 2 }))
+        t('Leia e toque "Dó-ré-mi-fá" (mão direita na posição de Dó)', 5, demo(DO_RE_MI_FA, 60, 80, 'Dó-ré-mi-fá, fá-fá…', { mao: 'D', repeticoes: 2 }))
       ]],
       ['Clave de fá e mão esquerda', 'Iniciante', 'A clave de fá é a da mão esquerda. Com ela você lê os graves.', [
         t('Clave de fá: o Fá fica na 4ª linha. Linhas: Sol-Si-Ré-Fá-Lá. Espaços: Lá-Dó-Mi-Sol.', 4),
         t('Ache no piano as notas das linhas da clave de fá: Sol2, Si2, Ré3, Fá3 e Lá3', 3, teclado(36, 60)),
-        t('Mão esquerda na posição de Dó, 5-4-3-2-1-2-3-4-5', 5, demo(seq(CINCO, 1, 2), 48, 60, 'Mão esquerda: 5-4-3-2-1-2-3-4-5', { repeticoes: 3 })),
-        t('"Dó-ré-mi-fá" com a mão esquerda', 5, demo(DO_RE_MI_FA, 48, 76, 'Mão esquerda, dedos começando no 5', { repeticoes: 2 }))
+        t('Mão esquerda na posição de Dó, 5-4-3-2-1-2-3-4-5', 5, demo(seq(CINCO, 1, 2), 48, 60, 'Mão esquerda: 5-4-3-2-1-2-3-4-5', { mao: 'E', dedos: E5, repeticoes: 3 })),
+        t('"Dó-ré-mi-fá" com a mão esquerda', 5, demo(DO_RE_MI_FA, 48, 76, 'Mão esquerda, dedos começando no 5', { mao: 'E', repeticoes: 2 }))
       ]],
       ['Mãos juntas', 'Iniciante', 'Primeiro movimento paralelo (as mãos vão para o mesmo lado), depois contrário (as mãos se abrem).', [
-        t('Movimento paralelo: esquerda 5-4-3-2-1, direita 1-2-3-4-5', 5, acordes(pares([0, 2, 4, 5, 7, 5, 4, 2, 0], 48, 60), 60, { repeticoes: 3, texto: 'Mãos juntas, uma oitava de distância' })),
-        t('Movimento contrário: os polegares começam juntos no Dó e as mãos se abrem', 5, acordes([['Dó / Dó', 1, [48, 60]], ['Si / Ré', 1, [47, 62]], ['Lá / Mi', 1, [45, 64]], ['Sol / Fá', 1, [43, 65]], ['Fá / Sol', 2, [41, 67]], ['Sol / Fá', 1, [43, 65]], ['Lá / Mi', 1, [45, 64]], ['Si / Ré', 1, [47, 62]], ['Dó / Dó', 2, [48, 60]]], 60, { repeticoes: 3 })),
+        t('Movimento paralelo: esquerda 5-4-3-2-1, direita 1-2-3-4-5', 5, acordes(pares([0, 2, 4, 5, 7, 5, 4, 2, 0], 48, 60, E5, D5), 60, { repeticoes: 3, texto: 'Mãos juntas, uma oitava de distância' })),
+        t('Movimento contrário: os polegares começam juntos no Dó e as mãos se abrem', 5, acordes([['Dó / Dó', 1, [48, 60], 'E1 D1'], ['Si / Ré', 1, [47, 62], 'E2 D2'], ['Lá / Mi', 1, [45, 64], 'E3 D3'], ['Sol / Fá', 1, [43, 65], 'E4 D4'], ['Fá / Sol', 2, [41, 67], 'E5 D5'], ['Sol / Fá', 1, [43, 65], 'E4 D4'], ['Lá / Mi', 1, [45, 64], 'E3 D3'], ['Si / Ré', 1, [47, 62], 'E2 D2'], ['Dó / Dó', 2, [48, 60], 'E1 D1']], 60, { repeticoes: 3 })),
         t('Toque "Dó-ré-mi-fá" com as duas mãos ao mesmo tempo, uma oitava de distância.', 4)
       ]],
       ['Escala de Dó com passagem do polegar', 'Intermediário', 'O polegar passa por baixo da mão sem levantar o punho. Devagar e igual.', [
-        t('Mão direita: 1-2-3-1-2-3-4-5 subindo, 5-4-3-2-1-3-2-1 descendo', 6, demo(seq(MAIOR, 1, 2), 60, 60, 'Mão direita: 1-2-3, polegar passa, 1-2-3-4-5', { repeticoes: 2 })),
-        t('Mão esquerda: 5-4-3-2-1-3-2-1 subindo, 1-2-3-1-2-3-4-5 descendo', 6, demo(seq(MAIOR, 1, 2), 48, 60, 'Mão esquerda: 5-4-3-2-1, o dedo 3 cruza, 3-2-1', { repeticoes: 2 })),
-        t('Mãos juntas, uma oitava de distância', 6, acordes(pares(MAIOR, 48, 60), 56, { repeticoes: 2, texto: 'Mãos juntas' }))
+        t('Mão direita: 1-2-3-1-2-3-4-5 subindo, 5-4-3-2-1-3-2-1 descendo', 6, demo(seq(MAIOR, 1, 2), 60, 60, 'Mão direita: 1-2-3, polegar passa, 1-2-3-4-5', { mao: 'D', dedos: D_ESC, repeticoes: 2 })),
+        t('Mão esquerda: 5-4-3-2-1-3-2-1 subindo, 1-2-3-1-2-3-4-5 descendo', 6, demo(seq(MAIOR, 1, 2), 48, 60, 'Mão esquerda: 5-4-3-2-1, o dedo 3 cruza, 3-2-1', { mao: 'E', dedos: E_ESC, repeticoes: 2 })),
+        t('Mãos juntas, uma oitava de distância', 6, acordes(pares(MAIOR, 48, 60, E_ESC, D_ESC), 56, { repeticoes: 2, texto: 'Mãos juntas' }))
       ]],
       ['Escalas de Sol e Fá maior', 'Intermediário', 'Sol maior tem um sustenido (Fá♯). Fá maior tem um bemol (Si♭).', [
-        t('Sol maior, mão direita: 1-2-3-1-2-3-4-5 (igual a Dó)', 5, demo(seq(MAIOR, 1, 2), 67, 60, 'Sol maior: não esqueça o Fá♯', { repeticoes: 2 })),
-        t('Fá maior, mão direita: 1-2-3-4-1-2-3-4 (o polegar passa depois do Si♭)', 5, demo(seq(MAIOR, 1, 2), 65, 60, 'Fá maior: Si♭ com o dedo 4', { repeticoes: 2 })),
-        t('Sol maior, mão esquerda: 5-4-3-2-1-3-2-1', 4, demo(seq(MAIOR, 1, 2), 43, 60, 'Mão esquerda em Sol maior', { repeticoes: 2 })),
-        t('Fá maior, mão esquerda: 5-4-3-2-1-3-2-1', 4, demo(seq(MAIOR, 1, 2), 41, 60, 'Mão esquerda em Fá maior', { repeticoes: 2 }))
+        t('Sol maior, mão direita: 1-2-3-1-2-3-4-5 (igual a Dó)', 5, demo(seq(MAIOR, 1, 2), 67, 60, 'Sol maior: não esqueça o Fá♯', { mao: 'D', dedos: D_ESC, repeticoes: 2 })),
+        t('Fá maior, mão direita: 1-2-3-4-1-2-3-4 (o polegar passa depois do Si♭)', 5, demo(seq(MAIOR, 1, 2), 65, 60, 'Fá maior: Si♭ com o dedo 4', { mao: 'D', dedos: D_FA, repeticoes: 2 })),
+        t('Sol maior, mão esquerda: 5-4-3-2-1-3-2-1', 4, demo(seq(MAIOR, 1, 2), 43, 60, 'Mão esquerda em Sol maior', { mao: 'E', dedos: E_ESC, repeticoes: 2 })),
+        t('Fá maior, mão esquerda: 5-4-3-2-1-3-2-1', 4, demo(seq(MAIOR, 1, 2), 41, 60, 'Mão esquerda em Fá maior', { mao: 'E', dedos: E_ESC, repeticoes: 2 }))
       ]],
       ['Dinâmica e articulação', 'Intermediário', 'Legato = notas ligadas. Staccato = notas curtas. p (piano) = fraco, f (forte) = forte.', [
-        t('Staccato: solte cada tecla rápido, com o punho leve', 4, demo(curto(CINCO), 60, 80, 'Staccato: curto e leve', { repeticoes: 3 })),
-        t('Legato com crescendo: comece fraco (p) e chegue forte (f) no Dó de cima', 4, demo(seq(MAIOR, 1, 2), 60, 60, 'Cresça até o Dó de cima e diminua na volta', { repeticoes: 2 })),
-        t('Toque "Dó-ré-mi-fá" duas vezes: uma piano (fraco) e uma forte.', 4, demo(DO_RE_MI_FA, 60, 80, '1ª vez piano, 2ª vez forte', { repeticoes: 2 }))
+        t('Staccato: solte cada tecla rápido, com o punho leve', 4, demo(curto(CINCO), 60, 80, 'Staccato: curto e leve', { mao: 'D', dedos: D5, repeticoes: 3 })),
+        t('Legato com crescendo: comece fraco (p) e chegue forte (f) no Dó de cima', 4, demo(seq(MAIOR, 1, 2), 60, 60, 'Cresça até o Dó de cima e diminua na volta', { mao: 'D', dedos: D_ESC, repeticoes: 2 })),
+        t('Toque "Dó-ré-mi-fá" duas vezes: uma piano (fraco) e uma forte.', 4, demo(DO_RE_MI_FA, 60, 80, '1ª vez piano, 2ª vez forte', { mao: 'D', repeticoes: 2 }))
       ]],
       ['Arpejos, cadência e primeira peça', 'Intermediário', 'Esta aula fecha o básico: arpejo, a cadência mais usada da música e uma peça de verdade.', [
-        t('Arpejo de Dó maior, mão direita: 1-2-3-5-3-2-1', 4, demo(seq([0, 4, 7, 12, 7, 4, 0], 1, 2), 60, 72, 'Mão direita: 1-2-3-5-3-2-1', { repeticoes: 4 })),
+        t('Arpejo de Dó maior, mão direita: 1-2-3-5-3-2-1', 4, demo(seq([0, 4, 7, 12, 7, 4, 0], 1, 2), 60, 72, 'Mão direita: 1-2-3-5-3-2-1', { mao: 'D', dedos: D_ARP, repeticoes: 4 })),
         t('Cadência I - IV - V - I: mão esquerda no baixo, direita nos acordes', 5, acordes([['C', 4, [48, 60, 64, 67]], ['F', 4, [41, 60, 65, 69]], ['G', 4, [43, 59, 62, 67]], ['C', 4, [48, 60, 64, 67]]], 60, { repeticoes: 4 })),
-        t('Ode à Alegria (Beethoven), mão direita na posição de Dó', 8, demo(ODE, 60, 90, 'Ode à Alegria: comece no Mi com o dedo 3', { repeticoes: 2 })),
+        t('Ode à Alegria (Beethoven), mão direita na posição de Dó', 8, demo(ODE, 60, 90, 'Ode à Alegria: comece no Mi com o dedo 3', { mao: 'D', repeticoes: 2 })),
         t('Grave a Ode à Alegria e poste na Comunidade.', 3)
       ]]
     ]),

@@ -242,6 +242,31 @@ main.wrap { padding-block: 24px 64px; }
 .nav-aula { position: sticky; bottom: 0; display: flex; justify-content: space-between; gap: 10px; padding: 12px 0 calc(12px + env(safe-area-inset-bottom, 0px)); background: var(--papel); border-top: 1px solid var(--linha); z-index: 4; }
 .nav-aula .botao { flex: 1; }
 .nav-aula .botao.vazado { flex: 0 0 auto; }
+.tempo-min { display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 12px; background: var(--papel-2); font-size: 14px; font-weight: 600; }
+.tempo-min .barra i { background: var(--ceu); }
+.tempo-min.ok { color: var(--ok); }
+.tempo-min.ok .barra i { background: var(--ok); }
+.passos button:disabled { opacity: .4; cursor: not-allowed; }
+.nav-aula .botao:disabled { opacity: .6; cursor: not-allowed; }
+/* Mãos (piano e teclado): direita em azul, esquerda em madeira */
+.voc-maos { display: flex; justify-content: center; gap: 24px; }
+.mao-caixa { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 110px; }
+.mao { width: 100%; height: auto; display: block; }
+.mao-palma { fill: var(--papel); stroke: var(--tinta-suave); stroke-width: 1.5; }
+.mao-dedo { fill: var(--papel); stroke: var(--tinta-suave); stroke-width: 1.5; transition: fill .12s; }
+.mao-dedo.usado { fill: var(--papel-2); stroke: var(--tinta); }
+.mao-dedo.ativo.D { fill: var(--ceu); stroke: var(--ceu); transition: none; }
+.mao-dedo.ativo.E { fill: var(--madeira); stroke: var(--madeira); transition: none; }
+.mao-num { font: 800 11px var(--f-texto); fill: var(--tinta); text-anchor: middle; pointer-events: none; }
+.mao-nome { font-size: 12px; font-weight: 700; color: var(--tinta-suave); }
+.mao-legenda { text-align: center; font-weight: 700; min-height: 1.5em; margin: 0; }
+.piano .pd { pointer-events: none; }
+.pd-fixo { fill: #FBFAF7; stroke-width: 1.5; opacity: .9; }
+.pd-fixo.D { stroke: #2F6A9E; } .pd-fixo.E { stroke: #8A4B2A; }
+.pd-fixo-txt { font: 800 10px var(--f-texto); text-anchor: middle; }
+.pd-fixo-txt.D { fill: #2F6A9E; } .pd-fixo-txt.E { fill: #8A4B2A; }
+.pd-ativo.D { fill: #2F6A9E; stroke: #FBFAF7; stroke-width: 2; } .pd-ativo.E { fill: #8A4B2A; stroke: #FBFAF7; stroke-width: 2; }
+.pd-ativo-txt { font: 800 12px var(--f-texto); fill: #FBFAF7; text-anchor: middle; }
 .fim-aula { text-align: center; align-items: center; padding: 28px 18px; }
 .fim-aula .selo { font-size: 44px; line-height: 1; }
 .chip.ok { background: var(--ok); border-color: var(--ok); color: var(--papel); }
@@ -719,6 +744,7 @@ td.num { font-variant-numeric: tabular-nums; }
     mostrarAula(); window.scrollTo(0, 0);
   }
   function fecharAula() {
+    clearInterval(relogio);
     if (window.AmaralCanto) window.AmaralCanto.pararTudo();
     if (history.state && history.state.aula) { history.back(); return; }  // o popstate mostra a lista
     aulaAtual = null; mostrarLista(); window.scrollTo(0, 0);
@@ -733,7 +759,16 @@ td.num { font-variant-numeric: tabular-nums; }
     passo = n; mostrarAula(); window.scrollTo(0, 0);
   }
 
+  // Tempo mínimo: o aluno só segue quando praticou os minutos do exercício (conta com a tela aberta;
+  // pausa se o celular apagar ou trocar de app). O professor não tem trava.
+  var relogio = null;
+  function chaveTempo(k) { return 'amaral-tempo-' + eu.id + '-' + hojeISO() + '-' + k; }
+  function lerTempo(k) { try { return Number(localStorage.getItem(chaveTempo(k))) || 0; } catch (e) { return 0; } }
+  function gravarTempo(k, seg) { try { localStorage.setItem(chaveTempo(k), String(seg)); } catch (e) { /* sem armazenamento */ } }
+  function mmss(seg) { seg = Math.max(0, Math.ceil(seg)); return Math.floor(seg / 60) + ':' + String(seg % 60).padStart(2, '0'); }
+
   function mostrarAula() {
+    clearInterval(relogio);
     var r = aulas.filter(function (a) { return a.id === aulaAtual; })[0]; if (!r) return mostrarLista();
     var info = infoAula(r), its = itensDe(r), v = $('vista-aula');
     $('vista-lista').hidden = true; v.hidden = false; v.replaceChildren();
@@ -743,8 +778,11 @@ td.num { font-variant-numeric: tabular-nums; }
       el('h1', { text: info.nome }),
       r.observacao ? el('p', { class: 'suave', text: r.observacao }) : null));
     var passos = el('nav', { class: 'passos', 'aria-label': 'Exercícios da aula' });
+    var semTrava = eu.papel === 'professor' || estadoDe(r).concluida, liberado = 0;
+    while (liberado < its.length && feitosHoje[r.id + ':' + liberado]) liberado++;
     its.forEach(function (it, i) {
       passos.appendChild(el('button', { type: 'button', class: feitosHoje[r.id + ':' + i] ? 'feito' : null, 'aria-current': i === passo ? 'step' : null,
+        disabled: !semTrava && i > liberado,
         'aria-label': 'Exercício ' + (i + 1) + (feitosHoje[r.id + ':' + i] ? ', feito hoje' : ''), text: String(i + 1), onclick: function () { irPara(i); } }));
     });
     v.appendChild(passos);
@@ -765,15 +803,45 @@ td.num { font-variant-numeric: tabular-nums; }
     v.appendChild(el('p', { class: 'msg erro', id: 'msg-aula', role: 'status', hidden: true }));
 
     var ultimo = passo === its.length - 1;
+    var textoSeguir = ultimo ? 'Finalizar aula ✓' : (feito ? 'Próximo →' : 'Feito, próximo →');
+    var seguir = el('button', { type: 'button', class: 'botao', text: textoSeguir,
+      onclick: async function (e) {
+        e.currentTarget.disabled = true;
+        if (ultimo) { for (var i = 0; i < its.length; i++) await marcarFeito(r, i); }   // finalizar conta a aula inteira
+        else await marcarFeito(r, passo);
+        irPara(passo + 1);
+      } });
+
+    // trava do tempo mínimo
+    var minSeg = min * 60, gasto = lerTempo(chave);
+    if (!feito && !semTrava && minSeg > 0 && gasto < minSeg) {
+      var barra = el('i'), info = el('span', { class: 'tempo-txt' });
+      var caixaTempo = el('div', { class: 'tempo-min', role: 'status' }, info, el('div', { class: 'barra', 'aria-hidden': 'true' }, barra));
+      cartao.appendChild(caixaTempo);
+      var atualizar = function () {
+        var falta = minSeg - gasto;
+        barra.style.width = Math.min(100, Math.round(100 * gasto / minSeg)) + '%';
+        if (falta > 0) {
+          info.textContent = 'Pratique pelo menos ' + min + ' min. Tempo praticado: ' + mmss(gasto) + ' de ' + mmss(minSeg) + '.';
+          seguir.disabled = true; seguir.textContent = 'Faltam ' + mmss(falta);
+        } else {
+          info.textContent = '✓ Tempo mínimo cumprido. Pode seguir!';
+          caixaTempo.classList.add('ok'); seguir.disabled = false; seguir.textContent = textoSeguir;
+          clearInterval(relogio);
+        }
+      };
+      atualizar();
+      relogio = setInterval(function () {
+        if (!cartao.isConnected) { clearInterval(relogio); return; }
+        if (document.hidden) return;
+        gasto++; if (gasto % 5 === 0 || gasto >= minSeg) gravarTempo(chave, gasto);
+        atualizar();
+      }, 1000);
+    }
+
     v.appendChild(el('div', { class: 'nav-aula' },
       el('button', { type: 'button', class: 'botao vazado', disabled: passo === 0, text: '← Anterior', onclick: function () { irPara(passo - 1); } }),
-      el('button', { type: 'button', class: 'botao', text: ultimo ? 'Finalizar aula ✓' : (feito ? 'Próximo →' : 'Feito, próximo →'),
-        onclick: async function (e) {
-          e.currentTarget.disabled = true;
-          if (ultimo) { for (var i = 0; i < its.length; i++) await marcarFeito(r, i); }   // finalizar conta a aula inteira
-          else await marcarFeito(r, passo);
-          irPara(passo + 1);
-        } })));
+      seguir));
   }
 
   function mostrarFim(r, v) {

@@ -36,7 +36,7 @@ Site e área do aluno da Amaral Escola de Música (Wenceslau Braz, PR).
 
 ## Cursos básicos e exercícios com som
 
-- `cursos.js` traz 8 aulas para cada instrumento do cadastro: Canto coral, Teclado, Piano, Violão,
+- `cursos.js` traz 8 aulas para cada instrumento do cadastro (16 no Teclado: escalas, arpejos, blues, jazz e independência das mãos): Canto coral, Teclado, Piano, Violão,
   Guitarra e Concurso (teoria e percepção). No painel do professor, **Cursos básicos prontos**
   cadastra cada curso com um clique. Cada aluno vê só as aulas do instrumento dele, na ordem.
 - Um exercício pode ter som, guardado no item da rotina no campo `vocalize`, sem mudar o banco:
@@ -46,4 +46,7 @@ Site e área do aluno da Amaral Escola de Música (Wenceslau Braz, PR).
 - Nas aulas de Violão e Guitarra o som é de corda (violão de nylon e guitarra de aço) e tudo aparece
   no braço desenhado na tela: dedos de cada acorde, próximo acorde pontilhado e cada nota acendendo
   na corda e casa certas. O aluno também pode tocar clicando no braço.
+- Piano e Teclado: as mãos aparecem desenhadas e o número do dedo fica em cada tecla (digitação escrita no
+  exercício em `dedos`/`mao`/`maos`, ou calculada nos acordes).
+- O aluno só passa para o próximo exercício depois de praticar os minutos dele (o professor não tem trava).
 - Para montar exercícios novos, use **Exercícios com piano e metrônomo** no formulário da rotina.
