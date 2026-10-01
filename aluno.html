@@ -853,6 +853,32 @@ td.num { font-variant-numeric: tabular-nums; }
   }
 
   var CURSOS = window.AmaralCursos || [];
+  var salvasProf = {};
+  // Compara ignorando a ordem dos campos (o banco reordena o JSON)
+  function estavel(x) {
+    if (Array.isArray(x)) return '[' + x.map(estavel).join(',') + ']';
+    if (x && typeof x === 'object') return '{' + Object.keys(x).sort().map(function (k) { return JSON.stringify(k) + ':' + estavel(x[k]); }).join(',') + '}';
+    return JSON.stringify(x);
+  }
+  // Aulas já cadastradas cujo conteúdo mudou nesta versão do site
+  function desatualizadas(curso) {
+    return curso.aulas.filter(function (a) {
+      var r = salvasProf[a.titulo];
+      return r && (estavel(r.itens) !== estavel(a.itens) || r.observacao !== a.observacao || r.nivel !== a.nivel);
+    });
+  }
+  async function atualizarCurso(curso, botao) {
+    botao.disabled = true;
+    var lista = desatualizadas(curso), erro = null;
+    for (var i = 0; i < lista.length && !erro; i++) {
+      var a = lista[i];
+      erro = (await sb.from('rotinas').update({ itens: a.itens, observacao: a.observacao, nivel: a.nivel }).eq('id', salvasProf[a.titulo].id)).error;
+    }
+    botao.disabled = false;
+    if (erro) return aviso('msg-prontas', 'Não foi possível atualizar: ' + erro.message, 'erro');
+    aviso('msg-prontas', lista.length + ' aulas de ' + curso.instrumento + ' atualizadas.', 'ok');
+    carregarProfessor();
+  }
   function faltando(curso) { return curso.aulas.filter(function (a) { return titulosProf.indexOf(a.titulo) < 0; }); }
   async function adicionarCursos(cursos, botao) {
     var novas = [];
@@ -873,8 +899,14 @@ td.num { font-variant-numeric: tabular-nums; }
       if (falta) algumFalta = true;
       var b = el('button', { class: 'botao mini' + (falta ? '' : ' vazado'), type: 'button', disabled: !falta, text: falta ? (tem ? 'Adicionar as ' + falta + ' que faltam' : 'Adicionar') : '✓ Cadastrado' });
       b.addEventListener('click', function () { adicionarCursos([c], b); });
+      var velhas = desatualizadas(c).length, bAtual = null;
+      if (velhas) {
+        bAtual = el('button', { class: 'botao mini', type: 'button', text: 'Atualizar ' + velhas + (velhas > 1 ? ' aulas' : ' aula') });
+        bAtual.addEventListener('click', function () { atualizarCurso(c, bAtual); });
+      }
       l.appendChild(el('div', { class: 'curso-linha' },
-        el('div', null, el('b', { text: c.instrumento }), el('span', { class: 'pequeno suave', text: ' · ' + c.aulas.length + ' aulas' + (tem && falta ? ' (' + tem + ' já cadastradas)' : '') })), b));
+        el('div', null, el('b', { text: c.instrumento }), el('span', { class: 'pequeno suave', text: ' · ' + c.aulas.length + ' aulas' + (tem && falta ? ' (' + tem + ' já cadastradas)' : '') + (velhas ? ' · nova versão disponível' : '') })),
+        el('span', { style: 'display: flex; gap: 6px; flex-wrap: wrap' }, bAtual, falta || !velhas ? b : null)));
     });
     $('btn-prontas').hidden = !algumFalta;
   }
@@ -899,11 +931,12 @@ td.num { font-variant-numeric: tabular-nums; }
   async function carregarProfessor() {
     var rs = await Promise.all([
       sb.from('perfis').select('*').order('criado_em'),
-      sb.from('rotinas').select('id,titulo,instrumento,nivel,ativa,criado_em').order('criado_em', { ascending: false }),
+      sb.from('rotinas').select('id,titulo,instrumento,nivel,ativa,criado_em,itens,observacao').order('criado_em', { ascending: false }),
       sb.from('progresso').select('aluno_id,dia,minutos').gte('dia', diasAtras(6))
     ]);
     var perfis = rs[0].data || [], rotinas = rs[1].data || [], prog = rs[2].data || [];
     titulosProf = rotinas.map(function (r) { return r.titulo; });
+    salvasProf = {}; rotinas.forEach(function (r) { salvasProf[r.titulo] = r; });
     $('bloco-prontas').hidden = !CURSOS.length;
     listarCursos();
 
