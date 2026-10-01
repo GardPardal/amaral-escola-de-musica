@@ -4,7 +4,7 @@
 //       vocalize: sobe de meio em meio tom de "de" até "ate" (tons da voz feminina; a masculina toca uma oitava abaixo)
 //       com demo: true é uma demonstração fixa em "de" (escala, melodia, afinação), repetida "repeticoes" vezes
 //   { tipo: 'acordes', acordes: [[cifra, tempos, midis?], ...], repeticoes, bpm, braco: true (desenho no braço) }
-//   { tipo: 'metronomo', bpm, tempos (por compasso), compassos, texto }
+//   { tipo: 'metronomo', bpm, tempos (por compasso), compassos, texto, batidas: [2, 4] (só clica nesses tempos) }
 //   { tipo: 'respiracao', fases: [[texto, tempos], ...], repeticoes, bpm }
 //   { tipo: 'piano', de, ate, demo }
 // Opcionais: semPiano (não mostra o piano), diagrama (desenho no braço: cifra ou { nome, inicio, pontos }), texto (instrução fixa),
@@ -50,7 +50,9 @@
   var QUALIDADE = {
     '': [0, 4, 7], 'm': [0, 3, 7], '7': [0, 4, 7, 10], 'm7': [0, 3, 7, 10], '7M': [0, 4, 7, 11], 'maj7': [0, 4, 7, 11],
     'dim': [0, 3, 6], '°': [0, 3, 6], 'aug': [0, 4, 8], '+': [0, 4, 8], 'm7(b5)': [0, 3, 6, 10], 'ø': [0, 3, 6, 10],
-    '5': [0, 7, 12], 'sus4': [0, 5, 7], 'sus2': [0, 2, 7], '6': [0, 4, 7, 9], 'm6': [0, 3, 7, 9], '9': [0, 4, 7, 10, 14], 'add9': [0, 4, 7, 14]
+    '5': [0, 7, 12], 'sus4': [0, 5, 7], 'sus2': [0, 2, 7], '6': [0, 4, 7, 9], 'm6': [0, 3, 7, 9], '9': [0, 4, 7, 10, 14], 'add9': [0, 4, 7, 14],
+    'dim7': [0, 3, 6, 9], '°7': [0, 3, 6, 9], '7sus4': [0, 5, 7, 10], '7M(9)': [0, 4, 7, 11, 14], '7(9)': [0, 4, 7, 10, 14],
+    'm7(9)': [0, 3, 7, 10, 14], '6(9)': [0, 4, 7, 9, 14], '7(13)': [0, 4, 10, 21], '7(b9)': [0, 4, 7, 10, 13], 'm7(11)': [0, 3, 7, 10, 17]
   };
   function pcDe(txt) { var x = txt.match(/^([A-G])([#b]?)/); return x ? (PC_LETRA[x[1]] + (x[2] === '#' ? 1 : x[2] === 'b' ? -1 : 0) + 12) % 12 : null; }
   // Voz de teclado: baixo na mão esquerda (Sol1 a Fá♯2) + acorde na direita (Sol3 a Fá♯4)
@@ -492,7 +494,12 @@
       }
     } else if (v.tipo === 'metronomo') {
       var total = Math.max(1, Number(v.compassos) || 32) * porCompasso;
-      for (i = 0; i < total; i++) { ev.push({ b: b, tipo: 'clique', forte: i % porCompasso === 0 }); ev.push({ b: b, tipo: 'batida', n: i % porCompasso + 1, compasso: Math.floor(i / porCompasso) + 1 }); b++; }
+      for (i = 0; i < total; i++) {
+        var n = i % porCompasso + 1;
+        if (!v.batidas || v.batidas.indexOf(n) >= 0) ev.push({ b: b, tipo: 'clique', forte: !v.batidas && n === 1 });
+        ev.push({ b: b, tipo: 'batida', n: n, compasso: Math.floor(i / porCompasso) + 1 });
+        b++;
+      }
     } else if (v.tipo === 'acordes') {
       var lista = v.acordes || [];
       for (r = 0; r < reps; r++) {

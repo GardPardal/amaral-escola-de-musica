@@ -55,7 +55,11 @@
     Object.keys(extra || {}).forEach(function (k) { v[k] = extra[k]; });
     return v;
   }
-  function metronomo(bpm, tempos, texto, compassos) { return { tipo: 'metronomo', bpm: bpm, tempos: tempos, texto: texto, compassos: compassos || 16 }; }
+  function metronomo(bpm, tempos, texto, compassos, batidas) {
+    var v = { tipo: 'metronomo', bpm: bpm, tempos: tempos, texto: texto, compassos: compassos || 16 };
+    if (batidas) v.batidas = batidas;
+    return v;
+  }
   function teclado(de, ate) { return { tipo: 'piano', de: de, ate: ate, demo: true }; }
   function t(texto, minutos, vocalize) { var i = { texto: texto, minutos: minutos }; if (vocalize) i.vocalize = vocalize; return i; }
 
@@ -82,14 +86,95 @@
     return semitons.map(function (s, i) { return [n[(s % 12 + 12) % 12], 1, [baixo + s, alto + s], 'E' + e[i] + ' D' + d[i]]; });
   }
 
-  function curso(instrumento, prefixo, aulas) {
+  function curso(instrumento, prefixo, aulas, nome) {
     return {
-      instrumento: instrumento,
+      instrumento: instrumento, nome: nome || instrumento,
       aulas: aulas.map(function (a, i) {
         return { titulo: prefixo + ' · Aula ' + (i + 1) + ': ' + a[0], instrumento: instrumento, nivel: a[1], observacao: a[2], itens: a[3] };
       })
     };
   }
+
+  // ---------- Ajudantes da trilha profissional ----------
+  var CIF = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+  var QUARTAS = [0, 5, 10, 3, 8, 1, 6, 11, 4, 9, 2, 7];      // C F Bb Eb Ab Db Gb B E A D G
+  function cif(pc, q) { return CIF[(pc % 12 + 12) % 12] + q; }
+  // várias escalas maiores seguidas (sobe e desce), com a digitação de subida de cada uma
+  function escalas(lista) {
+    var raiz = lista[0][0], padrao = [], dedos = [];
+    lista.forEach(function (e, k) {
+      var r = e[0], sobe = e[1].split(' ');
+      [0, 2, 4, 5, 7, 9, 11, 12, 11, 9, 7, 5, 4, 2, 0].forEach(function (s, i, arr) { padrao.push([r - raiz + s, i === arr.length - 1 ? 1.5 : 0.5]); });
+      dedos = dedos.concat(sobe, sobe.slice(0, 7).reverse());
+    });
+    return { raiz: raiz, padrao: padrao, dedos: dedos.join(' ') };
+  }
+  var ESC_SUST = escalas([[60, '1 2 3 1 2 3 4 5'], [67, '1 2 3 1 2 3 4 5'], [62, '1 2 3 1 2 3 4 5'], [69, '1 2 3 1 2 3 4 5'], [64, '1 2 3 1 2 3 4 5'], [71, '1 2 3 1 2 3 4 5']]);
+  var ESC_SUST_E = escalas([[48, '5 4 3 2 1 3 2 1'], [43, '5 4 3 2 1 3 2 1'], [50, '5 4 3 2 1 3 2 1'], [45, '5 4 3 2 1 3 2 1'], [52, '5 4 3 2 1 3 2 1'], [47, '4 3 2 1 4 3 2 1']]);
+  var ESCALA_FS = escalas([[66, '2 3 4 1 2 3 1 2']]);
+  var ESC_BEM = escalas([[65, '1 2 3 4 1 2 3 4'], [70, '4 1 2 3 1 2 3 4'], [63, '3 1 2 3 4 1 2 3'], [68, '3 4 1 2 3 1 2 3'], [61, '2 3 1 2 3 4 1 2']]);
+  // Hanon nº 1: graus 1-3-4-5-6-5-4-3 da escala de Dó, subindo um grau por grupo, em colcheias
+  var HANON = (function () {
+    var esc = [0, 2, 4, 5, 7, 9, 11, 12, 14, 16, 17, 19, 21], l = [];
+    for (var g = 0; g < 7; g++) [0, 2, 3, 4, 5, 4, 3, 2].forEach(function (d) { l.push([esc[g + d], 0.5]); });
+    l.push([12, 2]);
+    return l;
+  })();
+  var HANON_D = HANON, HANON_E = HANON;
+  var TETRADES_CICLO = [];
+  QUARTAS.forEach(function (pc) { ['7M', '7', 'm7', 'm7(b5)'].forEach(function (q) { TETRADES_CICLO.push([cif(pc, q), 2]); }); });
+  function iiVI(tons) {
+    var l = [];
+    tons.forEach(function (pc) { l.push([cif(pc + 2, 'm7'), 2], [cif(pc + 7, '7'), 2], [cif(pc, '7M'), 4]); });
+    return l;
+  }
+  // ii-V-I sem tônica na mão esquerda: ii e I na forma A (3-5-7-9), V na forma B (7-9-3-13)
+  function rootless(tons) {
+    var l = [];
+    tons.forEach(function (pc) {
+      var m = 50 + ((pc + 5 - 50) % 12 + 12) % 12;            // a 3ª do ii (Fá em Dó), entre Ré3 e Dó♯4
+      l.push([cif(pc + 2, 'm7(9)'), 2, [m, m + 4, m + 7, m + 11], 'E5 E3 E2 E1'],
+             [cif(pc + 7, '7(13)'), 2, [m, m + 4, m + 6, m + 11], 'E5 E3 E2 E1'],
+             [cif(pc, '7M(9)'), 4, [m - 1, m + 2, m + 6, m + 9], 'E5 E3 E2 E1']);
+    });
+    return l;
+  }
+  // shells (tônica + 7ª ou 3ª) na esquerda e notas-guia na direita
+  function shells(tons) {
+    var l = [];
+    tons.forEach(function (pc) {
+      function grave(x) { return 36 + ((x % 12) + 12) % 12; }
+      var ii = grave(pc + 2), v = grave(pc + 7), i = grave(pc), f = 60 + ((pc + 5) % 12 + 12) % 12;
+      if (f > 66) f -= 12;
+      l.push([cif(pc + 2, 'm7'), 2, [ii, ii + 10, f, f + 4], 'E5 E1 D1 D3'],
+             [cif(pc + 7, '7(9)'), 2, [v, v + 4, f, f + 4], 'E5 E1 D1 D3'],
+             [cif(pc, '7M'), 4, [i, i + 11, f - 1, f + 2], 'E5 E1 D1 D3']);
+    });
+    return l;
+  }
+  // Nashville: a tela mostra só o número; o som vem do acorde do tom escolhido
+  function nashville(pc, nums) {
+    var graus = { '1': [0, ''], '2m': [2, 'm'], '3m': [4, 'm'], '4': [5, ''], '5': [7, ''], '6m': [9, 'm'] };
+    return nums.map(function (n) { var g = graus[n]; return [n, 4, window.AmaralCanto.notasDaCifra(cif(pc + g[0], g[1]))]; });
+  }
+  var BEBOP = [[2, 2 / 3], [5, 1 / 3], [9, 2 / 3], [12, 1 / 3], [11, 2 / 3], [9, 1 / 3], [7, 2 / 3], [5, 1 / 3], [4, 2]];
+  // Pop: C - G/B - Am - F (esquerda na tônica, direita em colcheias com inversões perto)
+  var POP_E = { raiz: 48, padrao: [[0, 4], [-1, 4], [-3, 4], [-7, 4]], dedos: '5 5 5 5' };
+  var POP_D = { raiz: 60, padrao: repete([[[0, 4, 7], 0.5]], 8).concat(repete([[[-1, 2, 7], 0.5]], 8), repete([[[0, 4, 9], 0.5]], 8), repete([[[0, 5, 9], 0.5]], 8)),
+    dedos: [dedosRep('1+3+5', 8), dedosRep('1+2+5', 8), dedosRep('1+2+5', 8), dedosRep('1+3+5', 8)].join(' ') };
+  // Bossa: Dm7 - G7 - C7M - C7M (baixo tônica/quinta; direita no contratempo)
+  var BOSSA_E = { raiz: 48, padrao: [[2, 1.5], [9, 0.5], [9, 1.5], [2, 0.5], [-5, 1.5], [2, 0.5], [2, 1.5], [-5, 0.5], [0, 1.5], [7, 0.5], [7, 1.5], [0, 0.5], [0, 1.5], [7, 0.5], [7, 1.5], [0, 0.5]], dedos: dedosRep('5 1 1 5', 4) };
+  function bossaCompasso(ch) { return [[ch, 0.5], [null, 1], [ch, 0.5], [null, 1], [ch, 1]]; }
+  var BOSSA_D = { raiz: 60, padrao: bossaCompasso([5, 9, 12, 16]).concat(bossaCompasso([5, 9, 11, 16]), bossaCompasso([4, 7, 11, 14]), bossaCompasso([4, 7, 11, 14])), dedos: dedosRep('1+2+3+5', 12) };
+  // Samba: C - G7 (surdo na esquerda, acordes picados na direita), compasso de 2 tempos
+  var SAMBA_E = { raiz: 48, padrao: repete([[0, 1], [7, 1]], 2).concat(repete([[-5, 1], [2, 1]], 2)), dedos: dedosRep('5 1', 4) };
+  function sambaCompasso(ch) { return [[null, 0.25], [ch, 0.25], [null, 0.25], [ch, 0.5], [null, 0.25], [ch, 0.5]]; }
+  var SAMBA_D = { raiz: 60, padrao: sambaCompasso([4, 7, 12]).concat(sambaCompasso([4, 7, 12]), sambaCompasso([2, 5, 11]), sambaCompasso([2, 5, 11])), dedos: dedosRep('1+2+5', 6) + ' ' + dedosRep('1+2+5', 6) };
+  // Baião: C - F - G7 - C (célula da zabumba na esquerda, acorde no 2 na direita)
+  function baiaoE(r) { return [[r, 0.75], [r + 7, 0.25], [r + 7, 1]]; }
+  var BAIAO_E = { raiz: 48, padrao: baiaoE(0).concat(baiaoE(-7), baiaoE(-5), baiaoE(0)), dedos: dedosRep('5 1 1', 4) };
+  function baiaoD(ch) { return [[null, 1], [ch, 1]]; }
+  var BAIAO_D = { raiz: 60, padrao: baiaoD([4, 7, 12]).concat(baiaoD([5, 9, 12]), baiaoD([5, 7, 11]), baiaoD([4, 7, 12])), dedos: '1+2+5 1+3+5 1+2+4 1+2+5' };
 
   var CURSOS = [
     // ======================= CANTO =======================
@@ -258,6 +343,155 @@
         t('Acorde parado na esquerda, escala na direita', 5, duas({ raiz: 48, padrao: [[[0, 7], 4], [[0, 7], 4]], dedos: '5+1 5+1' }, { raiz: 60, padrao: seq(MAIOR, 0.5, 1), dedos: D_ESC }, 66, 'Esquerda segura, direita corre', { repeticoes: 3 }))
       ]]
     ]),
+
+    // ======================= TECLADO PROFISSIONAL =======================
+    // Baseado no que as escolas e os profissionais cobram: técnica e digitação nos 12 tons (escolas clássicas),
+    // leitura de cifra, voicings e ii-V-I com condução de vozes (Berklee), voicings sem tônica (Bill Evans),
+    // linguagem por transcrição (Barry Harris, Oscar Peterson), Nashville Number System (estúdio),
+    // acordes de passagem (gospel), levadas brasileiras e a rotina de palco e estúdio.
+    curso('Teclado', 'Teclado Pro', [
+      // ---- Módulo 1: rotina e técnica ----
+      ['Rotina de estudo profissional', 'Profissional', 'Profissional não é quem estuda mais horas, é quem estuda com método. Esta aula monta a sua rotina para as próximas 23.', [
+        t('Prática deliberada: estude no limite do que você consegue, bem devagar, corrigindo na hora. Repetir o que já sai fácil não faz evoluir.', 3),
+        t('Monte sua rotina diária de 60 min: 10 aquecimento e técnica, 15 harmonia em todos os tons, 20 repertório, 10 percepção (ouvido), 5 criar/improvisar. Escreva no caderno.', 5),
+        t('Grave 1 minuto tocando hoje, pelo celular. Ouça como se fosse outra pessoa: o que está fora do tempo? o que está alto demais? Anote 2 coisas para corrigir.', 5),
+        t('Aquecimento com metrônomo: escala de Dó, mãos separadas, uma nota por clique e depois duas', 5, demo(seq(MAIOR, 0.5, 1), 60, 72, 'Duas notas por clique, sem acelerar', { mao: 'D', dedos: D_ESC, repeticoes: 4 })),
+        t('Regra de ouro dos profissionais: tudo o que aprender nesta trilha, leve para os 12 tons. Use o ciclo das quartas: C F B♭ E♭ A♭ D♭ G♭ B E A D G.', 2)
+      ]],
+      ['Técnica: Hanon e independência dos dedos', 'Profissional', 'Exercício 1 do Hanon (1873, domínio público): cada dedo trabalha igual. Os dedos 4 e 5 são os mais fracos, dê atenção a eles.', [
+        t('Hanon nº 1, mão direita: dedos 1-2-3-4-5-4-3-2 subindo a escala', 6, demo(HANON_D, 60, 72, 'Dedos levantados, som igual em todas as notas', { mao: 'D', dedos: dedosRep('1 2 3 4 5 4 3 2', 7) + ' 1', repeticoes: 2 })),
+        t('Hanon nº 1, mão esquerda: dedos 5-4-3-2-1-2-3-4', 6, demo(HANON_E, 48, 72, 'O dedo 5 começa cada grupo', { mao: 'E', dedos: dedosRep('5 4 3 2 1 2 3 4', 7) + ' 5', repeticoes: 2 })),
+        t('Hanon nº 1 com as duas mãos, uma oitava de distância', 8, duas({ raiz: 48, padrao: HANON_E, dedos: dedosRep('5 4 3 2 1 2 3 4', 7) + ' 5' }, { raiz: 60, padrao: HANON_D, dedos: dedosRep('1 2 3 4 5 4 3 2', 7) + ' 1' }, 60, 'Mãos juntas: as notas têm que soar como uma só', { repeticoes: 2 })),
+        t('Meta da semana: suba 4 bpm por dia só quando sair limpo. Profissional chega a 108 bpm em semicolcheias (4 notas por clique). Se o punho doer, pare.', 2)
+      ]],
+      ['Escalas em todos os tons: sustenidos', 'Profissional', 'Dó, Sol, Ré, Lá, Mi e Si usam a mesma digitação na mão direita: 1-2-3, polegar passa, 1-2-3-4-5. Fá♯ começa no dedo 2.', [
+        t('Dó, Sol, Ré, Lá, Mi e Si maior, mão direita, uma atrás da outra', 8, demo(ESC_SUST.padrao, ESC_SUST.raiz, 80, 'Atenção aos sustenidos de cada tom', { mao: 'D', dedos: ESC_SUST.dedos })),
+        t('As mesmas escalas, mão esquerda: 5-4-3-2-1, o 3 cruza, 3-2-1', 8, demo(ESC_SUST_E.padrao, ESC_SUST_E.raiz, 80, 'Mão esquerda', { mao: 'E', dedos: ESC_SUST_E.dedos })),
+        t('Fá♯ maior, mão direita: 2-3-4, polegar no Si, 2-3, polegar no Mi♯ (Fá), 2', 4, demo(ESCALA_FS.padrao, ESCALA_FS.raiz, 72, 'Só o Si e o Mi♯ são teclas brancas', { mao: 'D', dedos: ESCALA_FS.dedos, repeticoes: 2 })),
+        t('Diga em voz alta os sustenidos de cada tom enquanto toca: Sol (Fá♯), Ré (Fá♯ Dó♯), Lá (+Sol♯), Mi (+Ré♯), Si (+Lá♯), Fá♯ (+Mi♯).', 3)
+      ]],
+      ['Escalas em todos os tons: bemóis', 'Profissional', 'Nos tons com bemol a regra é: polegares no Dó e no Fá. O dedo 4 cai sempre no Si♭.', [
+        t('Fá, Si♭, Mi♭, Lá♭ e Ré♭ maior, mão direita, uma atrás da outra', 10, demo(ESC_BEM.padrao, ESC_BEM.raiz, 76, 'Polegar no Dó e no Fá', { mao: 'D', dedos: ESC_BEM.dedos })),
+        t('Escreva no caderno a digitação de cada escala com bemol e confira tocando devagar, sem o tocador.', 5),
+        t('Desafio: toque a escala que o metrônomo "pedir". A cada 4 compassos, sorteie mentalmente um tom do ciclo e toque sem parar.', 6, metronomo(72, 4, 'Troque de tom a cada 4 compassos', 24))
+      ]],
+      // ---- Módulo 2: harmonia profissional ----
+      ['Tétrades nos 12 tons', 'Profissional', 'Música popular e jazz são feitos de tétrades (acordes de 4 notas). Você precisa achar qualquer uma sem pensar.', [
+        t('As cinco tétrades em Dó: 7M, 7, m7, m7(♭5) e °7 (diminuto)', 4, acordes('C7M:4 C7:4 Cm7:4 Cm7(b5):4 Cdim7:4', 60, { repeticoes: 2 })),
+        t('C7M, C7, Cm7, Cm7(♭5) em todos os tons, pelo ciclo das quartas', 12, acordes(TETRADES_CICLO, 80, { texto: 'Diga o nome antes de tocar' })),
+        t('Teste: feche os olhos, escolha um tom e toque as 5 tétrades dele em menos de 10 segundos.', 4)
+      ]],
+      ['Inversões e condução de vozes', 'Profissional', 'Profissional não "pula" de acorde em acorde: cada voz anda o mínimo possível. Isso deixa o som limpo e as mãos relaxadas.', [
+        t('C7M nas quatro posições: fundamental, 1ª, 2ª e 3ª inversão', 4, acordes([['C7M', 4, [48, 60, 64, 67, 71]], ['C7M/E', 4, [48, 64, 67, 71, 72]], ['C7M/G', 4, [48, 67, 71, 72, 76]], ['C7M/B', 4, [48, 59, 60, 64, 67]]], 60, { repeticoes: 2 })),
+        t('Am7 - D7 - G7M - C7M com a direita andando o mínimo', 6, acordes([['Am7', 4, [45, 60, 64, 67, 69]], ['D7', 4, [50, 60, 62, 66, 69]], ['G7M', 4, [43, 59, 62, 66, 67]], ['C7M', 4, [48, 59, 60, 64, 67]]], 66, { repeticoes: 4 })),
+        t('Pegue uma música que você toca e reescreva os acordes da mão direita para que nenhuma nota pule mais que 2 teclas.', 8)
+      ]],
+      ['ii-V-I nos 12 tons', 'Profissional', 'O ii-V-I é a frase mais importante da harmonia: aparece no jazz, na bossa, no gospel e no pop. Profissional toca em qualquer tom de olhos fechados.', [
+        t('ii-V-I em Dó, Fá e Si♭ (devagar)', 5, acordes(iiVI([0, 5, 10]), 60, { texto: 'Dois - cinco - um' })),
+        t('ii-V-I nos 12 tons pelo ciclo das quartas', 12, acordes(iiVI(QUARTAS), 76, { texto: 'O I de um tom leva ao ii do próximo' })),
+        t('Faça o mesmo com o ii-V-i menor: Dm7(♭5) - G7 - Cm7. Toque em Dó, Fá e Si♭ sem o tocador.', 6)
+      ]],
+      ['Voicings sem tônica (estilo Bill Evans)', 'Profissional', 'Na banda, o baixista toca a tônica. O tecladista toca 3ª, 5ª, 7ª e 9ª na mão esquerda: o som fica moderno e não embola com o baixo.', [
+        t('ii-V-I em Dó com voicings sem tônica na mão esquerda', 5, acordes(rootless([0]), 60, { repeticoes: 4, texto: 'Repare: de um acorde para o outro mudam só 1 ou 2 notas' })),
+        t('Os mesmos voicings nos 12 tons', 12, acordes(rootless(QUARTAS), 72, { texto: 'Mão esquerda na região do Dó central' })),
+        t('Toque uma melodia simples na mão direita (ex.: "Dó-ré-mi-fá") usando esses voicings na esquerda.', 5)
+      ]],
+      ['Shells e notas-guia', 'Profissional', 'Shell = tônica + 3ª ou 7ª na esquerda. As 3ªs e 7ªs (notas-guia) dizem qual é o acorde; o resto é cor.', [
+        t('ii-V-I em Dó: shells na esquerda, notas-guia na direita', 5, acordes(shells([0]), 60, { repeticoes: 4, texto: 'A direita quase não se mexe' })),
+        t('Os mesmos shells em Fá, Si♭ e Mi♭', 6, acordes(shells([5, 10, 3]), 66, { repeticoes: 2 })),
+        t('Linha de notas-guia: cante a 7ª do Dm7 (Dó), que desce para a 3ª do G7 (Si) e fica na 7ª do C7M (Si). Toque e cante.', 4)
+      ]],
+      ['Tensões: 9ª, 11ª, 13ª e sus', 'Profissional', 'Tensões dão a "cor" do acorde. Regra prática: 9ª combina com quase tudo; 13ª e ♭9 ficam nos dominantes; 11ª nos menores.', [
+        t('Ouça a diferença: C7M(9), C7(9), Cm7(9), C7sus4, C6(9) e C7(♭9)', 5, acordes('C7M(9):4 C7(9):4 Cm7(9):4 C7sus4:4 C6(9):4 C7(b9):4', 56, { repeticoes: 2 })),
+        t('ii-V-I com tensões: Dm7(9) - G7(13) - C7M(9)', 5, acordes('Dm7(9):4 G7(13):4 C7M(9):8', 60, { repeticoes: 4 })),
+        t('Sus: G7sus4 resolvendo em G7, muito usado no pop e no louvor', 4, acordes('G7sus4:4 G7:4 C7M(9):8', 60, { repeticoes: 4 }))
+      ]],
+      ['Voicings em quartas (som modal)', 'Profissional', 'Empilhar quartas cria um som aberto e moderno (o famoso acorde de "So What", de Miles Davis e Bill Evans). Funciona em acordes menores e sus.', [
+        t('Dm11 em quartas: Ré-Sol-Dó na esquerda, Fá-Lá na direita', 4, acordes([['Dm11', 8, [50, 55, 60, 65, 69], 'E5 E2 E1 D1 D3'], ['Ebm11', 8, [51, 56, 61, 66, 70], 'E5 E2 E1 D1 D3'], ['Dm11', 8, [50, 55, 60, 65, 69], 'E5 E2 E1 D1 D3']], 72, { repeticoes: 2 })),
+        t('Mova o mesmo desenho pelas notas da escala de Ré dórico (Ré, Mi, Fá, Sol, Lá, Si, Dó), mão direita inteira subindo e descendo.', 6),
+        t('Improvise uma levada lenta só com esse desenho por 3 minutos, como num fundo de louvor ou de MPB.', 4, metronomo(66, 4, 'Mude o desenho a cada 2 compassos', 16))
+      ]],
+      ['Rearmonização: dominantes secundários e trítono', 'Profissional', 'Rearmonizar é trocar acordes sem trocar a melodia. É o que faz um arranjo soar "profissional".', [
+        t('Original: C - Am7 - Dm7 - G7 - C', 3, acordes('C7M:4 Am7:4 Dm7:4 G7:4 C7M:4', 60, { repeticoes: 2 })),
+        t('Dominante secundário: o Am7 vira A7 (o "cinco" do Dm7)', 4, acordes('C7M:4 A7:4 Dm7:4 G7:4 C7M:4', 60, { repeticoes: 2 })),
+        t('Trítono: A7 vira E♭7 e G7 vira D♭7 (o baixo desce em meio tom)', 4, acordes('C7M:4 Eb7:4 Dm7:4 Db7:4 C7M:4', 60, { repeticoes: 2 })),
+        t('Escolha uma música simples e rearmonize 4 compassos com essas duas ideias. Grave e poste na Comunidade.', 8)
+      ]],
+      // ---- Módulo 3: tempo, groove e estilos ----
+      ['Tempo de verdade: 2 e 4 e subdivisões', 'Profissional', 'Quem dá emprego a um tecladista é o tempo. Treine com o clique só nos tempos 2 e 4 (como a caixa da bateria): você passa a sentir o balanço.', [
+        t('Clique só no 2 e no 4: toque um acorde em cada tempo', 4, metronomo(80, 4, 'Clique = caixa da bateria (2 e 4)', 24, [2, 4])),
+        t('Subdivisões no mesmo acorde: 4 compassos de colcheias, 4 de tercinas, 4 de semicolcheias', 5, metronomo(70, 4, 'Colcheias → tercinas → semicolcheias', 24, [2, 4])),
+        t('Clique só no 1, bem lento: você segura o tempo sozinho nos outros 3', 4, metronomo(50, 4, 'Só o 1 clica: conte 2-3-4 por dentro', 16, [1])),
+        t('Grave 1 minuto com o clique e confira: o acorde caiu junto do clique ou "fugiu"?', 3)
+      ]],
+      ['Pop e balada', 'Profissional', 'Balada e pop: a esquerda segura a tônica e a direita faz as tríades em colcheias, com inversões para não pular.', [
+        t('C - G/B - Am - F: esquerda na tônica, direita em colcheias', 6, duas(POP_E, POP_D, 76, 'Direita em colcheias, esquerda segura o compasso', { repeticoes: 4 })),
+        t('Dinâmica de balada: comece só com a esquerda e acordes longos, e só no refrão entre com as colcheias. Toque a progressão assim por 4 voltas.', 4, acordes('C:4 G/B:4 Am:4 F:4', 70, { repeticoes: 4, texto: 'Verso suave → refrão cheio' })),
+        t('Tire de ouvido uma balada que você goste e toque com essa levada.', 8)
+      ]],
+      ['Bossa nova', 'Profissional', 'Na bossa o tecladista não marca o tempo: o baixo faz tônica e quinta e a direita "flutua" no contratempo, com acordes de 7ª e 9ª. Esta é uma das levadas possíveis.', [
+        t('Baixo da bossa (simplificado): tônica e quinta', 4, demo(repete([[0, 1.5], [7, 0.5], [7, 1.5], [0, 0.5]], 2), 48, 92, 'Mão esquerda: tônica, quinta, quinta, tônica', { mao: 'E', dedos: dedosRep('5 1 1 5', 2), repeticoes: 4 })),
+        t('ii-V-I em bossa: baixo na esquerda, acordes sincopados na direita', 8, duas(BOSSA_E, BOSSA_D, 92, 'Direita no contratempo, leve', { repeticoes: 4 })),
+        t('Ouça "Garota de Ipanema" e "Wave" (Tom Jobim) e repare: o piano entra pouco e com acordes curtos.', 5)
+      ]],
+      ['Samba e baião', 'Profissional', 'Ritmos brasileiros pedem a esquerda como o surdo (samba) ou a zabumba (baião). São levadas possíveis para começar; depois imite os discos.', [
+        t('Samba: surdo na esquerda (tônica no 1, quinta forte no 2) e acordes picados na direita', 7, duas(SAMBA_E, SAMBA_D, 88, 'Pense em 2: o 2 é o tempo forte do surdo', { repeticoes: 4 })),
+        t('Baião: a célula da zabumba na esquerda', 5, demo(repete([[0, 0.75], [7, 0.25], [7, 1]], 4), 48, 92, 'Tum… tum-tum', { mao: 'E', dedos: dedosRep('5 1 1', 4), repeticoes: 4 })),
+        t('Baião com acordes: C - F - G7 - C com a célula na esquerda', 6, duas(BAIAO_E, BAIAO_D, 92, 'Direita no tempo 2 de cada compasso', { repeticoes: 3 })),
+        t('Ouça Luiz Gonzaga (baião) e um samba do Cartola, e toque junto só a mão esquerda.', 4)
+      ]],
+      ['Louvor e gospel: acordes de passagem', 'Profissional', 'Acordes de passagem ligam os principais e criam movimento. É a linguagem do gospel e do louvor contemporâneo.', [
+        t('A progressão de passagem mais clássica: C - C7 - F - F♯°7 - C/G - A7 - Dm7 - G7 - C', 6, acordes('C:2 C7:2 F:2 F#dim7:2 C/G:2 A7:2 Dm7:2 G7:2 C:4', 66, { repeticoes: 4 })),
+        t('O "1 - 4 sobre 1" (C e F/C): o balanço que segura os momentos de adoração', 4, acordes('C:2 F/C:2 C:2 F/C:2 Am7:2 G/B:2 C:4', 72, { repeticoes: 4 })),
+        t('Sus4 antes de resolver: dá a sensação de "chegada" no refrão', 4, acordes('F7M:4 G7sus4:2 G7:2 Cadd9:4', 66, { repeticoes: 4 })),
+        t('Dinâmica no culto: intro com pad suave, verso só com a esquerda e acordes longos, refrão cheio, ponte crescendo. Combine os sinais com o ministro (mão aberta = mais baixo, mão subindo = crescer).', 4)
+      ]],
+      // ---- Módulo 4: ouvido e improvisação ----
+      ['Percepção: intervalos e acordes', 'Profissional', 'Ouvido treinado é o que permite tocar uma música que você nunca ensaiou. Ouça, escreva e só depois confira o gabarito.', [
+        t('Ditado de intervalos: diga qual é cada salto', 5, demo([[0, 1], [7, 1], [null, 2], [0, 1], [4, 1], [null, 2], [0, 1], [10, 1], [null, 2], [0, 1], [5, 1], [null, 2], [0, 1], [9, 1], [null, 2], [0, 1], [3, 1], [null, 2]], 60, 72, 'Ouça e escreva os 6 intervalos', { repeticoes: 2, ocultar: true })),
+        t('Ditado de acordes: maior, menor, diminuto, aumentado, 7, m7 ou 7M?', 5, acordes('Cm7:4 Caug:4 C7:4 Cdim:4 C7M:4 Cm:4', 56, { repeticoes: 2, ocultar: true })),
+        t('Ditado de progressão em Dó: escreva os graus (I, ii, iii, IV, V, vi)', 5, acordes('C:4 Em:4 F:4 G7:4 Am:4 Dm7:4 G7:4 C:4', 66, { repeticoes: 3, ocultar: true })),
+        t('Gabarito (só depois!): intervalos = 5ª J, 3ª M, 7ª m, 4ª J, 6ª M, 3ª m. Acordes = m7, aumentado, 7, diminuto, 7M, menor. Progressão = I - iii - IV - V7 - vi - ii7 - V7 - I.', 2)
+      ]],
+      ['Tirar de ouvido, transcrever e Nashville', 'Profissional', 'Os grandes aprenderam copiando discos nota por nota. E no estúdio todo mundo lê números (Nashville): 1-5-6m-4 serve em qualquer tom.', [
+        t('Método para tirar uma música: 1) ache a tônica (a nota de "repouso"); 2) tire o baixo; 3) descubra se cada acorde é maior ou menor; 4) escreva em números.', 3),
+        t('Nashville em Ré: os números na tela, você descobre os acordes', 5, acordes(nashville(2, ['1', '5', '6m', '4']), 72, { repeticoes: 3, texto: 'Ré: 1 = D, 5 = A, 6m = Bm, 4 = G' })),
+        t('A mesma sequência em Lá: os números não mudam, só o tom', 5, acordes(nashville(9, ['1', '5', '6m', '4']), 72, { repeticoes: 3, texto: 'Lá: 1 = A, 5 = E, 6m = F♯m, 4 = D' })),
+        t('Transcreva 8 compassos de um solo de piano que você ame (ouça trecho por trecho, cante, depois toque). Escreva e toque junto com a gravação.', 15)
+      ]],
+      ['Improvisação: modos e pentatônicas', 'Profissional', 'Sobre Dm7 use Ré dórico; sobre G7, Sol mixolídio. Repare: são as mesmas notas de Dó maior, mudando só o "centro".', [
+        t('Ré dórico, mão direita', 4, demo(seq([0, 2, 3, 5, 7, 9, 10, 12, 10, 9, 7, 5, 3, 2, 0], 0.5, 1), 62, 80, 'Ré dórico: notas brancas a partir do Ré', { mao: 'D', dedos: D_ESC, repeticoes: 2 })),
+        t('Sol mixolídio, mão direita', 4, demo(seq([0, 2, 4, 5, 7, 9, 10, 12, 10, 9, 7, 5, 4, 2, 0], 0.5, 1), 67, 80, 'Sol mixolídio: notas brancas a partir do Sol', { mao: 'D', dedos: D_ESC, repeticoes: 2 })),
+        t('Pentatônica menor de Ré (Ré, Fá, Sol, Lá, Dó)', 4, demo(seq([0, 3, 5, 7, 10, 12, 10, 7, 5, 3, 0], 0.5, 1), 62, 80, 'Dedos 1-2-3, polegar passa, 1-2-3', { mao: 'D', dedos: '1 2 3 1 2 3 2 1 3 2 1', repeticoes: 2 })),
+        t('Improvise sobre Dm7 - G7: frases curtas, respire entre elas, termine na 3ª ou na 7ª do acorde', 8, acordes('Dm7:8 G7:8', 96, { repeticoes: 6, texto: 'Dórico no Dm7 · mixolídio no G7' }))
+      ]],
+      ['Linguagem: frases de ii-V-I em vários tons', 'Profissional', 'Improvisar é falar uma língua: primeiro se decora frases, depois se combina. Barry Harris ensinava assim: a mesma frase em todos os tons.', [
+        t('Frase bebop em Dó: arpejo do ii subindo, escala descendo, resolve na 3ª do I', 4, demo(BEBOP, 60, 100, 'Swing: longa-curta', { mao: 'D', dedos: '1 2 3 5 4 3 2 1 3', repeticoes: 4 })),
+        t('A mesma frase em Fá', 4, demo(BEBOP, 65, 100, 'Mesma digitação, outro tom', { mao: 'D', dedos: '1 2 3 5 4 3 2 1 3', repeticoes: 4 })),
+        t('A mesma frase em Si♭', 4, demo(BEBOP, 58, 100, 'Mesma digitação, outro tom', { mao: 'D', dedos: '1 2 3 5 4 3 2 1 3', repeticoes: 4 })),
+        t('Aproximação cromática: chegue em cada nota do acorde por meio tom abaixo', 4, demo([[3, 0.5], [4, 0.5], [6, 0.5], [7, 0.5], [10, 0.5], [11, 0.5], [12, 2]], 60, 90, 'Ré♯→Mi, Fá♯→Sol, Lá♯→Si, Dó', { mao: 'D', dedos: '2 3 1 2 3 4 5', repeticoes: 4 })),
+        t('Use as frases sobre a base de ii-V-I nos tons de Dó, Fá e Si♭', 6, acordes(iiVI([0, 5, 10]), 100, { repeticoes: 3 }))
+      ]],
+      // ---- Módulo 5: palco, estúdio e carreira ----
+      ['O tecladista na banda: timbres e arranjo', 'Profissional', 'Na banda, o maior erro do tecladista é tocar demais. Cada instrumento tem a sua região: deixe o grave para o baixo e não brigue com a guitarra.', [
+        t('Região: toque a progressão só entre o Dó central e o Dó de cima, sem baixo na esquerda (o baixista faz)', 5, acordes([['C', 4, [60, 64, 67]], ['G/B', 4, [59, 62, 67]], ['Am7', 4, [60, 64, 67, 69]], ['F7M', 4, [60, 64, 65, 69]]], 76, { repeticoes: 4, texto: 'Sem mão esquerda: o baixo é do baixista' })),
+        t('Timbres de um tecladista profissional: piano, Rhodes (elétrico), órgão, pad, cordas, synth lead e brass. Monte no seu teclado uma lista com 1 de cada e salve.', 6),
+        t('Split e layer: split = cada metade do teclado com um timbre (baixo à esquerda, piano à direita); layer = dois timbres juntos (piano + pad). Configure os dois no seu teclado ou no Kontakt/Carla.', 6),
+        t('Arranjo: escute uma música da sua banda e escreva o que o teclado faz em cada parte (intro, verso, refrão, ponte). Se a guitarra faz acordes, você faz pad ou sai.', 6)
+      ]],
+      ['Ao vivo: click, playback, in-ear e direção musical', 'Profissional', 'Igrejas e bandas profissionais tocam com click e playback (multitrack). O tecladista costuma ser quem dispara e quem conduz.', [
+        t('Entrada com contagem: ouça 2 compassos de click e entre exatamente no 1', 4, metronomo(90, 4, 'Compassos 1 e 2: só ouvir · entre no compasso 3', 12)),
+        t('In-ear: no seu fone, o click e a voz principal vêm primeiro, depois você, depois o baixo e a bateria. Nunca suba o seu volume para "se ouvir": peça para baixar o resto.', 4),
+        t('Roteiro do show (setlist): para cada música anote tom, andamento (bpm), timbre e quem começa. Monte o de 5 músicas que você toca.', 8),
+        t('Direção musical: ensaie os finais e as viradas, combine sinais com a mão (último refrão, parar, repetir) e marque no roteiro.', 6)
+      ]],
+      ['Estúdio e carreira', 'Profissional', 'O tecladista profissional grava em casa, tem repertório pronto e se apresenta como empresa. Esta aula fecha a trilha.', [
+        t('Gravação em casa: no Reaper, crie uma faixa MIDI com o Pianoteq (ou Kontakt), grave 8 compassos com o click, e corrija só o que estiver muito fora (quantização leve, 50%).', 10),
+        t('Repertório: monte uma lista de 30 músicas que você toca de cor, em pelo menos 2 tons cada, separadas por estilo (louvor, pop, MPB, sertanejo, jazz).', 8),
+        t('Profissão: tenha um vídeo curto tocando, um portfólio no Instagram, um valor de cachê por evento e um contrato simples (data, horário, valor, quem paga o som).', 6),
+        t('Saúde: alongue punhos e dedos antes e depois, pausa de 5 min a cada 50 min, banco na altura certa. Dor é sinal para parar, não para insistir.', 3)
+      ]]
+    ], 'Teclado Profissional'),
 
     // ======================= PIANO =======================
     curso('Piano', 'Piano', [

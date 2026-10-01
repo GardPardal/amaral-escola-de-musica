@@ -36,7 +36,7 @@ Site e área do aluno da Amaral Escola de Música (Wenceslau Braz, PR).
 
 ## Cursos básicos e exercícios com som
 
-- `cursos.js` traz 8 aulas para cada instrumento do cadastro (16 no Teclado: escalas, arpejos, blues, jazz e independência das mãos): Canto coral, Teclado, Piano, Violão,
+- `cursos.js` traz 8 aulas para cada instrumento do cadastro (16 no Teclado: escalas, arpejos, blues, jazz e independência das mãos), mais a trilha **Teclado Profissional** (24 aulas: técnica nos 12 tons, voicings, ii-V-I, rearmonização, groove, ritmos brasileiros, gospel, percepção, Nashville, improvisação, banda, palco, estúdio e carreira): Canto coral, Teclado, Piano, Violão,
   Guitarra e Concurso (teoria e percepção). No painel do professor, **Cursos básicos prontos**
   cadastra cada curso com um clique. Cada aluno vê só as aulas do instrumento dele, na ordem.
 - Um exercício pode ter som, guardado no item da rotina no campo `vocalize`, sem mudar o banco:

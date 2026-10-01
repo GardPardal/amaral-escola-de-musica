@@ -659,6 +659,7 @@ td.num { font-variant-numeric: tabular-nums; }
   var aulas = [], feitosHoje = {}, feitosSempre = {}, minutosHoje = 0;
   var aulaAtual = null, passo = 0, instrAtual = null;
   $('filtro-instr').addEventListener('change', function () { aulaAtual = null; carregarRotinas(); });
+  var NOME_CURSO = { 'Teoria': 'Teoria (Concurso)', 'Teclado Pro': 'Teclado Profissional' };
   function infoAula(r) {
     var m = String(r.titulo).match(/^(.*) · Aula (\d+): (.*)$/);
     return m ? { curso: m[1], n: Number(m[2]), nome: m[3] } : { curso: '', n: 0, nome: r.titulo };
@@ -717,7 +718,7 @@ td.num { font-variant-numeric: tabular-nums; }
       var grupo = info.curso || 'Rotinas extras';
       if (grupo !== cursoAtual) {
         cursoAtual = grupo;
-        lista.appendChild(el('h2', { class: 'curso-titulo', text: grupo === 'Teoria' ? 'Teoria (Concurso)' : grupo }));
+        lista.appendChild(el('h2', { class: 'curso-titulo', text: NOME_CURSO[grupo] || grupo }));
         grade = el('div', { class: 'aulas-grid' }); lista.appendChild(grade);
       }
       var status = e.concluida ? el('span', { class: 'aula-status ok', text: '✓ Concluída' })
@@ -774,7 +775,7 @@ td.num { font-variant-numeric: tabular-nums; }
     $('vista-lista').hidden = true; v.hidden = false; v.replaceChildren();
     v.appendChild(el('button', { type: 'button', class: 'link-botao voltar', text: '← Todas as aulas', onclick: fecharAula }));
     v.appendChild(el('div', { class: 'pilha', style: 'gap: 6px' },
-      el('span', { class: 'rotulo', text: (info.curso === 'Teoria' ? 'Teoria' : info.curso || r.instrumento) + (info.n ? ' · Aula ' + info.n : '') }),
+      el('span', { class: 'rotulo', text: (NOME_CURSO[info.curso] || info.curso || r.instrumento) + (info.n ? ' · Aula ' + info.n : '') }),
       el('h1', { text: info.nome }),
       r.observacao ? el('p', { class: 'suave', text: r.observacao }) : null));
     var passos = el('nav', { class: 'passos', 'aria-label': 'Exercícios da aula' });
@@ -1044,7 +1045,7 @@ td.num { font-variant-numeric: tabular-nums; }
     }
     botao.disabled = false;
     if (erro) return aviso('msg-prontas', 'Não foi possível atualizar: ' + erro.message, 'erro');
-    aviso('msg-prontas', lista.length + ' aulas de ' + curso.instrumento + ' atualizadas.', 'ok');
+    aviso('msg-prontas', lista.length + ' aulas de ' + (curso.nome || curso.instrumento) + ' atualizadas.', 'ok');
     carregarProfessor();
   }
   function faltando(curso) { return curso.aulas.filter(function (a) { return titulosProf.indexOf(a.titulo) < 0; }); }
@@ -1073,7 +1074,7 @@ td.num { font-variant-numeric: tabular-nums; }
         bAtual.addEventListener('click', function () { atualizarCurso(c, bAtual); });
       }
       l.appendChild(el('div', { class: 'curso-linha' },
-        el('div', null, el('b', { text: c.instrumento }), el('span', { class: 'pequeno suave', text: ' · ' + c.aulas.length + ' aulas' + (tem && falta ? ' (' + tem + ' já cadastradas)' : '') + (velhas ? ' · nova versão disponível' : '') })),
+        el('div', null, el('b', { text: c.nome || c.instrumento }), el('span', { class: 'pequeno suave', text: ' · ' + c.aulas.length + ' aulas' + (tem && falta ? ' (' + tem + ' já cadastradas)' : '') + (velhas ? ' · nova versão disponível' : '') })),
         el('span', { style: 'display: flex; gap: 6px; flex-wrap: wrap' }, bAtual, falta || !velhas ? b : null)));
     });
     $('btn-prontas').hidden = !algumFalta;
