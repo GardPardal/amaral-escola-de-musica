@@ -176,7 +176,34 @@ main.wrap { padding-block: 24px 64px; }
 .braco-casa { font: 600 9px var(--f-texto); fill: var(--tinta-suave); text-anchor: end; }
 .braco-marca { font: 700 11px var(--f-texto); fill: var(--tinta-suave); text-anchor: middle; }
 .braco-solta { fill: none; stroke: var(--tinta); stroke-width: 1.2; }
-.voc-acordes .voc-grande, .voc-metronomo .voc-grande { font-size: 36px; }
+/* Braço do violão na horizontal */
+.voc-braco-h { overflow-x: auto; }
+.braco-h { width: 100%; height: auto; display: block; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+.bh-madeira { fill: #4A2C1A; }
+.bh-traste { stroke: #D9D2C5; stroke-width: 2.5; }
+.bh-pestana { fill: #EDE6DA; }
+.bh-marcador { fill: #E9DFCF; opacity: .5; }
+.bh-corda { stroke: #EDE6DA; }
+.bh-corda.grave { stroke: #D2AE78; }
+.bh-corda.vibra { animation: vibra .9s ease-out; }
+@keyframes vibra { from { stroke: var(--ceu); stroke-width: 4; } }
+@media (prefers-reduced-motion: reduce) { .bh-corda.vibra { animation-duration: .01s; } }
+.bh-nome { font: 600 11px var(--f-texto); fill: var(--tinta-suave); }
+.bh-num { font: 600 10px var(--f-texto); fill: var(--tinta-suave); text-anchor: middle; }
+.bh-x { font: 700 15px var(--f-texto); fill: var(--erro); text-anchor: middle; }
+.bh-solta { fill: none; stroke: var(--tinta); stroke-width: 2; }
+.bh-dedo { fill: #FBFAF7; stroke: #1C1A17; stroke-width: 1; }
+.bh-dedo-txt { font: 800 12px var(--f-texto); fill: #1C1A17; text-anchor: middle; pointer-events: none; }
+.bh-prox { fill: none; stroke: #FBFAF7; stroke-width: 2; stroke-dasharray: 3 3; }
+.bh-escala { fill: #FBFAF7; opacity: .5; }
+.bh-escala-txt { font: 700 11px var(--f-texto); fill: #1C1A17; text-anchor: middle; pointer-events: none; }
+.bh-tocando { fill: var(--ceu); stroke: #FBFAF7; stroke-width: 2; }
+.bh-tocando-txt { font: 800 12px var(--f-texto); fill: var(--papel); text-anchor: middle; pointer-events: none; }
+.bh-alvo { fill: transparent; cursor: pointer; }
+.voc-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.voc-chip { font-weight: 800; padding: 4px 12px; border-radius: 999px; border: 1.5px solid var(--linha); background: var(--papel); }
+.voc-chip.atual { background: var(--madeira); border-color: var(--madeira); color: var(--sobre-madeira); }
+.voc-acordes .voc-grande, .voc-metronomo .voc-grande { font-size: 30px; }
 .voc-contador { font: 800 18px var(--f-display); color: var(--tinta-suave); font-variant-numeric: tabular-nums; }
 .voc-controles { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
 .voc-campo { display: flex; align-items: center; gap: 8px; font-size: 14px; }
@@ -588,13 +615,17 @@ td.num { font-variant-numeric: tabular-nums; }
       return ka.curso.localeCompare(kb.curso) || ka.n - kb.n;
     });
   }
-  function areaVocalize(chave, voc) {
+  // O botão diz com o que o aluno vai praticar
+  var COM_O = { 'Violão': 'com o violão', 'Guitarra': 'com a guitarra', 'Teclado': 'com o teclado', 'Piano': 'com o piano', 'Canto coral': 'com o piano', 'Concurso': 'ouvindo' };
+  function areaVocalize(chave, voc, instrumento) {
     var area = el('div', { class: 'voc-area', hidden: !(players[chave] && players[chave].aberto) });
     if (players[chave]) area.appendChild(players[chave].el);
-    var rotulo = voc.tipo === 'piano' ? 'Abrir teclado' : voc.tipo === 'respiracao' ? 'Praticar com metrônomo' : 'Praticar com piano';
+    var rotulo = voc.tipo === 'piano' ? 'Abrir teclado'
+      : voc.tipo === 'respiracao' || voc.tipo === 'metronomo' ? 'Praticar com metrônomo'
+      : 'Praticar ' + (COM_O[instrumento] || 'com piano');
     var botao = el('button', { class: 'botao mini vazado', type: 'button', 'aria-expanded': String(!area.hidden),
       text: (area.hidden ? '♪ ' + rotulo : 'Fechar'), onclick: function () {
-        if (!players[chave]) { players[chave] = window.AmaralCanto.criarPlayer(voc); area.appendChild(players[chave].el); }
+        if (!players[chave]) { players[chave] = window.AmaralCanto.criarPlayer(voc, { instrumento: instrumento }); area.appendChild(players[chave].el); }
         var abrir = area.hidden;
         area.hidden = !abrir; players[chave].aberto = abrir;
         if (!abrir) players[chave].parar();
@@ -627,7 +658,7 @@ td.num { font-variant-numeric: tabular-nums; }
         var chave = r.id + ':' + i, feito = !!marcado[chave], min = Number(it.minutos) || 0;
         conta.total += min; if (feito) { conta.feito += min; conta.feitos++; }
         var id = 'it-' + r.id + '-' + i;
-        var voc = it.vocalize && window.AmaralCanto ? areaVocalize(chave, it.vocalize) : null;
+        var voc = it.vocalize && window.AmaralCanto ? areaVocalize(chave, it.vocalize, r.instrumento) : null;
         var li = el('li', { class: 'item' + (feito ? ' feito' : '') },
           el('input', { type: 'checkbox', id: id, checked: feito, onchange: function (e) { marcar(r.id, i, min, e.target.checked, li); } }),
           el('div', { class: 'item-texto' }, el('label', { for: id, text: String(it.texto || '') }), voc && voc.botao),

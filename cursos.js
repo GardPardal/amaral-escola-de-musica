@@ -45,6 +45,13 @@
     pontos: [[6, 5, 1], [6, 8, 4], [5, 5, 1], [5, 7, 3], [4, 5, 1], [4, 7, 3], [3, 5, 1], [3, 7, 3], [2, 5, 1], [2, 8, 4], [1, 5, 1], [1, 8, 4]]
   };
   var PENTA_NOTAS = [0, 3, 5, 7, 10, 12, 15, 17, 19, 22, 24, 27, 24, 22, 19, 17, 15, 12, 10, 7, 5, 3, 0];
+  // cromático: casas 1-2-3-4 da 6ª à 1ª corda e de volta (4-3-2-1 da 1ª à 6ª)
+  var ARANHA = (function () {
+    var soltas = [0, 5, 10, 15, 19, 24], l = [];
+    soltas.forEach(function (s) { for (var c = 1; c <= 4; c++) l.push(s + c); });
+    soltas.slice().reverse().forEach(function (s) { for (var c = 4; c >= 1; c--) l.push(s + c); });
+    return l;
+  })();
   var ODE = [[4, 1], [4, 1], [5, 1], [7, 1], [7, 1], [5, 1], [4, 1], [2, 1], [0, 1], [0, 1], [2, 1], [4, 1], [4, 1.5], [2, 0.5], [2, 2],
              [4, 1], [4, 1], [5, 1], [7, 1], [7, 1], [5, 1], [4, 1], [2, 1], [0, 1], [0, 1], [2, 1], [4, 1], [2, 1.5], [0, 0.5], [0, 2]];
   var DO_RE_MI_FA = [[0, 1], [2, 1], [4, 1], [5, 1], [5, 1], [5, 2], [0, 1], [2, 1], [0, 1], [2, 1], [2, 1], [2, 2],
@@ -232,8 +239,8 @@
     curso('Violão', 'Violão', [
       ['Conhecendo o violão e afinação', 'Iniciante', 'Unhas da mão esquerda curtas. Aperte a corda perto do traste, não em cima dele.', [
         t('Cordas: da mais fina (1ª, Mi) para a mais grossa (6ª, Mi grave). Postura: violão na perna, polegar da mão esquerda atrás do braço.', 3),
-        t('Afinação: ouça cada nota e afine a corda até soar igual', 5, demo(AFINACAO, 40, 60, 'Afine cada corda pela nota do piano', { repeticoes: 2, semPiano: true })),
-        t('Mão direita: polegar (p) nas cordas 6, 5 e 4; indicador (i), médio (m) e anelar (a) nas cordas 3, 2 e 1', 5, metronomo(60, 4, 'Uma corda solta por clique: 6-5-4-3-2-1', 16))
+        t('Afinação: ouça cada nota e afine a corda até soar igual', 5, demo(AFINACAO, 40, 60, 'Afine cada corda até soar igual à nota de referência', { repeticoes: 2, semPiano: true })),
+        t('Mão direita: polegar (p) nas cordas 6, 5 e 4; indicador (i), médio (m) e anelar (a) nas cordas 3, 2 e 1', 5, demo([[0, 1, 'p · 6ª corda'], [5, 1, 'p · 5ª corda'], [10, 1, 'p · 4ª corda'], [15, 1, 'i · 3ª corda'], [19, 1, 'm · 2ª corda'], [24, 1, 'a · 1ª corda']], 40, 60, 'Uma corda solta por tempo', { repeticoes: 4, semPiano: true }))
       ]],
       ['Primeiros acordes: Em e Am', 'Iniciante', 'No desenho: linhas verticais são as cordas (6ª à esquerda); bolinha é onde apertar; número é o dedo; × não toca; ○ é corda solta.', [
         t('Troque entre Em e Am', 6, acordes('Em:4 Am:4', 60, { braco: true, repeticoes: 4 })),
@@ -258,9 +265,9 @@
         t('Levada pop na progressão', 6, acordes('G:4 D:4 Em:4 C:4', 80, { braco: true, repeticoes: 4, texto: 'Levada: ↓ ↓↑ ↑↓↑' }))
       ]],
       ['Dedilhado', 'Intermediário', 'p = polegar, i = indicador, m = médio, a = anelar. O polegar toca o baixo (a corda que dá nome ao acorde).', [
-        t('Am e E com dedilhado p-i-m-a', 6, acordes('Am:4 E:4', 60, { braco: true, repeticoes: 4, texto: 'Uma nota por tempo: p · i · m · a' })),
-        t('C - G - Am - Em com dedilhado p-i-m-a', 6, acordes('C:4 G:4 Am:4 Em:4', 66, { braco: true, repeticoes: 4, texto: 'p · i · m · a' })),
-        t('Variação: p-i-m-a-m-i (duas notas por tempo). Suba o andamento aos poucos.', 4)
+        t('Am e E com dedilhado p-i-m-a', 6, acordes('Am:4 E:4', 60, { braco: true, repeticoes: 4, dedilhado: ['p', 'i', 'm', 'a'], texto: 'Uma nota por tempo: p · i · m · a' })),
+        t('C - G - Am - Em com dedilhado p-i-m-a', 6, acordes('C:4 G:4 Am:4 Em:4', 66, { braco: true, repeticoes: 4, dedilhado: ['p', 'i', 'm', 'a'], texto: 'p · i · m · a' })),
+        t('Variação p-i-m-a-m-i, duas notas por tempo (compasso de 3)', 5, acordes('C:3 Am:3 Em:3 G:3', 60, { braco: true, repeticoes: 4, dedilhado: ['p', 'i', 'm', 'a', 'm', 'i'], passo: 0.5, texto: 'p · i · m · a · m · i' }))
       ]],
       ['Acordes com sétima', 'Intermediário', 'O acorde com sétima (7) cria tensão e pede para resolver no próximo acorde.', [
         t('Conheça A7, D7, E7 e B7', 4, acordes('A7:4 D7:4 E7:4 B7:4', 60, { braco: true, repeticoes: 2 })),
@@ -278,13 +285,13 @@
     // ======================= GUITARRA =======================
     curso('Guitarra', 'Guitarra', [
       ['Guitarra, afinação e palheta', 'Iniciante', 'Segure a palheta entre o polegar e a lateral do indicador, com só a pontinha para fora.', [
-        t('Afinação: ouça cada nota e afine a corda até soar igual', 4, demo(AFINACAO, 40, 60, 'Afine cada corda pela nota do piano', { repeticoes: 2, semPiano: true })),
+        t('Afinação: ouça cada nota e afine a corda até soar igual', 4, demo(AFINACAO, 40, 60, 'Afine cada corda até soar igual à nota de referência', { repeticoes: 2, semPiano: true })),
         t('Palhetada alternada na 6ª corda solta: ↓ no tempo, ↑ no "e"', 4, metronomo(60, 4, '↓↑ ↓↑ ↓↑ ↓↑', 16)),
         t('A mesma coisa em todas as cordas, um compasso em cada', 4, metronomo(80, 4, 'Um compasso por corda: 6, 5, 4, 3, 2, 1', 24))
       ]],
       ['Exercício cromático', 'Iniciante', 'Um dedo por casa: dedo 1 na casa 1, dedo 2 na 2, dedo 3 na 3, dedo 4 na 4.', [
-        t('1-2-3-4 em cada corda, da 6ª até a 1ª, e volte', 6, metronomo(60, 4, 'Uma nota por clique, palhetada alternada', 32)),
-        t('Agora em colcheias (duas notas por clique)', 6, metronomo(80, 4, 'Duas notas por clique', 32)),
+        t('1-2-3-4 em cada corda, da 6ª até a 1ª, e volte', 6, demo(seq(ARANHA, 1, 2), 40, 60, 'Um dedo por casa, palhetada alternada', { semPiano: true, casaBase: 1 })),
+        t('Agora em colcheias (duas notas por clique)', 6, demo(seq(ARANHA, 0.5, 1), 40, 80, 'Duas notas por clique', { semPiano: true, casaBase: 1 })),
         t('Suba 4 bpm quando sair limpo 3 vezes. Não aperte as cordas mais do que precisa.', 1)
       ]],
       ['Power chords', 'Iniciante', 'Power chord = tônica + quinta. Duas ou três cordas, som de rock. O desenho se move pelo braço.', [
@@ -308,7 +315,7 @@
       ['Ligados e bends', 'Intermediário', 'Hammer-on: toque a nota e martele outro dedo mais à frente, sem palhetar. Pull-off: o contrário, puxe o dedo para soar a nota de trás.', [
         t('Na pentatônica: palhete a 1ª nota de cada corda e faça hammer-on na 2ª', 4, demo(seq(PENTA_NOTAS, 1, 2), 45, 60, 'Palheta só na 1ª nota de cada corda', { semPiano: true, diagrama: PENTA })),
         t('Bend: 3ª corda, casa 7. Empurre a corda para cima até soar como a casa 9 (use os dedos 2 e 3 juntos).', 3),
-        t('Ouça o alvo do bend e tente chegar nele', 4, demo([[2, 2, 'Alvo: casa 9'], [0, 2, 'Casa 7'], [2, 4, 'Agora faça o bend até aqui']], 62, 60, 'Compare o bend com o alvo', { repeticoes: 4, semPiano: true }))
+        t('Ouça o alvo do bend e tente chegar nele', 4, demo([[2, 2, 'Alvo: casa 9'], [0, 2, 'Casa 7'], [2, 4, 'Agora faça o bend até aqui']], 62, 60, 'Compare o bend com o alvo', { repeticoes: 4, semPiano: true, diagrama: { nome: 'Bend na 3ª corda', inicio: 7, pontos: [[3, 7, 3], [3, 9, 3]] } }))
       ]],
       ['Primeiro improviso', 'Intermediário', 'Use a pentatônica de Lá sobre a base. Poucas notas, frases curtas e respire entre elas.', [
         t('Base para improvisar: Am - G - F - G', 10, acordes('Am:4 G:4 F:4 G:4', 80, { repeticoes: 8, semPiano: true, diagrama: PENTA, texto: 'Improvise com a pentatônica de Lá' })),

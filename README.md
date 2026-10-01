@@ -43,4 +43,7 @@ Site e área do aluno da Amaral Escola de Música (Wenceslau Braz, PR).
   vocalize (sobe de meio em meio tom), demonstração (escala, melodia, afinação), progressão de
   acordes (com desenho no braço para violão e guitarra), metrônomo, respiração com contagem ou
   teclado livre. Os tipos estão descritos no topo do `canto.js`.
+- Nas aulas de Violão e Guitarra o som é de corda (violão de nylon e guitarra de aço) e tudo aparece
+  no braço desenhado na tela: dedos de cada acorde, próximo acorde pontilhado e cada nota acendendo
+  na corda e casa certas. O aluno também pode tocar clicando no braço.
 - Para montar exercícios novos, use **Exercícios com piano e metrônomo** no formulário da rotina.

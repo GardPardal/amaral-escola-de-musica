@@ -158,6 +158,37 @@
     o.start(quando); o.stop(quando + 0.05);
   }
 
+  // Corda dedilhada (Karplus-Strong): nylon para violão, aço para guitarra. As ondas ficam guardadas por nota.
+  var ondas = {};
+  function ondaCorda(midi, timbre) {
+    var chave = timbre + midi;
+    if (ondas[chave]) return ondas[chave];
+    var sr = ctx.sampleRate, f = 440 * Math.pow(2, (midi - 69) / 12);
+    var P = sr / f - 0.5, len = Math.floor(sr * 2.8);
+    var buf = ctx.createBuffer(1, len, sr), d = buf.getChannelData(0);
+    var ini = Math.ceil(P) + 2, i;
+    for (i = 0; i < ini; i++) d[i] = Math.random() * 2 - 1;
+    var suaviza = timbre === 'aco' ? 1 : 3;              // nylon: ataque mais macio
+    for (var k = 0; k < suaviza; k++) for (i = 1; i < ini; i++) d[i] = (d[i] + d[i - 1]) / 2;
+    var perda = timbre === 'aco' ? 0.9975 : 0.996;
+    function em(x) { var i0 = Math.floor(x), fr = x - i0; return d[i0] + (d[i0 + 1] - d[i0]) * fr; }
+    for (i = ini; i < len; i++) d[i] = perda * 0.5 * (em(i - P) + em(i - P - 1));
+    ondas[chave] = buf;
+    return buf;
+  }
+  function somCorda(midi, quando, dur, volume, timbre) {
+    var c = audio(); if (!c) return;
+    var t0 = Math.max(quando || 0, c.currentTime) + 0.005;
+    var src = c.createBufferSource(); src.buffer = ondaCorda(midi, timbre);
+    var filtro = c.createBiquadFilter(); filtro.type = 'lowpass'; filtro.frequency.value = timbre === 'aco' ? 6000 : 3200;
+    var g = c.createGain(), fim = t0 + Math.max(dur || 1, 0.35);
+    g.gain.setValueAtTime(0.6 * (volume || 1), t0);
+    g.gain.setValueAtTime(0.6 * (volume || 1), fim);
+    g.gain.exponentialRampToValueAtTime(0.0001, fim + 0.12); // a mão abafa a corda na troca
+    src.connect(filtro); filtro.connect(g); g.connect(saida);
+    src.start(t0); src.stop(fim + 0.15);
+  }
+
   // ---------- Preferências do aluno ----------
   function lerPref(k, padrao) { try { var v = localStorage.getItem('amaral-' + k); return v == null ? padrao : v; } catch (e) { return padrao; } }
   function gravarPref(k, v) { try { localStorage.setItem('amaral-' + k, v); } catch (e) { /* sem armazenamento */ } }
@@ -245,6 +276,99 @@
     return svg;
   }
 
+  // ---------- Braço do violão na horizontal (como o aluno vê o próprio violão) ----------
+  var NOMES_CORDAS = ['Mi', 'Si', 'Sol', 'Ré', 'Lá', 'Mi']; // 1ª a 6ª
+  function midiCorda(corda, casa) { return CORDAS_SOLTAS[6 - corda] + casa; }
+  // Corda e casa de uma nota dentro da região [base, base + 3], procurando da 6ª para a 1ª corda
+  function posicaoNaRegiao(midi, base) {
+    var corda, casa;
+    for (corda = 6; corda >= 1; corda--) { casa = midi - CORDAS_SOLTAS[6 - corda]; if (casa >= base && casa <= base + 3) return { corda: corda, casa: casa }; }
+    for (corda = 6; corda >= 1; corda--) { casa = midi - CORDAS_SOLTAS[6 - corda]; if (casa >= 0 && casa <= 15) return { corda: corda, casa: casa }; }
+    return null;
+  }
+  function criarBracoH(lo, hi, aoTocar) {
+    var FW = 62, SP = 25, X0 = 54, Y0 = 20, n = hi - lo;
+    var W = X0 + n * FW + 10, H = Y0 + 5 * SP + 34;
+    var svg = svgEl('svg', { viewBox: '0 0 ' + W + ' ' + H, class: 'braco-h', role: 'img', 'aria-label': 'Braço do violão, da casa ' + lo + ' à ' + hi });
+    svg.style.maxWidth = Math.round(W * 1.35) + 'px';
+    function xT(k) { return X0 + (k - lo) * FW; }
+    function xC(casa) { return casa === 0 ? X0 - 15 : xT(casa) - FW / 2; }
+    function yC(c) { return Y0 + (c - 1) * SP; }
+    var yMeio = Y0 + 2.5 * SP;
+    svg.appendChild(svgEl('rect', { x: X0, y: Y0 - 12, width: n * FW, height: 5 * SP + 24, rx: 3, class: 'bh-madeira' }));
+    for (var k = lo + 1; k <= hi; k++) {
+      if ([3, 5, 7, 9, 15].indexOf(k) >= 0) svg.appendChild(svgEl('circle', { cx: xC(k), cy: yMeio, r: 6, class: 'bh-marcador' }));
+      if (k === 12) { svg.appendChild(svgEl('circle', { cx: xC(k), cy: Y0 + 1.5 * SP, r: 6, class: 'bh-marcador' })); svg.appendChild(svgEl('circle', { cx: xC(k), cy: Y0 + 3.5 * SP, r: 6, class: 'bh-marcador' })); }
+      svg.appendChild(svgEl('line', { x1: xT(k), y1: Y0 - 12, x2: xT(k), y2: Y0 + 5 * SP + 12, class: 'bh-traste' }));
+      if ([3, 5, 7, 9, 12, 15].indexOf(k) >= 0 || (k === lo + 1 && lo > 0)) svg.appendChild(svgEl('text', { x: xC(k), y: H - 4, class: 'bh-num' }, k + 'ª'));
+    }
+    if (lo === 0) svg.appendChild(svgEl('rect', { x: X0 - 5, y: Y0 - 12, width: 6, height: 5 * SP + 24, class: 'bh-pestana' }));
+    var cordasEl = {};
+    for (var c = 1; c <= 6; c++) {
+      svg.appendChild(svgEl('text', { x: 4, y: yC(c) + 4, class: 'bh-nome' }, NOMES_CORDAS[c - 1]));
+      cordasEl[c] = svgEl('line', { x1: X0 - 26, y1: yC(c), x2: W - 4, y2: yC(c), class: 'bh-corda' + (c >= 4 ? ' grave' : ''), 'stroke-width': [1.3, 1.6, 2, 2.4, 2.9, 3.4][c - 1] });
+      svg.appendChild(cordasEl[c]);
+    }
+    var camadas = {};
+    ['marcas', 'escala', 'prox', 'acorde', 'nota', 'alvos'].forEach(function (nome) { camadas[nome] = svgEl('g', nome === 'alvos' ? { 'aria-hidden': 'true' } : {}); svg.appendChild(camadas[nome]); });
+    // áreas de toque: cada casa de cada corda toca a nota
+    for (c = 1; c <= 6; c++) {
+      (function (corda) {
+        var casas = []; if (lo === 0) casas.push(0);
+        for (var q = lo + 1; q <= hi; q++) casas.push(q);
+        casas.forEach(function (casa) {
+          var x = casa === 0 ? X0 - 30 : xT(casa - 1), w = casa === 0 ? 30 : FW;
+          var r = svgEl('rect', { x: x, y: yC(corda) - SP / 2, width: w, height: SP, class: 'bh-alvo' });
+          r.addEventListener('pointerdown', function (e) { e.preventDefault(); aoTocar(corda, casa); });
+          camadas.alvos.appendChild(r);
+        });
+      })(c);
+    }
+    function ponto(g, corda, casa, dedo, classe, classeTxt) {
+      var x = xC(casa), y = yC(corda);
+      g.appendChild(svgEl('circle', { cx: x, cy: y, r: 10, class: classe }));
+      if (dedo) g.appendChild(svgEl('text', { x: x, y: y + 4, class: classeTxt || 'bh-dedo-txt' }, String(dedo)));
+    }
+    function pestana(g, d, classe, classeTxt) {
+      if (!d.pestana) return;
+      var x = xC(d.pestana);
+      g.appendChild(svgEl('rect', { x: x - 10, y: yC(1) - 10, width: 20, height: 5 * SP + 20, rx: 10, class: classe }));
+      if (classeTxt) g.appendChild(svgEl('text', { x: x, y: yC(1) + 4, class: classeTxt }, '1'));
+    }
+    function limpar(g) { g.replaceChildren(); }
+    return {
+      el: svg,
+      acorde: function (d) {
+        limpar(camadas.acorde); limpar(camadas.marcas); limpar(camadas.prox);
+        if (!d) return;
+        pestana(camadas.acorde, d, 'bh-dedo', 'bh-dedo-txt');
+        d.pontos.forEach(function (p) { ponto(camadas.acorde, p[0], p[1], p[2], 'bh-dedo'); });
+        (d.abafadas || []).forEach(function (corda) { camadas.marcas.appendChild(svgEl('text', { x: X0 - 15, y: yC(corda) + 4, class: 'bh-x' }, '×')); });
+        (d.soltas || []).forEach(function (corda) { camadas.marcas.appendChild(svgEl('circle', { cx: X0 - 15, cy: yC(corda), r: 6, class: 'bh-solta' })); });
+      },
+      proximo: function (d) {
+        limpar(camadas.prox); if (!d) return;
+        pestana(camadas.prox, d, 'bh-prox');
+        d.pontos.forEach(function (p) { ponto(camadas.prox, p[0], p[1], '', 'bh-prox'); });
+      },
+      escala: function (lista) {
+        limpar(camadas.escala);
+        (lista || []).forEach(function (p) { if (p.casa > 0) ponto(camadas.escala, p.corda, p.casa, p.dedo, 'bh-escala', 'bh-escala-txt'); });
+      },
+      nota: function (corda, casa, dedo, seg) {
+        var g = svgEl('g', {});
+        ponto(g, corda, casa, dedo, 'bh-tocando', 'bh-tocando-txt');
+        camadas.nota.appendChild(g);
+        setTimeout(function () { g.remove(); }, Math.max(150, (seg || 0.3) * 1000 - 40));
+        this.vibrar([corda]);
+      },
+      vibrar: function (lista) {
+        lista.forEach(function (corda) { var l = cordasEl[corda]; if (!l) return; l.classList.remove('vibra'); void l.getBoundingClientRect(); l.classList.add('vibra'); });
+      },
+      limpar: function () { ['marcas', 'escala', 'prox', 'acorde', 'nota'].forEach(function (k) { limpar(camadas[k]); }); }
+    };
+  }
+
   // ---------- Montagem da sequência (em tempos) ----------
   function tonicas(de, ate, direcao) {
     var l = [], m;
@@ -279,7 +403,12 @@
       for (r = 0; r < reps; r++) {
         lista.forEach(function (a, k) {
           var tempos = Math.max(1, Number(a[1]) || 4), prox = lista[k + 1] || (r < reps - 1 ? lista[0] : null);
-          ev.push({ b: b, tipo: 'acorde', midis: notasDoAcorde(v, a), dur: tempos * 0.92, nome: a[0], k: k, prox: prox ? prox[0] : '', rep: r + 1, reps: reps });
+          ev.push({ b: b, tipo: 'acorde', midis: notasDoAcorde(v, a), dur: tempos * 0.92, nome: a[0], k: k, prox: prox ? prox[0] : '', rep: r + 1, reps: reps, dedilhado: !!v.dedilhado });
+          if (prox && tempos >= 2) ev.push({ b: b + tempos - 1, tipo: 'proximo', nome: prox[0] });
+          if (v.dedilhado) {
+            var passo = Number(v.passo) || 1;
+            for (var q = 0; q * passo < tempos - 1e-9; q++) ev.push({ b: b + q * passo, tipo: 'dedo', tok: v.dedilhado[q % v.dedilhado.length], nome: a[0], dur: passo });
+          }
           for (var j = 0; j < tempos; j++) { ev.push({ b: b + j, tipo: 'clique', forte: j === 0 }); ev.push({ b: b + j, tipo: 'batida', n: j + 1 }); }
           b += tempos;
         });
@@ -307,11 +436,15 @@
   // ---------- Tocador ----------
   var ativo = null; // só um exercício toca por vez
 
-  function criarPlayer(v) {
-    v = v || {};
+  // opcoes.instrumento: em 'Violão' e 'Guitarra' o som é de corda e o exercício aparece no braço, sem piano
+  function criarPlayer(v, opcoes) {
+    v = v || {}; opcoes = opcoes || {};
     var tipo = v.tipo || 'notas';
     var vocal = tipo === 'notas' && !v.demo;            // vocalize: tem voz e faixa de tons
-    var temPiano = !v.semPiano && !v.ocultar && (tipo === 'notas' || tipo === 'piano' || (tipo === 'acordes' && !v.braco));
+    var cordas = (opcoes.instrumento === 'Violão' || opcoes.instrumento === 'Guitarra') && !vocal;
+    var timbre = opcoes.instrumento === 'Guitarra' ? 'aco' : 'nylon';
+    var usaBraco = cordas && (tipo === 'acordes' || tipo === 'notas') && !v.ocultar;
+    var temPiano = !cordas && !v.semPiano && !v.ocultar && (tipo === 'notas' || tipo === 'piano' || (tipo === 'acordes' && !v.braco));
     var voz = lerPref('voz', 'f');
     var desloc = function () { return (vocal || (tipo === 'piano' && !v.demo)) && voz === 'm' ? -12 : 0; };
     var bpm = Math.min(220, Math.max(30, Number(v.bpm) || 80));
@@ -319,6 +452,58 @@
     var de = Number(v.de) || 60, ate = Number(v.ate) || 65;
     var ref = { de: de, ate: ate };
     var tocando = false, eventos = [], idx = 0, ancB = 0, ancT = 0, timer = null, raf = null, visuais = [], piano = null, bracos = [];
+    var braco = null, chips = [];
+
+    // --- braço do violão: posições do exercício ---
+    var diagFixo = v.diagrama ? diagramaDe(v.diagrama) : null;   // ex.: desenho da pentatônica
+    var base = v.casaBase != null ? Number(v.casaBase) : diagFixo && diagFixo.inicio ? diagFixo.inicio : 0;
+    function dedoDe(pos) {
+      if (diagFixo) { var p = diagFixo.pontos.filter(function (x) { return x[0] === pos.corda && x[1] === pos.casa; })[0]; if (p) return p[2]; }
+      return pos.casa ? pos.casa - Math.max(base, 1) + 1 : '';
+    }
+    function posicoesDasNotas() {
+      var vistas = {}, lista = [];
+      (v.padrao || []).forEach(function (p) {
+        if (p[0] == null) return;
+        var pos = posicaoNaRegiao(de + p[0], base); if (!pos) return;
+        var k = pos.corda + ':' + pos.casa; if (vistas[k]) return; vistas[k] = 1;
+        pos.dedo = dedoDe(pos); lista.push(pos);
+      });
+      return lista;
+    }
+    function escalaFixa() { return diagFixo ? diagFixo.pontos.map(function (p) { return { corda: p[0], casa: p[1], dedo: p[2] }; }) : posicoesDasNotas(); }
+    function nomesAcordes() { var l = []; (v.acordes || []).forEach(function (a) { if (l.indexOf(a[0]) < 0) l.push(a[0]); }); return l; }
+    function estadoInicialBraco() {
+      if (!braco) return;
+      braco.limpar();
+      if (tipo === 'acordes' && !diagFixo) braco.acorde(diagramaDe((v.acordes || [[]])[0][0]));
+      else braco.escala(escalaFixa());
+    }
+    function desenharBracoH() {
+      var casas = [];
+      if (tipo === 'acordes' && !diagFixo) nomesAcordes().forEach(function (n) { var d = diagramaDe(n); if (d) { d.pontos.forEach(function (p) { casas.push(p[1]); }); if (d.pestana) casas.push(d.pestana); } });
+      else escalaFixa().forEach(function (p) { casas.push(p.casa); });
+      var comCasa = casas.filter(function (c) { return c > 0; });
+      var menor = comCasa.length ? Math.min.apply(null, comCasa) : 1, maior = Math.max.apply(null, casas.concat([3]));
+      var lo = menor - 1 <= 2 ? 0 : menor - 1, hi = Math.min(lo + 9, Math.max(lo + 5, maior + 1));
+      braco = criarBracoH(lo, hi, function (corda, casa) { somCorda(midiCorda(corda, casa), 0, 0.9, 0.6, timbre); braco.nota(corda, casa, '', 0.5); });
+      var area = h('div', { class: 'voc-braco-h' }); area.appendChild(braco.el);
+      if (tipo === 'acordes') {
+        var linha = h('div', { class: 'voc-chips', 'aria-label': 'Acordes do exercício' });
+        nomesAcordes().forEach(function (n) { var c = h('span', { class: 'voc-chip', text: n }); chips.push({ nome: n, el: c }); linha.appendChild(c); });
+        areaBraco.appendChild(linha);
+      }
+      areaBraco.appendChild(area);
+      estadoInicialBraco();
+    }
+    function destacarChip(nome) { chips.forEach(function (c) { c.el.classList.toggle('atual', c.nome === nome); }); }
+    function tocarAcordeNoBraco(nome, t, dur) {
+      var d = DIAGRAMAS[nome], soam = [];
+      if (d) d.f.split('').forEach(function (ch, i) { if (ch !== 'x') soam.push({ corda: 6 - i, midi: CORDAS_SOLTAS[i] + Number(ch) }); });
+      else notasDaCifra(nome).forEach(function (m, i) { soam.push({ corda: 6 - i, midi: m - 12 }); });
+      soam.forEach(function (n, i) { somCorda(n.midi, t + i * 0.022, dur, 0.34, timbre); }); // batida para baixo, da grave para a aguda
+      return soam.map(function (n) { return n.corda; });
+    }
 
     var caixa = h('div', { class: 'voc voc-' + tipo });
     var tomEl = h('b', { class: 'voc-tom', text: '' });
@@ -382,18 +567,41 @@
       if (e.tipo === 'clique') {
         if (metro) clique(t, e.forte);
         vis(function () { pulso.classList.remove('bate'); void pulso.offsetWidth; pulso.classList.add('bate'); pulso.classList.toggle('forte', e.forte); });
+      } else if (e.tipo === 'nota' && cordas) {
+        var pos = posicaoNaRegiao(e.midi, base);
+        somCorda(e.midi, t, Math.max(e.dur * seg, 0.5), 0.6, timbre);
+        vis(function () {
+          if (braco && pos) braco.nota(pos.corda, pos.casa, dedoDe(pos), e.dur * 60 / bpm);
+          grande.textContent = v.ocultar ? '♪' : e.rotulo || (pos ? NOMES[pc(e.midi)] + ' · ' + pos.corda + 'ª corda, ' + (pos.casa ? 'casa ' + pos.casa : 'solta') : NOMES[pc(e.midi)]);
+        });
       } else if (e.tipo === 'nota') {
         somNota(e.midi, t, e.dur * seg, 1, !!v.demo);
         vis(function () {
           if (piano) piano.acender(e.midi, e.dur * 60 / bpm);
           if (v.demo) grande.textContent = v.ocultar ? '♪' : e.rotulo || NOMES[pc(e.midi)];
         });
+      } else if (e.tipo === 'dedo') {
+        var dd = DIAGRAMAS[e.nome]; if (!dd) return;
+        var corda = { i: 3, m: 2, a: 1 }[e.tok], casa;
+        if (!corda) for (var ci = 0; ci < 6; ci++) if (dd.f[ci] !== 'x') { corda = 6 - ci; break; }  // p = baixo do acorde
+        casa = Number(dd.f[6 - corda]);
+        somCorda(midiCorda(corda, casa), t, e.dur * seg * 2, 0.55, timbre);
+        vis(function () {
+          contador.textContent = e.tok + ' · ' + ({ p: 'polegar', i: 'indicador', m: 'médio', a: 'anelar' }[e.tok] || '');
+          if (braco) braco.nota(corda, casa, dd.d[6 - corda] === '-' ? '' : dd.d[6 - corda], e.dur * 60 / bpm);
+        });
+      } else if (e.tipo === 'proximo') {
+        if (braco && !diagFixo) vis(function () { braco.proximo(diagramaDe(e.nome)); });
       } else if (e.tipo === 'acordeTom') {
         e.midis.forEach(function (m) { somNota(m, t, e.dur * seg, 0.55); });
         vis(function () { e.midis.forEach(function (m) { if (piano) piano.acender(m, e.dur * 60 / bpm); }); grande.textContent = 'Respire…'; });
       } else if (e.tipo === 'acorde') {
-        e.midis.forEach(function (m, i) { somNota(m, t + (v.braco ? i * 0.018 : 0), e.dur * seg, 0.5, true); });
+        var soando = [];
+        if (cordas) { if (!e.dedilhado) soando = tocarAcordeNoBraco(e.nome, t, e.dur * seg); }
+        else e.midis.forEach(function (m, i) { somNota(m, t + (v.braco ? i * 0.018 : 0), e.dur * seg, 0.5, true); });
         vis(function () {
+          if (braco) { if (!diagFixo) braco.acorde(diagramaDe(e.nome)); braco.vibrar(soando); }
+          destacarChip(e.nome);
           grande.textContent = v.ocultar ? 'Acorde ' + (e.k + 1) : e.nome;
           silEl.textContent = e.prox && !v.ocultar ? 'Próximo: ' + e.prox : (v.texto || '');
           tomEl.textContent = e.reps > 1 ? 'Volta ' + e.rep + ' de ' + e.reps : '';
@@ -401,7 +609,7 @@
           destacarBraco(e.nome);
         });
       } else if (e.tipo === 'batida') {
-        vis(function () { contador.textContent = String(e.n); if (tipo === 'metronomo') { grande.textContent = String(e.n); tomEl.textContent = 'Compasso ' + e.compasso; } });
+        vis(function () { if (!v.dedilhado) contador.textContent = String(e.n); if (tipo === 'metronomo') { grande.textContent = String(e.n); tomEl.textContent = 'Compasso ' + e.compasso; } });
       } else if (e.tipo === 'tom') {
         vis(function () {
           tomEl.textContent = v.demo ? (e.total > 1 ? 'Vez ' + e.k + ' de ' + e.total : '') : 'Tom: ' + nomeNota(e.tonica) + ' · ' + e.k + ' de ' + e.total;
@@ -443,7 +651,7 @@
       tocando = false; clearInterval(timer); cancelAnimationFrame(raf); visuais = [];
       btn.textContent = '▶ Começar'; caixa.classList.remove('ativo');
       if (piano) piano.marcar([]);
-      destacarBraco(null);
+      destacarBraco(null); destacarChip(null); estadoInicialBraco();
       grande.textContent = inicial; tomEl.textContent = ''; contador.textContent = '';
       silEl.textContent = v.silaba ? (vocal ? 'Cante: ' : '') + v.silaba : (v.texto || '');
       if (ctx && saida) { // corta o som que já estava agendado
@@ -475,7 +683,8 @@
     // --- layout ---
     if (tipo !== 'piano') caixa.appendChild(h('div', { class: 'voc-topo' }, tomEl, silEl));
     caixa.appendChild(h('div', { class: 'voc-visor' }, tipo !== 'piano' ? pulso : null, grande, tipo === 'acordes' ? contador : null));
-    if (tipo === 'acordes' || v.diagrama) { caixa.appendChild(areaBraco); desenharBracos(); }
+    if (usaBraco) { caixa.appendChild(areaBraco); desenharBracoH(); }
+    else if (tipo === 'acordes' || v.diagrama) { caixa.appendChild(areaBraco); desenharBracos(); }
     if (temPiano) { caixa.appendChild(areaPiano); desenharPiano(); }
     var ctrl = h('div', { class: 'voc-controles' });
     if (tipo !== 'piano') {
