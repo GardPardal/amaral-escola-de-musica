@@ -267,6 +267,24 @@ main.wrap { padding-block: 24px 64px; }
 .pd-fixo-txt.D { fill: #2F6A9E; } .pd-fixo-txt.E { fill: #8A4B2A; }
 .pd-ativo.D { fill: #2F6A9E; stroke: #FBFAF7; stroke-width: 2; } .pd-ativo.E { fill: #8A4B2A; stroke: #FBFAF7; stroke-width: 2; }
 .pd-ativo-txt { font: 800 12px var(--f-texto); fill: #FBFAF7; text-anchor: middle; }
+/* Mapa dos acordes */
+.mapa { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--linha); padding-top: 12px; }
+.mapa-fila { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 2px 2px 8px; }
+.mapa-cartao { flex: 0 0 auto; width: min(270px, 82vw); scroll-snap-align: start; display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 14px; border: 2px solid var(--linha); background: var(--papel); }
+.mapa-cartao.atual { border-color: var(--madeira); box-shadow: 0 0 0 3px color-mix(in srgb, var(--madeira) 20%, transparent); }
+.mapa-cab { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.mapa-cifra { font-family: var(--f-display); font-size: 24px; font-weight: 800; }
+.mapa-ouvir { min-height: 32px; padding: 4px 8px; color: var(--madeira); }
+.mapa-grau { font-size: 14px; color: var(--tinta-suave); }
+.mapa-grau b { color: var(--tinta); }
+.mapa-desenho .piano { max-width: 100% !important; }
+.braco-mini { width: 120px; align-self: center; }
+.mapa-tabela { font-size: 13px; }
+.mapa-tabela th, .mapa-tabela td { padding: 5px 6px; white-space: normal; }
+.mapa-tabela td:first-child { font-weight: 800; white-space: nowrap; }
+.mapa-tabela td.me { color: var(--madeira); font-weight: 800; white-space: nowrap; }
+.mapa-tabela td.md { color: var(--ceu); font-weight: 800; white-space: nowrap; }
+.mapa-obs { margin: 0; font-size: 13px; color: var(--tinta-suave); }
 .fim-aula { text-align: center; align-items: center; padding: 28px 18px; }
 .fim-aula .selo { font-size: 44px; line-height: 1; }
 .chip.ok { background: var(--ok); border-color: var(--ok); color: var(--papel); }

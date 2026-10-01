@@ -122,10 +122,11 @@
   })();
   var HANON_D = HANON, HANON_E = HANON;
   var TETRADES_CICLO = [];
-  QUARTAS.forEach(function (pc) { ['7M', '7', 'm7', 'm7(b5)'].forEach(function (q) { TETRADES_CICLO.push([cif(pc, q), 2]); }); });
+  QUARTAS.forEach(function (pc) { ['7M', '7', 'm7', 'm7(b5)'].forEach(function (q) { TETRADES_CICLO.push([cif(pc, q), 2, null, null, pc]); }); });
   function iiVI(tons) {
     var l = [];
-    tons.forEach(function (pc) { l.push([cif(pc + 2, 'm7'), 2], [cif(pc + 7, '7'), 2], [cif(pc, '7M'), 4]); });
+    // o 5º item de cada acorde é o tom (para o mapa mostrar o grau certo)
+    tons.forEach(function (pc) { l.push([cif(pc + 2, 'm7'), 2, null, null, pc], [cif(pc + 7, '7'), 2, null, null, pc], [cif(pc, '7M'), 4, null, null, pc]); });
     return l;
   }
   // ii-V-I sem tônica na mão esquerda: ii e I na forma A (3-5-7-9), V na forma B (7-9-3-13)
@@ -133,9 +134,9 @@
     var l = [];
     tons.forEach(function (pc) {
       var m = 50 + ((pc + 5 - 50) % 12 + 12) % 12;            // a 3ª do ii (Fá em Dó), entre Ré3 e Dó♯4
-      l.push([cif(pc + 2, 'm7(9)'), 2, [m, m + 4, m + 7, m + 11], 'E5 E3 E2 E1'],
-             [cif(pc + 7, '7(13)'), 2, [m, m + 4, m + 6, m + 11], 'E5 E3 E2 E1'],
-             [cif(pc, '7M(9)'), 4, [m - 1, m + 2, m + 6, m + 9], 'E5 E3 E2 E1']);
+      l.push([cif(pc + 2, 'm7(9)'), 2, [m, m + 4, m + 7, m + 11], 'E5 E3 E2 E1', pc],
+             [cif(pc + 7, '7(13)'), 2, [m, m + 4, m + 6, m + 11], 'E5 E3 E2 E1', pc],
+             [cif(pc, '7M(9)'), 4, [m - 1, m + 2, m + 6, m + 9], 'E5 E3 E2 E1', pc]);
     });
     return l;
   }
@@ -146,9 +147,9 @@
       function grave(x) { return 36 + ((x % 12) + 12) % 12; }
       var ii = grave(pc + 2), v = grave(pc + 7), i = grave(pc), f = 60 + ((pc + 5) % 12 + 12) % 12;
       if (f > 66) f -= 12;
-      l.push([cif(pc + 2, 'm7'), 2, [ii, ii + 10, f, f + 4], 'E5 E1 D1 D3'],
-             [cif(pc + 7, '7(9)'), 2, [v, v + 4, f, f + 4], 'E5 E1 D1 D3'],
-             [cif(pc, '7M'), 4, [i, i + 11, f - 1, f + 2], 'E5 E1 D1 D3']);
+      l.push([cif(pc + 2, 'm7'), 2, [ii, ii + 10, f, f + 4], 'E5 E1 D1 D3', pc],
+             [cif(pc + 7, '7(9)'), 2, [v, v + 4, f, f + 4], 'E5 E1 D1 D3', pc],
+             [cif(pc, '7M'), 4, [i, i + 11, f - 1, f + 2], 'E5 E1 D1 D3', pc]);
     });
     return l;
   }
@@ -320,14 +321,14 @@
       ['Blues: escala, baixo e 12 compassos', 'Intermediário', 'O blues tem 12 compassos e três acordes: C7, F7 e G7. A mão esquerda faz o "balanço" e a direita responde.', [
         t('Escala blues de Dó, mão direita (Dó, Mi♭, Fá, Fá♯, Sol, Si♭)', 5, demo(seq(BLUES, 1, 2), 60, 72, 'Dedos 1-2-1-2-3-4-5', { mao: 'D', dedos: D_BLUES, repeticoes: 3 })),
         t('Baixo do blues na mão esquerda: Dó-Sol-Lá-Sol', 4, demo(repete([[0, 1], [7, 1], [9, 1], [7, 1]], 2), 48, 84, 'Dedos 5-2-1-2, sem atrasar', { mao: 'E', dedos: dedosRep('5 2 1 2', 2), repeticoes: 4 })),
-        t('Os 12 compassos do blues com acordes', 6, acordes('C7:4 C7:4 C7:4 C7:4 F7:4 F7:4 C7:4 C7:4 G7:4 F7:4 C7:4 G7:4', 84, { texto: 'Conte os compassos: 4 de C7, 2 de F7, 2 de C7, G7, F7, C7, G7' })),
+        t('Os 12 compassos do blues com acordes', 6, acordes('C7:4 C7:4 C7:4 C7:4 F7:4 F7:4 C7:4 C7:4 G7:4 F7:4 C7:4 G7:4', 84, { tom: 0, texto: 'Conte os compassos: 4 de C7, 2 de F7, 2 de C7, G7, F7, C7, G7' })),
         t('Baixo na esquerda e acorde na direita (tempos 2 e 4)', 6, duas({ raiz: 48, padrao: [[0, 1], [7, 1], [9, 1], [7, 1]], dedos: '5 2 1 2' }, { raiz: 60, padrao: [[null, 1], [[4, 7, 10], 1], [null, 1], [[4, 7, 10], 1]], dedos: '1+2+4 1+2+4' }, 80, 'Direita só no 2 e no 4', { repeticoes: 6 }))
       ]],
       ['Frases de blues', 'Intermediário', 'Frases curtas (licks) com a mão direita na posição de Dó: polegar no Dó, 5 no Sol. Toque junto até decorar e use no blues.', [
         t('Frase 1: sobe pela escala blues e volta para o Dó', 5, demo([[0, 1], [3, 0.5], [5, 0.5], [6, 0.5], [7, 1.5], [3, 1], [0, 3]], 60, 80, 'Dedos 1-2-3-4-5-2-1', { mao: 'D', dedos: '1 2 3 4 5 2 1', repeticoes: 4 })),
         t('Frase 2: desce do Sol até o Dó', 4, demo([[7, 0.5], [6, 0.5], [5, 0.5], [3, 0.5], [0, 2], [null, 2]], 60, 80, 'Dedos 5-4-3-2-1', { mao: 'D', dedos: '5 4 3 2 1', repeticoes: 4 })),
         t('Frase 3: a "nota triste" (Mi♭ escorregando para o Mi)', 4, demo([[3, 0.5], [4, 1], [0, 0.5], [3, 0.5], [4, 0.5], [7, 3]], 60, 80, 'Dedos 2-3-1-2-3-5', { mao: 'D', dedos: '2 3 1 2 3 5', repeticoes: 4 })),
-        t('Use as três frases sobre o blues de 12 compassos', 6, acordes('C7:4 C7:4 C7:4 C7:4 F7:4 F7:4 C7:4 C7:4 G7:4 F7:4 C7:4 G7:4', 84, { repeticoes: 2, texto: 'Mão direita: frases 1, 2 e 3' }))
+        t('Use as três frases sobre o blues de 12 compassos', 6, acordes('C7:4 C7:4 C7:4 C7:4 F7:4 F7:4 C7:4 C7:4 G7:4 F7:4 C7:4 G7:4', 84, { tom: 0, repeticoes: 2, texto: 'Mão direita: frases 1, 2 e 3' }))
       ]],
       ['Jazz: tétrades e o ii-V-I', 'Avançado', 'O ii-V-I (Dm7 - G7 - C7M) é a frase-base do jazz. Colcheias com swing: longa-curta, longa-curta.', [
         t('Ouça e toque o ii-V-I em Dó', 5, acordes('Dm7:4 G7:4 C7M:8', 60, { repeticoes: 4 })),
@@ -377,7 +378,7 @@
       ]],
       // ---- Módulo 2: harmonia profissional ----
       ['Tétrades nos 12 tons', 'Profissional', 'Música popular e jazz são feitos de tétrades (acordes de 4 notas). Você precisa achar qualquer uma sem pensar.', [
-        t('As cinco tétrades em Dó: 7M, 7, m7, m7(♭5) e °7 (diminuto)', 4, acordes('C7M:4 C7:4 Cm7:4 Cm7(b5):4 Cdim7:4', 60, { repeticoes: 2 })),
+        t('As cinco tétrades em Dó: 7M, 7, m7, m7(♭5) e °7 (diminuto)', 4, acordes('C7M:4 C7:4 Cm7:4 Cm7(b5):4 Cdim7:4', 60, { tom: 0, repeticoes: 2 })),
         t('C7M, C7, Cm7, Cm7(♭5) em todos os tons, pelo ciclo das quartas', 12, acordes(TETRADES_CICLO, 80, { texto: 'Diga o nome antes de tocar' })),
         t('Teste: feche os olhos, escolha um tom e toque as 5 tétrades dele em menos de 10 segundos.', 4)
       ]],
@@ -402,7 +403,7 @@
         t('Linha de notas-guia: cante a 7ª do Dm7 (Dó), que desce para a 3ª do G7 (Si) e fica na 7ª do C7M (Si). Toque e cante.', 4)
       ]],
       ['Tensões: 9ª, 11ª, 13ª e sus', 'Profissional', 'Tensões dão a "cor" do acorde. Regra prática: 9ª combina com quase tudo; 13ª e ♭9 ficam nos dominantes; 11ª nos menores.', [
-        t('Ouça a diferença: C7M(9), C7(9), Cm7(9), C7sus4, C6(9) e C7(♭9)', 5, acordes('C7M(9):4 C7(9):4 Cm7(9):4 C7sus4:4 C6(9):4 C7(b9):4', 56, { repeticoes: 2 })),
+        t('Ouça a diferença: C7M(9), C7(9), Cm7(9), C7sus4, C6(9) e C7(♭9)', 5, acordes('C7M(9):4 C7(9):4 Cm7(9):4 C7sus4:4 C6(9):4 C7(b9):4', 56, { tom: 0, repeticoes: 2 })),
         t('ii-V-I com tensões: Dm7(9) - G7(13) - C7M(9)', 5, acordes('Dm7(9):4 G7(13):4 C7M(9):8', 60, { repeticoes: 4 })),
         t('Sus: G7sus4 resolvendo em G7, muito usado no pop e no louvor', 4, acordes('G7sus4:4 G7:4 C7M(9):8', 60, { repeticoes: 4 }))
       ]],

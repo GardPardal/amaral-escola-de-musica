@@ -48,5 +48,8 @@ Site e área do aluno da Amaral Escola de Música (Wenceslau Braz, PR).
   na corda e casa certas. O aluno também pode tocar clicando no braço.
 - Piano e Teclado: as mãos aparecem desenhadas e o número do dedo fica em cada tecla (digitação escrita no
   exercício em `dedos`/`mao`/`maos`, ou calculada nos acordes).
+- Exercícios de acordes mostram o **Mapa dos acordes**: para cada acorde, cifra, grau e função na tonalidade, desenho
+  (teclado com dedos ou braço do violão) e a tabela nota por nota com dedo e função (3ª, 7ª, 9ª…). O cartão do
+  acorde que está tocando fica destacado.
 - O aluno só passa para o próximo exercício depois de praticar os minutos dele (o professor não tem trava).
 - Para montar exercícios novos, use **Exercícios com piano e metrônomo** no formulário da rotina.

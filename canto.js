@@ -474,6 +474,79 @@
     if (direcao === 'subir-descer') for (m = ate - 1; m >= de; m--) l.push(m);
     return l;
   }
+  // ---------- Análise dos acordes (mapa para estudar antes de tocar) ----------
+  var LETRAS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'], LETRA_PC = [0, 2, 4, 5, 7, 9, 11];
+  var LETRA_PT = { C: 'Dó', D: 'Ré', E: 'Mi', F: 'Fá', G: 'Sol', A: 'Lá', B: 'Si' };
+  var ACIDENTE = { '-2': '𝄫', '-1': '♭', '0': '', '1': '♯', '2': '𝄪' };
+  function lerCifra(nome) {
+    var x = String(nome).match(/^([A-G])([#b]?)(.*?)(?:\/([A-G][#b]?))?$/);
+    if (!x) return null;
+    var q = x[3];
+    if (!(q in QUALIDADE)) return null;
+    return { letra: x[1], pc: pcDe(x[1] + x[2]), q: q, baixo: x[4] || null };
+  }
+  // Função de cada nota dentro do acorde (pelo intervalo até a fundamental) e o grau usado para escrever o nome certo
+  function funcaoNota(intervalo, q) {
+    var tem7 = /7|9|13|ø/.test(q), menor = /^m|dim|°|ø/.test(q);
+    switch (intervalo) {
+      case 0: return ['Fundamental', 1];
+      case 1: return ['9ª menor (♭9)', 2];
+      case 2: return ['9ª', 2];
+      case 3: return [menor ? '3ª menor' : '9ª aumentada (♯9)', menor ? 3 : 2];
+      case 4: return ['3ª maior', 3];
+      case 5: return [/sus/.test(q) ? '4ª (sus)' : '11ª', 4];
+      case 6: return [/m7\(b5\)|dim|°|ø/.test(q) ? '5ª diminuta' : '11ª aumentada (♯11)', /m7\(b5\)|dim|°|ø/.test(q) ? 5 : 4];
+      case 7: return ['5ª justa', 5];
+      case 8: return [/aug|\+/.test(q) ? '5ª aumentada' : '13ª menor (♭13)', /aug|\+/.test(q) ? 5 : 6];
+      case 9: return [/dim7|°7/.test(q) ? '7ª diminuta' : tem7 ? '13ª' : '6ª', /dim7|°7/.test(q) ? 7 : 6];
+      case 10: return ['7ª menor', 7];
+      default: return ['7ª maior', 7];
+    }
+  }
+  function escreverNota(midi, raiz, grau) {
+    if (!raiz) return NOMES[pc(midi)] + (Math.floor(midi / 12) - 1);
+    var li = (LETRAS.indexOf(raiz.letra) + grau - 1) % 7, letra = LETRAS[li];
+    var dif = ((pc(midi) - LETRA_PC[li]) % 12 + 18) % 12 - 6;
+    var oit = Math.floor((midi - dif) / 12) - 1;   // a oitava acompanha a letra (Si♯ é escrito na oitava de baixo)
+    return LETRA_PT[letra] + (ACIDENTE[dif] != null ? ACIDENTE[dif] : '?') + oit;
+  }
+  // Tom da sequência: o tom maior em que mais acordes são do campo harmônico (empate: tônica igual ao 1º ou último acorde)
+  var CAMPO = { 0: 'M', 2: 'm', 4: 'm', 5: 'M', 7: 'M', 9: 'm', 11: 'd' };
+  // dominante = tem 7ª menor e 3ª maior (7, 7(9), 7(13), 7sus4…); 7M não é dominante
+  function ehDominante(q) { return /^7(?!M)/.test(q) || q === '9' || q === '13'; }
+  function tipoAcorde(q) { return /m7\(b5\)|ø|dim|°/.test(q) ? 'd' : /^m(?!aj)/.test(q) ? 'm' : 'M'; }
+  function inferirTom(lista) {
+    var cs = lista.map(function (a) { return lerCifra(a[0]); }).filter(Boolean);
+    if (!cs.length) return null;
+    var melhor = null, nota = -1;
+    for (var k = 0; k < 12; k++) {
+      var pts = 0;
+      cs.forEach(function (c) { var g = CAMPO[(c.pc - k + 12) % 12]; if (g && (g === tipoAcorde(c.q) || (g === 'M' && ehDominante(c.q) && (c.pc - k + 12) % 12 === 7))) pts += 2; });
+      if (cs[0].pc === k) pts += 1; if (cs[cs.length - 1].pc === k) pts += 1;
+      if (pts > nota) { nota = pts; melhor = k; }
+    }
+    return melhor;
+  }
+  var ROMANOS = ['I', '♭II', 'II', '♭III', 'III', 'IV', '♯IV', 'V', '♭VI', 'VI', '♭VII', 'VII'];
+  function sufixoGrau(q) { return q.replace('m7(b5)', 'm7(♭5)').replace('(b9)', '(♭9)').replace('dim7', '°7').replace('dim', '°'); }
+  // proxima: o acorde seguinte na sequência (um dominante "aponta" para ele)
+  function grauEFuncao(c, tom, proxima) {
+    if (!c || tom == null) return null;
+    var i = (c.pc - tom + 12) % 12, tipo = tipoAcorde(c.q), dom = ehDominante(c.q);
+    var grau = ROMANOS[i] + sufixoGrau(c.q), funcao;
+    var alvoDe = function (r) { var g = CAMPO[(r - tom + 12) % 12]; return g ? ROMANOS[(r - tom + 12) % 12] + (g === 'm' ? 'm' : g === 'd' ? '°' : '') : null; };
+    if (dom && proxima && i !== 7 && proxima.pc === (c.pc + 5) % 12 && alvoDe(proxima.pc)) funcao = 'Dominante secundário (V7 de ' + alvoDe(proxima.pc) + ')';
+    else if (dom && proxima && i !== 7 && proxima.pc === (c.pc + 11) % 12 && alvoDe(proxima.pc)) funcao = 'Substituto de trítono (SubV7 de ' + alvoDe(proxima.pc) + ')';
+    else if (dom && i === 0) funcao = 'Tônica com 7ª (som de blues)';
+    else if (dom && i !== 7) {
+      var alvo = alvoDe((c.pc + 5) % 12), sub = alvoDe((c.pc + 11) % 12);
+      funcao = alvo ? 'Dominante secundário (V7 de ' + alvo + ')' : sub ? 'Substituto de trítono (SubV7 de ' + sub + ')' : 'Empréstimo / cor';
+    } else if (/dim7|°7/.test(c.q)) funcao = 'Diminuto de passagem';
+    else if (CAMPO[i] && CAMPO[i] !== tipo && !(i === 0 && dom)) funcao = 'Empréstimo modal';
+    else funcao = { 0: 'Tônica', 4: 'Tônica (substituto)', 9: 'Tônica (relativo)', 2: 'Subdominante', 5: 'Subdominante', 7: 'Dominante', 11: 'Dominante' }[i] || 'Empréstimo modal';
+    return { grau: grau, funcao: funcao };
+  }
+
   function notasDoAcorde(v, a) { return a[2] || (v.braco && notasDoBraco(a[0])) || notasDaCifra(a[0]); }
   function montar(v, de, ate) {
     var ev = [], b = 0, i, porCompasso = Math.max(1, Number(v.tempos) || 4);
@@ -767,7 +840,7 @@
         else e.midis.forEach(function (m, i) { somNota(m, t + (v.braco ? i * 0.018 : 0), e.dur * seg, 0.5, true); });
         vis(function () {
           if (braco) { if (!diagFixo) braco.acorde(diagramaDe(e.nome)); braco.vibrar(cordasSoando); }
-          destacarChip(e.nome);
+          destacarChip(e.nome); destacarMapa(e.nome);
           grande.textContent = v.ocultar ? 'Acorde ' + (e.k + 1) : e.nome;
           silEl.textContent = e.prox && !v.ocultar ? 'Próximo: ' + e.prox : (v.texto || '');
           tomEl.textContent = e.reps > 1 ? 'Volta ' + e.rep + ' de ' + e.reps : '';
@@ -819,7 +892,7 @@
       tocando = false; clearInterval(timer); cancelAnimationFrame(raf); visuais = [];
       btn.textContent = '▶ Começar'; caixa.classList.remove('ativo');
       if (piano) piano.marcar([]);
-      destacarBraco(null); destacarChip(null); estadoInicialBraco(); estadoInicialMaos();
+      destacarBraco(null); destacarChip(null); destacarMapa(null); estadoInicialBraco(); estadoInicialMaos();
       grande.textContent = inicial; tomEl.textContent = ''; contador.textContent = ''; soando = [];
       silEl.textContent = v.silaba ? (vocal ? 'Cante: ' : '') + v.silaba : (v.texto || '');
       if (ctx && saida) { // corta o som que já estava agendado
@@ -853,6 +926,66 @@
     caixa.appendChild(h('div', { class: 'voc-visor' }, tipo !== 'piano' ? pulso : null, grande, tipo === 'acordes' ? contador : null));
     if (usaBraco) { caixa.appendChild(areaBraco); desenharBracoH(); }
     else if (tipo === 'acordes' || v.diagrama) { caixa.appendChild(areaBraco); desenharBracos(); }
+    // Mapa dos acordes: tudo à vista antes de tocar (notas, dedos, função de cada nota, grau)
+    var cartoes = [], areaMapa = null;
+    if (tipo === 'acordes' && !v.ocultar) {
+      var tomGeral = v.tom != null ? v.tom : inferirTom(v.acordes || []);
+      var vistos = {};
+      var fila = h('div', { class: 'mapa-fila' });
+      (v.acordes || []).forEach(function (a, ia, lista) {
+        var midis = cordas ? (notasDoBraco(a[0]) || notasDoAcorde(v, a)) : notasDoAcorde(v, a);
+        var chaveA = a[0] + '|' + midis.join(','); if (vistos[chaveA]) return; vistos[chaveA] = 1;
+        if (midis.length < 2) return;
+        var c = lerCifra(a[0]), raiz = c || { letra: null, pc: pc(Math.min.apply(null, midis)), q: '' };
+        if (!c) raiz = null;
+        var prox = lista[ia + 1] && lerCifra(lista[ia + 1][0]);
+        var ge = grauEFuncao(c, a[4] != null ? a[4] : tomGeral, prox);
+        var cartao = h('div', { class: 'mapa-cartao' });
+        cartao.appendChild(h('div', { class: 'mapa-cab' }, h('b', { class: 'mapa-cifra', text: a[0] }),
+          h('button', { type: 'button', class: 'link-botao mapa-ouvir', 'aria-label': 'Ouvir ' + a[0], text: '▶ Ouvir', onclick: function () {
+            if (cordas) tocarAcordeNoBraco(a[0], 0, 1.6); else midis.forEach(function (m) { somNota(m, 0, 1.4, 0.5, true); });
+          } })));
+        if (ge) cartao.appendChild(h('div', { class: 'mapa-grau' }, h('b', { text: ge.grau }), ' · ' + ge.funcao));
+        var dg = cordas ? [] : dedilharAcorde(midis, a[3]);
+        if (cordas && diagramaDe(a[0])) cartao.appendChild(h('div', { class: 'mapa-desenho braco-mini' }, desenharBraco(diagramaDe(a[0]))));
+        else {
+          var lo = Math.min.apply(null, midis) - 2, hi = Math.max.apply(null, midis) + 2;
+          if (hi - lo < 14) hi = lo + 14;
+          var mini = criarTeclado(lo, hi, function (m) { somNota(m, 0, 0.6, 1, true); mini.acender(m, 0.4); }, false);
+          mini.marcar(midis); mini.rotular(dg);
+          cartao.appendChild(h('div', { class: 'mapa-desenho' }, mini.el));
+        }
+        // tabela: da nota mais aguda para a mais grave (como se lê na partitura)
+        var tab = h('table', { class: 'mapa-tabela' }, h('thead', null, h('tr', null, h('th', { text: 'Nota' }), h('th', { text: cordas ? 'Corda' : 'Dedo' }), h('th', { text: 'Função' }))));
+        var corpo = h('tbody');
+        var ordem = midis.slice().sort(function (x, y) { return y - x; }), d = DIAGRAMAS[a[0]];
+        var temFund = midis.some(function (m) { return raiz && pc(m) === raiz.pc; });
+        ordem.forEach(function (m) {
+          var f = raiz ? funcaoNota((pc(m) - raiz.pc + 12) % 12, raiz.q) : ['', 1];
+          var onde = '';
+          if (cordas && d) { for (var i = 0; i < 6; i++) if (d.f[i] !== 'x' && CORDAS_SOLTAS[i] + Number(d.f[i]) === m) { onde = (6 - i) + 'ª ' + (d.f[i] === '0' ? 'solta' : 'casa ' + d.f[i] + (d.d[i] !== '-' ? ' · dedo ' + d.d[i] : '')); break; } }
+          else { var x = dg.filter(function (n) { return n.midi === m; })[0]; if (x) onde = (x.mao === 'E' ? 'ME ' : 'MD ') + x.dedo; }
+          corpo.appendChild(h('tr', null, h('td', { text: escreverNota(m, raiz, f[1]) }), h('td', { class: onde.indexOf('ME') === 0 ? 'me' : onde.indexOf('MD') === 0 ? 'md' : null, text: onde }), h('td', { text: f[0] })));
+        });
+        tab.appendChild(corpo); cartao.appendChild(tab);
+        if (raiz && c && !temFund) cartao.appendChild(h('p', { class: 'mapa-obs', text: 'Sem a fundamental (' + escreverNota(raiz.pc + 48, raiz, 1).replace(/-?\d+$/, '') + '): ela fica com o baixista.' }));
+        if (c && c.baixo) cartao.appendChild(h('p', { class: 'mapa-obs', text: 'Baixo em ' + LETRA_PT[c.baixo[0]] + (c.baixo[1] === 'b' ? '♭' : c.baixo[1] === '#' ? '♯' : '') + ' (acorde invertido).' }));
+        cartoes.push({ nome: a[0], el: cartao });
+        fila.appendChild(cartao);
+      });
+      if (cartoes.length) {
+        areaMapa = h('div', { class: 'mapa' },
+          h('div', { class: 'mapa-titulo' }, h('b', { text: 'Mapa dos acordes' }), h('span', { class: 'pequeno suave', text: ' · estude antes de tocar' + (cartoes.length > 1 ? ' (deslize para o lado)' : '') })),
+          fila);
+      }
+    }
+    function destacarMapa(nome) {
+      cartoes.forEach(function (c) {
+        var atual = c.nome === nome; c.el.classList.toggle('atual', atual);
+        if (atual && c.el.parentNode) { var f = c.el.parentNode; f.scrollTo({ left: c.el.offsetLeft - f.offsetLeft - 8, behavior: 'smooth' }); }
+      });
+    }
+
     if (areaMaos) { caixa.appendChild(areaMaos); caixa.appendChild(legenda); }
     if (temPiano) { caixa.appendChild(areaPiano); desenharPiano(); }
     var ctrl = h('div', { class: 'voc-controles' });
@@ -868,6 +1001,7 @@
       ctrl.appendChild(h('label', { class: 'voc-campo' }, h('span', { text: 'Até o tom' }), ateSel));
     }
     if (ctrl.children.length) caixa.appendChild(ctrl);
+    if (areaMapa) caixa.appendChild(areaMapa);
 
     var api = { el: caixa, parar: function () { if (tocando) parar(); } };
     return api;
