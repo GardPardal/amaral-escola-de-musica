@@ -87,45 +87,468 @@
     return semitons.map(function (s, i) { return [n[(s % 12 + 12) % 12], 1, [baixo + s, alto + s], 'E' + e[i] + ' D' + d[i]]; });
   }
 
-  // ---------- Leitura de partitura: melodias em ordem de dificuldade (semitons a partir de Dó; compassos completos) ----------
-  var LEITURAS = [
-    { nome: 'Dó, Ré e Mi', padrao: [[0, 1], [2, 1], [4, 1], [2, 1], [0, 1], [2, 1], [4, 2]] },
-    { nome: 'Mi, Ré, Dó', padrao: [[4, 1], [2, 1], [0, 2], [4, 1], [2, 1], [0, 2], [0, 1], [2, 1], [4, 1], [2, 1], [4, 1], [2, 1], [0, 2]] },
-    { nome: 'Subindo até o Sol', padrao: [[0, 1], [2, 1], [4, 1], [5, 1], [7, 2], [7, 2], [5, 1], [4, 1], [2, 1], [0, 1], [0, 4]] },
-    { nome: 'Ode à Alegria (Beethoven)', padrao: [[4, 1], [4, 1], [5, 1], [7, 1], [7, 1], [5, 1], [4, 1], [2, 1], [0, 1], [0, 1], [2, 1], [4, 1], [4, 1.5], [2, 0.5], [2, 2]] },
-    { nome: 'Mínimas e pausas', padrao: [[0, 2], [4, 2], [7, 1], [null, 1], [4, 2], [5, 1], [4, 1], [2, 1], [null, 1], [0, 4]] },
-    { nome: 'Brilha, brilha, estrelinha', padrao: [[0, 1], [0, 1], [7, 1], [7, 1], [9, 1], [9, 1], [7, 2], [5, 1], [5, 1], [4, 1], [4, 1], [2, 1], [2, 1], [0, 2]] },
-    { nome: 'Valsa em 3/4', compasso: 3, padrao: [[0, 2], [4, 1], [7, 2], [4, 1], [5, 1], [4, 1], [2, 1], [0, 3]] },
-    { nome: 'Colcheias', padrao: [[0, 0.5], [2, 0.5], [4, 0.5], [5, 0.5], [7, 1], [7, 1], [9, 0.5], [7, 0.5], [5, 0.5], [4, 0.5], [2, 2], [4, 0.5], [5, 0.5], [4, 0.5], [2, 0.5], [0, 1], [2, 1], [0, 4]] },
-    { nome: 'Ponto de aumento', padrao: [[0, 1.5], [2, 0.5], [4, 1], [0, 1], [4, 1.5], [5, 0.5], [7, 2], [9, 1.5], [7, 0.5], [5, 1], [4, 1], [2, 1.5], [2, 0.5], [0, 2]] },
-    { nome: 'Sol maior (Fá♯ na armadura)', desloc: 7, armadura: 1, padrao: [[0, 1], [2, 1], [4, 1], [0, 1], [-1, 1], [0, 1], [2, 2], [4, 1], [5, 1], [7, 1], [4, 1], [2, 1], [-1, 1], [0, 2]] },
-    { nome: 'Saltos', padrao: [[0, 1], [7, 1], [4, 1], [12, 1], [11, 1], [7, 1], [9, 2], [5, 1], [9, 1], [7, 1], [4, 1], [2, 1], [7, 1], [0, 2]] },
-    { nome: 'Lá menor (Sol♯ da harmônica)', desloc: 9, padrao: [[0, 1], [3, 1], [7, 1], [3, 1], [5, 1], [3, 1], [2, 2], [0, 1], [2, 1], [3, 1], [5, 1], [7, 1], [11, 1], [12, 2]] },
-    { nome: 'Fá maior (Si♭ na armadura)', desloc: 5, armadura: -1, padrao: [[0, 1], [2, 1], [4, 1], [5, 1], [7, 1], [5, 1], [4, 1], [2, 1], [0, 1], [4, 1], [7, 2], [4, 1], [2, 1], [0, 2]] },
-    { nome: 'Síncope', padrao: [[0, 0.5], [2, 1], [4, 0.5], [5, 1], [4, 1], [7, 0.5], [5, 1], [4, 0.5], [2, 2], [0, 0.5], [2, 1], [4, 0.5], [2, 1], [0, 1], [0, 4]] },
-    { nome: 'Semicolcheias', padrao: [[0, 0.25], [2, 0.25], [4, 0.25], [5, 0.25], [7, 1], [5, 0.25], [4, 0.25], [2, 0.25], [0, 0.25], [2, 1], [4, 0.5], [5, 0.5], [7, 0.5], [9, 0.5], [7, 2], [4, 1], [2, 1], [0, 2]] },
-    { nome: 'Ré maior (Fá♯ e Dó♯)', desloc: 2, armadura: 2, padrao: [[0, 1], [2, 1], [4, 1], [5, 1], [7, 1], [9, 1], [7, 2], [5, 1], [4, 1], [2, 1], [0, 1], [2, 0.5], [4, 0.5], [-1, 1], [0, 2]] }
-  ];
-  // como cada instrumento lê: clave, nota de partida e o texto do exercício
-  var LER = {
-    'Violão': { raiz: 48, texto: function (n) { return 'Leitura de partitura: ' + n + '. Leia as notas na pauta (a tablatura embaixo mostra corda e casa), diga o nome de cada uma e depois toque junto.'; } },
-    'Guitarra': { raiz: 48, texto: function (n) { return 'Leitura de partitura: ' + n + '. Leia na pauta (a tablatura embaixo ajuda no começo), diga as notas e depois toque junto, com palhetada alternada.'; } },
-    'Teclado': { raiz: 60, raizFa: 48, maos: true, texto: function (n, fa) { return 'Leitura de partitura: ' + n + ', mão ' + (fa ? 'esquerda na clave de fá' : 'direita na clave de sol') + '. Diga o nome das notas no ritmo e depois toque junto.'; } },
-    'Piano': { raiz: 60, raizFa: 48, maos: true, texto: function (n, fa) { return 'Leitura de partitura: ' + n + ', mão ' + (fa ? 'esquerda na clave de fá' : 'direita na clave de sol') + '. Diga o nome das notas no ritmo e depois toque junto.'; } },
-    'Canto coral': { raiz: 60, texto: function (n) { return 'Solfejo: ' + n + '. Leia na pauta e cante dizendo o nome das notas, junto com o piano.'; } },
-    'Concurso': { raiz: 60, raizFa: 48, texto: function (n, fa) { return 'Leitura e solfejo: ' + n + ', na clave de ' + (fa ? 'fá' : 'sol') + '. Diga as notas no ritmo antes de ouvir; depois confira com o exemplo.'; } }
+  // ---------- Lições de partitura ----------
+  // Cada aula começa com uma lição (explicação + exemplos na pauta + "Confira se entendeu") e termina com uma leitura
+  // que usa só o que já foi ensinado. A prova do módulo cobra as lições e as aulas dele.
+  // notas / notasFa: notas escritas que a lição ensina (entram nas questões de nome da nota e de casa no violão).
+  // gera: questões sorteadas na prova. leitura: melodia em semitons a partir do Dó (C4 escrito).
+  function ex(notas, extra) { var p = { clave: 'sol', notas: notas }; Object.keys(extra || {}).forEach(function (k) { p[k] = extra[k]; }); return { pauta: p }; }
+  function leg(bloco, legenda) { bloco.legenda = legenda; return bloco; }
+  var NAT_SOL = [60, 62, 64, 65, 67, 69, 71, 72];
+  var LICOES = {
+    'pauta': { titulo: 'A pauta e a clave de sol', notas: [67, 69, 71, 72],
+      blocos: ['A música se escreve na pauta (ou pentagrama): 5 linhas e 4 espaços. Contamos sempre de baixo para cima: a linha de baixo é a 1ª linha.',
+        leg(ex([[64, 1, '1ª'], [67, 1, '2ª'], [71, 1, '3ª'], [74, 1, '4ª'], [77, 1, '5ª']]), 'As 5 linhas, contadas de baixo para cima.'),
+        'A clave de sol fica no começo da pauta e se enrola na 2ª linha: a nota dessa linha se chama Sol. A partir dela achamos as outras, na ordem Dó, Ré, Mi, Fá, Sol, Lá, Si.',
+        'Linha, espaço, linha, espaço: cada degrau é a nota seguinte. Quanto mais alta na pauta, mais aguda a nota.',
+        leg(ex([[67, 1, 'Sol'], [69, 1, 'Lá'], [71, 1, 'Si'], [72, 1, 'Dó']]), 'Sol (2ª linha), Lá (2º espaço), Si (3ª linha) e Dó (3º espaço).')],
+      confira: [['Quantas linhas tem a pauta?', '5', '4', '6', '7'], ['A clave de sol dá nome à nota de qual linha?', '2ª linha', '1ª linha', '3ª linha', '5ª linha'],
+        ['Na pauta, contamos as linhas:', 'De baixo para cima', 'De cima para baixo', 'Da direita para a esquerda', 'Tanto faz'],
+        ['Uma nota mais alta na pauta soa:', 'Mais aguda', 'Mais grave', 'Mais forte', 'Mais longa'], ['A nota no espaço logo acima do Sol é:', 'Lá', 'Fá', 'Si', 'Dó']],
+      gera: [], leitura: { nome: 'Sol, Lá, Si e Dó (cada nota vale 1 tempo)', padrao: [[7, 1], [9, 1], [11, 1], [12, 1], [11, 1], [9, 1], [7, 1], [7, 1], [9, 1], [11, 1], [9, 1], [7, 1]] } },
+    'figuras': { titulo: 'Figuras: quanto tempo dura cada nota',
+      blocos: ['A forma da nota mostra quanto tempo ela dura. O tempo é o pulso da música, o clique do metrônomo.',
+        leg(ex([[71, 4, '4 tempos'], [71, 2, '2 tempos'], [71, 1, '1 tempo']]), 'Semibreve, mínima e semínima.'),
+        'Semibreve: bolinha vazia sem haste, vale 4 tempos. Mínima: bolinha vazia com haste, 2 tempos. Semínima: bolinha cheia com haste, 1 tempo.',
+        'A haste pode subir ou descer: isso não muda o tempo. Notas do meio da pauta para cima têm a haste para baixo.'],
+      confira: [['Quantos tempos vale a semibreve?', '4', '2', '1', '3'], ['Qual figura vale 2 tempos?', 'Mínima', 'Semínima', 'Semibreve', 'Colcheia'],
+        ['A semínima é:', 'Bolinha cheia com haste', 'Bolinha vazia sem haste', 'Bolinha vazia com haste', 'Bolinha cheia sem haste'],
+        ['A haste para baixo muda o tempo da nota?', 'Não, só depende da posição na pauta', 'Sim, dura o dobro', 'Sim, dura a metade', 'Sim, vira pausa']],
+      gera: [{ tema: 'figura', valores: [4, 2, 1] }],
+      leitura: { nome: 'Semínimas, mínimas e semibreve', padrao: [[7, 1], [9, 1], [11, 2], [12, 1], [11, 1], [9, 2], [7, 1], [9, 1], [11, 1], [9, 1], [7, 4]] } },
+    'compasso': { titulo: 'Compasso, barra e a fórmula 4/4',
+      blocos: ['As notas são agrupadas em compassos, separados pela barra de compasso. A barra dupla (fina e grossa) marca o fim da música.',
+        'A fórmula de compasso fica no começo. No 4/4, o número de cima diz que cada compasso tem 4 tempos; o de baixo diz que a semínima vale 1 tempo.',
+        leg(ex([[72, 2], [71, 1], [69, 1], [67, 2], [69, 2], [71, 1], [72, 1], [71, 1], [69, 1], [67, 4]], { compasso: 4 }), 'Três compassos de 4 tempos: some as figuras de cada um.'),
+        'O 1º tempo de cada compasso é o tempo forte. Conte em voz alta: UM, dois, três, quatro.'],
+      confira: [['O que separa um compasso do outro?', 'A barra de compasso', 'A clave', 'A haste', 'A pausa'], ['No compasso 4/4, quantos tempos tem cada compasso?', '4', '3', '2', '8'],
+        ['Qual é o tempo forte do compasso?', 'O 1º', 'O 2º', 'O 3º', 'O último'], ['A barra dupla no fim da pauta indica:', 'O fim da música', 'Repetir tudo', 'Mudar de clave', 'Uma pausa longa']],
+      gera: [{ tema: 'compasso', formulas: [4], valores: [4, 2, 1] }],
+      leitura: { nome: 'Contando 1-2-3-4', padrao: [[12, 2], [11, 1], [9, 1], [7, 2], [9, 2], [11, 1], [12, 1], [11, 1], [9, 1], [7, 4]] } },
+    'oitava': { titulo: 'Dó, Ré, Mi e Fá: a oitava completa', notas: [60, 62, 64, 65],
+      blocos: ['Descendo do Sol: o 1º espaço é o Fá e a 1ª linha é o Mi. Logo abaixo da pauta fica o Ré.',
+        'O Dó precisa de uma linha extra, curtinha: a linha suplementar. É o Dó central (no piano, o Dó do meio; no violão, a 5ª corda na casa 3).',
+        leg(ex([[60, 1, 'Dó'], [62, 1, 'Ré'], [64, 1, 'Mi'], [65, 1, 'Fá'], [67, 1, 'Sol']]), 'Dó (linha suplementar), Ré, Mi (1ª linha), Fá (1º espaço) e Sol.'),
+        'Agora você lê uma oitava inteira, do Dó ao Dó: Dó, Ré, Mi, Fá, Sol, Lá, Si, Dó.',
+        leg(ex([[60, 1], [62, 1], [64, 1], [65, 1], [67, 1], [69, 1], [71, 1], [72, 1]]), 'A oitava de Dó.')],
+      confira: [['O que é linha suplementar?', 'Uma linha curta para escrever notas fora da pauta', 'A 1ª linha da pauta', 'A barra de compasso', 'A linha da clave'],
+        ['Qual nota fica na 1ª linha da clave de sol?', 'Mi', 'Fá', 'Ré', 'Sol'], ['Qual nota fica no 1º espaço?', 'Fá', 'Mi', 'Lá', 'Sol'],
+        ['O Dó central fica:', 'Numa linha suplementar abaixo da pauta', 'Na 1ª linha', 'No 3º espaço', 'Na 5ª linha'], ['A nota logo abaixo da 1ª linha é:', 'Ré', 'Dó', 'Mi', 'Si']],
+      gera: [], leitura: { nome: 'Brilha, brilha, estrelinha', padrao: [[0, 1], [0, 1], [7, 1], [7, 1], [9, 1], [9, 1], [7, 2], [5, 1], [5, 1], [4, 1], [4, 1], [2, 1], [2, 1], [0, 2]] } },
+    'pausas': { titulo: 'Pausas: o silêncio também se conta',
+      blocos: ['Cada figura tem uma pausa com o mesmo valor. Na pausa você não toca, mas continua contando os tempos.',
+        leg(ex([[null, 4, '4 tempos'], [null, 2, '2 tempos'], [null, 1, '1 tempo']]), 'Pausas de semibreve, de mínima e de semínima.'),
+        'Pausa de semibreve: retângulo pendurado embaixo da 4ª linha. Pausa de mínima: retângulo apoiado em cima da 3ª linha. Pausa de semínima: parece um raio.',
+        leg(ex([[67, 1], [null, 1], [69, 1], [null, 1], [71, 2], [null, 2]], { compasso: 4 }), 'Toque, silêncio, toque, silêncio: conte todos os tempos.')],
+      confira: [['O que fazemos numa pausa?', 'Ficamos em silêncio, mas contando', 'Tocamos mais forte', 'Paramos de contar', 'Repetimos a nota'],
+        ['A pausa de mínima vale:', '2 tempos', '1 tempo', '4 tempos', 'meio tempo'], ['A pausa pendurada embaixo da 4ª linha é a de:', 'Semibreve', 'Mínima', 'Semínima', 'Colcheia'],
+        ['A pausa de semínima vale:', '1 tempo', '2 tempos', '4 tempos', 'meio tempo']],
+      gera: [{ tema: 'pausa', valores: [4, 2, 1] }, { tema: 'compasso', formulas: [4], valores: [2, 1], pausas: true }],
+      leitura: { nome: 'Notas e pausas', padrao: [[7, 1], [null, 1], [9, 1], [null, 1], [11, 2], [null, 2], [12, 1], [11, 1], [9, 1], [7, 1], [4, 2], [null, 2]] } },
+    'tres': { titulo: 'Compassos de 2 e de 3 tempos',
+      blocos: ['Nem toda música tem 4 tempos por compasso. 2/4 é binário (marcha): UM-dois. 3/4 é ternário (valsa): UM-dois-três.',
+        leg(ex([[67, 2], [71, 1], [72, 2], [71, 1], [69, 1], [67, 1], [65, 1], [64, 3]], { compasso: 3 }), 'Valsa em 3/4: cada compasso soma 3 tempos.'),
+        'A mínima com um ponto (mínima pontuada) vale 3 tempos: enche sozinha um compasso de 3/4.'],
+      confira: [['O compasso 3/4 tem quantos tempos?', '3', '4', '2', '6'], ['A valsa é um compasso:', 'Ternário (3/4)', 'Binário (2/4)', 'Quaternário (4/4)', 'Livre'],
+        ['A mínima pontuada vale:', '3 tempos', '2 tempos', '4 tempos', '1 tempo e meio'], ['No 2/4, contamos:', 'UM-dois', 'UM-dois-três', 'UM-dois-três-quatro', 'um-DOIS-três']],
+      gera: [{ tema: 'compasso', formulas: [2, 3, 4], valores: [3, 2, 1] }, { tema: 'figura', valores: [4, 3, 2, 1] }],
+      leitura: { nome: 'Valsa em 3/4', compasso: 3, padrao: [[7, 2], [11, 1], [12, 2], [11, 1], [9, 1], [7, 1], [5, 1], [4, 3]] } },
+    'colcheias': { titulo: 'Colcheias: duas notas por tempo',
+      blocos: ['A colcheia vale meio tempo: cabem duas em cada tempo. Sozinha ela tem uma bandeirinha; em grupo, as colcheias se ligam por uma barra.',
+        leg(ex([[67, 1, '1'], [67, 1, '2'], [67, 0.5, '1'], [69, 0.5, 'e'], [71, 0.5, '2'], [72, 0.5, 'e']]), 'Semínimas e colcheias: conte "1 e 2 e".'),
+        'Conte "1 e 2 e 3 e 4 e": a nota do número cai no tempo, a do "e" cai no meio. A pausa de colcheia também vale meio tempo.'],
+      confira: [['A colcheia vale:', 'Meio tempo', '1 tempo', '2 tempos', '1/4 de tempo'], ['Quantas colcheias cabem em uma semínima?', '2', '4', '1', '3'],
+        ['Para contar colcheias falamos:', '1 e 2 e 3 e 4 e', '1 2 3 4', '1 2 3', 'UM-dois'], ['Colcheias em grupo aparecem:', 'Ligadas por uma barra', 'Sem haste', 'Com bolinha vazia', 'Com um ponto']],
+      gera: [{ tema: 'figura', valores: [4, 2, 1, 0.5] }, { tema: 'compasso', formulas: [2, 3, 4], valores: [2, 1, 0.5] }],
+      leitura: { nome: 'Colcheias', padrao: [[0, 0.5], [2, 0.5], [4, 0.5], [5, 0.5], [7, 1], [7, 1], [9, 0.5], [7, 0.5], [5, 0.5], [4, 0.5], [2, 2], [4, 0.5], [5, 0.5], [4, 0.5], [2, 0.5], [0, 1], [2, 1], [0, 4]] } },
+    'ponto': { titulo: 'Ponto de aumento e ligadura',
+      blocos: ['O ponto ao lado da nota soma metade do valor dela. Mínima pontuada = 2 + 1 = 3 tempos. Semínima pontuada = 1 + meio = 1 tempo e meio.',
+        leg(ex([[67, 1.5, '1 e meio'], [69, 0.5, 'meio'], [71, 2, '2']], { compasso: 4 }), 'Semínima pontuada + colcheia = 2 tempos (longa-curta).'),
+        'A ligadura (um arco ligando duas notas iguais) junta os valores: você toca uma vez e segura pelo tempo das duas.'],
+      confira: [['O ponto de aumento:', 'Soma metade do valor da nota', 'Dobra o valor', 'Deixa a nota curta', 'Sobe meio tom'], ['A semínima pontuada vale:', '1 tempo e meio', '2 tempos', 'meio tempo', '3 tempos'],
+        ['Semínima pontuada + colcheia somam:', '2 tempos', '1 tempo', '3 tempos', '1 tempo e meio'], ['A ligadura entre duas notas iguais quer dizer:', 'Toca uma vez e segura o tempo das duas', 'Toca as duas separadas', 'As notas ficam curtas', 'Repete o compasso']],
+      gera: [{ tema: 'figura', valores: [4, 3, 2, 1.5, 1, 0.5] }, { tema: 'compasso', formulas: [3, 4], valores: [2, 1.5, 1, 0.5] }],
+      leitura: { nome: 'Ponto de aumento', padrao: [[0, 1.5], [2, 0.5], [4, 1], [0, 1], [4, 1.5], [5, 0.5], [7, 2], [9, 1.5], [7, 0.5], [5, 1], [4, 1], [2, 1.5], [2, 0.5], [0, 2]] } },
+    'clave-fa': { titulo: 'A clave de fá (mão esquerda)', notasFa: [43, 45, 47, 48, 50, 52, 53, 55, 57],
+      blocos: ['Os sons graves se escrevem na clave de fá. Os dois pontinhos ficam em volta da 4ª linha: a nota dessa linha é o Fá, logo abaixo do Dó central.',
+        leg(ex([[43, 1, 'Sol'], [47, 1, 'Si'], [50, 1, 'Ré'], [53, 1, 'Fá'], [57, 1, 'Lá']], { clave: 'fa' }), 'Linhas da clave de fá: Sol, Si, Ré, Fá e Lá.'),
+        'Espaços da clave de fá: Lá, Dó, Mi e Sol. O Dó central fica numa linha suplementar acima da pauta de fá.',
+        leg(ex([[48, 1, 'Dó'], [50, 1, 'Ré'], [52, 1, 'Mi'], [53, 1, 'Fá'], [55, 1, 'Sol']], { clave: 'fa' }), 'A posição de Dó da mão esquerda.'),
+        'No piano as duas pautas vêm juntas (sistema): clave de sol em cima para a mão direita e clave de fá embaixo para a esquerda.'],
+      confira: [['A clave de fá dá nome à nota de qual linha?', '4ª linha', '2ª linha', '3ª linha', '5ª linha'], ['As linhas da clave de fá, de baixo para cima, são:', 'Sol – Si – Ré – Fá – Lá', 'Mi – Sol – Si – Ré – Fá', 'Fá – Lá – Dó – Mi – Sol', 'Lá – Dó – Mi – Sol – Si'],
+        ['No piano, a clave de fá normalmente é lida pela:', 'Mão esquerda', 'Mão direita', 'Voz', 'Pedal'], ['O Dó central, na clave de fá, fica:', 'Numa linha suplementar acima da pauta', 'Na 1ª linha', 'No 2º espaço', 'Na 4ª linha']],
+      gera: [], leitura: { nome: 'Subindo até o Sol, na clave de fá', clave: 'fa', padrao: [[0, 1], [2, 1], [4, 1], [5, 1], [7, 2], [7, 2], [5, 1], [4, 1], [2, 1], [0, 1], [0, 4]] } },
+    'agudas': { titulo: 'Notas agudas: Ré, Mi, Fá e Sol', notas: [74, 76, 77, 79],
+      blocos: ['Subindo do Dó do 3º espaço: Ré (4ª linha), Mi (4º espaço), Fá (5ª linha) e Sol (logo acima da pauta).',
+        leg(ex([[72, 1, 'Dó'], [74, 1, 'Ré'], [76, 1, 'Mi'], [77, 1, 'Fá'], [79, 1, 'Sol']]), 'As notas de cima da clave de sol.'),
+        'Para decorar: os 4 espaços formam Fá – Lá – Dó – Mi; as 5 linhas, Mi – Sol – Si – Ré – Fá.'],
+      confira: [['Qual nota fica na 5ª linha da clave de sol?', 'Fá', 'Mi', 'Sol', 'Ré'], ['Os 4 espaços da clave de sol (de baixo para cima) são:', 'Fá – Lá – Dó – Mi', 'Mi – Sol – Si – Ré', 'Dó – Mi – Sol – Si', 'Sol – Si – Ré – Fá'],
+        ['As 5 linhas da clave de sol (de baixo para cima) são:', 'Mi – Sol – Si – Ré – Fá', 'Fá – Lá – Dó – Mi – Sol', 'Sol – Si – Ré – Fá – Lá', 'Dó – Mi – Sol – Si – Ré'], ['A nota do 4º espaço é:', 'Mi', 'Ré', 'Fá', 'Dó']],
+      gera: [], leitura: { nome: 'Lá em cima', padrao: [[12, 1], [14, 1], [16, 2], [17, 1], [16, 1], [14, 2], [12, 1], [16, 1], [19, 1], [17, 1], [16, 4]] } },
+    'graves-violao': { titulo: 'As notas graves do violão (abaixo da pauta)', notas: [52, 53, 55, 57, 59],
+      blocos: ['As cordas graves ficam abaixo da pauta, com linhas suplementares. Descendo do Dó (5ª corda, casa 3): Si (5ª corda, casa 2), Lá (5ª solta), Sol (6ª, casa 3), Fá (6ª, casa 1) e Mi (6ª solta).',
+        leg(ex([[60, 1, 'Dó'], [59, 1, 'Si'], [57, 1, 'Lá'], [55, 1, 'Sol'], [53, 1, 'Fá'], [52, 1, 'Mi']], { tab: true }), 'Cada linha suplementar a mais é uma nota mais grave.'),
+        'Para achar rápido: o Lá fica na 2ª linha suplementar, o Fá na 3ª, e o Mi logo abaixo dela.'],
+      confira: [['A 6ª corda solta (Mi grave) é escrita:', 'Logo abaixo da 3ª linha suplementar', 'Na 1ª linha', 'No 1º espaço', 'Na 2ª linha suplementar'], ['A 5ª corda solta é a nota:', 'Lá', 'Si', 'Mi', 'Ré'],
+        ['O Sol grave fica na:', '6ª corda, casa 3', '5ª corda solta', '4ª corda solta', '6ª corda, casa 1'], ['O Lá grave fica na:', '2ª linha suplementar abaixo da pauta', '1ª linha', '2º espaço', 'Na linha do Dó central']],
+      gera: [], leitura: { nome: 'Baixos do violão', padrao: [[-8, 1], [-7, 1], [-5, 2], [-3, 1], [-1, 1], [0, 2], [-1, 1], [-3, 1], [-5, 1], [-7, 1], [-8, 4]] } },
+    'acidentes': { titulo: 'Sustenido, bemol e bequadro',
+      blocos: ['De uma nota para a vizinha mais próxima a distância é o semitom (meio tom). Dois semitons formam um tom. Entre Mi–Fá e Si–Dó não há nada no meio: já são semitom.',
+        '♯ sustenido sobe a nota meio tom; ♭ bemol desce meio tom; ♮ bequadro cancela o acidente. O acidente vale até o fim do compasso.',
+        leg(ex([[65, 1, 'Fá'], [66, 1, 'Fá♯'], [65, 2, 'Fá']], { compasso: 4 }), 'O sustenido vale no compasso inteiro; para voltar ao Fá natural, usamos o bequadro.'),
+        leg(ex([[71, 2, 'Si'], [70, 2, 'Si♭']], { bemois: true, compasso: 4 }), 'O bemol desce o Si meio tom.')],
+      confira: [['O sustenido (♯):', 'Sobe a nota meio tom', 'Desce meio tom', 'Cancela o acidente', 'Dobra o valor'], ['O bemol (♭):', 'Desce a nota meio tom', 'Sobe meio tom', 'Cancela o acidente', 'Indica silêncio'],
+        ['O bequadro (♮):', 'Cancela o acidente e volta à nota natural', 'Sobe um tom', 'Desce um tom', 'Repete o compasso'], ['Entre quais notas naturais já existe semitom?', 'Mi–Fá e Si–Dó', 'Dó–Ré e Fá–Sol', 'Ré–Mi e Lá–Si', 'Sol–Lá e Dó–Ré'],
+        ['Um acidente escrito na nota vale:', 'Até o fim do compasso', 'Só para aquela nota', 'Para a música inteira', 'Até a próxima pausa']],
+      gera: [{ tema: 'acidente' }],
+      leitura: { nome: 'Fá sustenido e bequadro', padrao: [[7, 1], [6, 1], [7, 2], [4, 1], [5, 1], [6, 1], [7, 1], [9, 1], [7, 1], [6, 1], [5, 1], [4, 4]] } },
+    'escala-maior': { titulo: 'A escala maior',
+      blocos: ['A escala maior segue sempre a mesma fórmula: tom – tom – semitom – tom – tom – tom – semitom. Começando no Dó, ela usa só as notas naturais.',
+        leg(ex([[60, 1, 'Dó'], [62, 1, 'T'], [64, 1, 'T'], [65, 1, 'S'], [67, 1, 'T'], [69, 1, 'T'], [71, 1, 'T'], [72, 1, 'S']]), 'Dó maior: os semitons ficam entre Mi–Fá e Si–Dó.'),
+        'Cada nota da escala é um grau: Dó é o 1º grau (a tônica), Ré o 2º, Mi o 3º, e assim por diante.'],
+      confira: [['A fórmula da escala maior é:', 'T – T – S – T – T – T – S', 'T – S – T – T – S – T – T', 'S – T – T – T – S – T – T', 'T – T – T – S – T – T – S'],
+        ['Na escala de Dó maior, onde ficam os semitons?', 'Mi–Fá e Si–Dó', 'Dó–Ré e Sol–Lá', 'Ré–Mi e Lá–Si', 'Fá–Sol e Dó–Ré'], ['O 1º grau da escala se chama:', 'Tônica', 'Dominante', 'Sensível', 'Mediante'],
+        ['O 5º grau da escala de Dó maior é:', 'Sol', 'Fá', 'Lá', 'Mi']],
+      gera: [{ tema: 'escala', tons: ['Dó'] }],
+      leitura: { nome: 'Escala de Dó maior', padrao: [[0, 1], [2, 1], [4, 1], [5, 1], [7, 1], [9, 1], [11, 1], [12, 1], [11, 1], [9, 1], [7, 1], [5, 1], [4, 1], [2, 1], [0, 2]] } },
+    'armadura-sol': { titulo: 'Armadura de clave: Sol maior', notas: [66],
+      blocos: ['Começando a escala maior no Sol, para manter a fórmula o Fá precisa virar Fá♯.',
+        'Em vez de escrever ♯ em todo Fá, ele aparece uma vez só no começo de cada linha: é a armadura de clave. Com um ♯ na armadura, todo Fá é Fá♯ (o tom é Sol maior).',
+        leg(ex([[67, 1], [69, 1], [71, 1], [72, 1], [74, 1], [76, 1], [78, 1, 'Fá♯'], [79, 1]], { armadura: 1 }), 'Escala de Sol maior com a armadura.')],
+      confira: [['A escala de Sol maior tem qual acidente?', 'Fá♯', 'Si♭', 'Dó♯', 'Nenhum'], ['A armadura de clave serve para:', 'Indicar os acidentes que valem na música toda', 'Mostrar o andamento', 'Separar compassos', 'Indicar a dinâmica'],
+        ['Com um ♯ na armadura, todo Fá vira:', 'Fá♯', 'Fá♭', 'Sol', 'Mi'], ['Um sustenido na armadura indica o tom de:', 'Sol maior', 'Fá maior', 'Ré maior', 'Dó maior']],
+      gera: [{ tema: 'escala', tons: ['Dó', 'Sol'] }, { tema: 'armadura', tons: ['Sol', 'Ré', 'Fá'] }],
+      leitura: { nome: 'Em Sol maior (Fá♯ na armadura)', armadura: 1, padrao: [[7, 1], [9, 1], [11, 1], [7, 1], [6, 1], [7, 1], [9, 2], [11, 1], [12, 1], [11, 1], [9, 1], [7, 1], [6, 1], [7, 2]] } },
+    'armadura-fa': { titulo: 'Fá maior, Ré maior e a ordem dos acidentes',
+      blocos: ['Fá maior precisa de Si♭ para seguir a fórmula: a armadura tem um bemol. Ré maior precisa de dois sustenidos: Fá♯ e Dó♯.',
+        leg(ex([[65, 1], [67, 1], [69, 1], [70, 1, 'Si♭'], [72, 1], [74, 1], [76, 1], [77, 1]], { armadura: -1 }), 'Escala de Fá maior.'),
+        'Os sustenidos entram sempre nesta ordem: Fá, Dó, Sol, Ré, Lá, Mi, Si. Os bemóis, na ordem contrária: Si, Mi, Lá, Ré, Sol, Dó, Fá.'],
+      confira: [['Qual tom maior tem um bemol (Si♭)?', 'Fá maior', 'Sol maior', 'Ré maior', 'Dó maior'], ['Ré maior tem quais sustenidos?', 'Fá♯ e Dó♯', 'Fá♯ e Sol♯', 'Dó♯ e Sol♯', 'Só Fá♯'],
+        ['A ordem dos sustenidos começa por:', 'Fá – Dó – Sol', 'Si – Mi – Lá', 'Dó – Ré – Mi', 'Sol – Ré – Lá'], ['A ordem dos bemóis começa por:', 'Si – Mi – Lá', 'Fá – Dó – Sol', 'Lá – Si – Dó', 'Mi – Si – Fá']],
+      gera: [{ tema: 'armadura', tons: ['Sol', 'Ré', 'Fá', 'Lá', 'Si♭'] }, { tema: 'escala', tons: ['Sol', 'Ré', 'Fá'] }],
+      leitura: { nome: 'Em Fá maior (Si♭ na armadura)', armadura: -1, padrao: [[5, 1], [7, 1], [9, 1], [10, 1], [12, 1], [10, 1], [9, 1], [7, 1], [5, 1], [9, 1], [12, 2], [9, 1], [7, 1], [5, 2]] } },
+    'intervalos': { titulo: 'Intervalos: a distância entre as notas',
+      blocos: ['Intervalo é a distância entre duas notas. Conte as notas incluindo a primeira e a última: Dó–Mi = Dó, Ré, Mi = 3ª.',
+        leg(ex([[60, 1, 'Dó'], [62, 1, '2ª'], [60, 1, 'Dó'], [64, 1, '3ª'], [60, 1, 'Dó'], [67, 1, '5ª'], [60, 1, 'Dó'], [72, 1, '8ª']]), 'A partir do Dó: 2ª, 3ª, 5ª e 8ª.'),
+        'Na pauta é fácil: de linha para a linha seguinte (ou de espaço para espaço) é uma 3ª; de uma linha para o espaço vizinho é uma 2ª.',
+        '3ª maior = 2 tons (Dó–Mi); 3ª menor = 1 tom e meio (Lá–Dó). 5ª justa = 3 tons e meio (Dó–Sol). 8ª é a mesma nota mais aguda.'],
+      confira: [['O intervalo Dó–Mi é uma:', '3ª', '2ª', '4ª', '5ª'], ['O intervalo Dó–Sol é uma:', '5ª', '4ª', '6ª', '3ª'], ['Duas notas em linhas vizinhas formam uma:', '3ª', '2ª', '4ª', '5ª'],
+        ['A 3ª maior tem:', '2 tons', '1 tom e meio', '1 tom', '2 tons e meio']],
+      gera: [{ tema: 'intervalo', lista: [2, 3, 4, 5, 7, 12] }, { tema: 'intervalo-ouvido', lista: [3, 4, 7, 12] }],
+      leitura: { nome: 'Saltos', padrao: [[0, 1], [7, 1], [4, 1], [12, 1], [11, 1], [7, 1], [9, 2], [5, 1], [9, 1], [7, 1], [4, 1], [2, 1], [7, 1], [0, 2]] } },
+    'triades': { titulo: 'Acordes na pauta: as tríades',
+      blocos: ['Tríade é um acorde de 3 notas empilhadas em terças. Na pauta parece um "boneco de neve": três notas em linhas seguidas (ou em espaços seguidos).',
+        leg(ex([[[60, 64, 67], 1, 'C'], [[65, 69, 72], 1, 'F'], [[67, 71, 74], 1, 'G'], [[69, 72, 76], 1, 'Am']]), 'C, F, G e Am escritos na pauta.'),
+        'Acorde maior: 3ª maior embaixo e 3ª menor em cima (Dó–Mi–Sol). Menor: 3ª menor embaixo e maior em cima (Lá–Dó–Mi). A cifra dá o nome: C = Dó maior, Am = Lá menor.'],
+      confira: [['Tríade é um acorde de:', '3 notas em terças', '2 notas', '4 notas', 'Notas em segundas'], ['Quais notas formam C (Dó maior)?', 'Dó – Mi – Sol', 'Dó – Mi♭ – Sol', 'Dó – Fá – Lá', 'Ré – Fá – Lá'],
+        ['Am é:', 'Lá menor', 'Lá maior', 'Lá com sétima', 'Lá diminuto'], ['A tríade maior tem embaixo uma:', '3ª maior', '3ª menor', '4ª justa', '2ª maior']],
+      gera: [{ tema: 'triade', tons: ['Dó', 'Sol', 'Fá'] }, { tema: 'acorde-ouvido', tipos: ['', 'm'] }],
+      leitura: { nome: 'Arpejos de C, F e G', padrao: [[0, 1], [4, 1], [7, 2], [5, 1], [9, 1], [12, 2], [2, 1], [7, 1], [11, 2], [0, 4]] } },
+    'semicolcheias': { titulo: 'Semicolcheias: quatro notas por tempo',
+      blocos: ['A semicolcheia vale 1/4 de tempo: cabem quatro em cada tempo. Tem duas bandeirinhas, ou duas barras quando está em grupo.',
+        leg(ex([[67, 0.25], [69, 0.25], [71, 0.25], [72, 0.25], [71, 0.5], [69, 0.5], [67, 1]]), 'Um tempo de semicolcheias, um de colcheias e uma semínima.'),
+        'Fale "ta-ca-ta-ca" em cada tempo. A colcheia pontuada com uma semicolcheia (longa-curta) também completa 1 tempo: é o "galope".'],
+      confira: [['A semicolcheia vale:', '1/4 de tempo', 'Meio tempo', '1 tempo', '2 tempos'], ['Quantas semicolcheias cabem em um tempo?', '4', '2', '8', '3'],
+        ['A semicolcheia tem:', 'Duas bandeirinhas (ou duas barras)', 'Uma bandeirinha', 'Nenhuma haste', 'Bolinha vazia'], ['Colcheia pontuada + semicolcheia somam:', '1 tempo', 'Meio tempo', '2 tempos', '1 tempo e meio']],
+      gera: [{ tema: 'figura', valores: [2, 1, 0.5, 0.25, 0.75] }, { tema: 'compasso', formulas: [2, 4], valores: [1, 0.5, 0.25] }],
+      leitura: { nome: 'Semicolcheias', padrao: [[0, 0.25], [2, 0.25], [4, 0.25], [5, 0.25], [7, 1], [5, 0.25], [4, 0.25], [2, 0.25], [0, 0.25], [2, 1], [4, 0.5], [5, 0.5], [7, 0.5], [9, 0.5], [7, 2], [4, 1], [2, 1], [0, 2]] } },
+    'menor': { titulo: 'Tom menor e a relativa', notas: [68],
+      blocos: ['Toda escala maior tem uma relativa menor com as mesmas notas, começando no 6º grau: Dó maior → Lá menor. Por isso as duas usam a mesma armadura.',
+        leg(ex([[57, 1, 'Lá'], [59, 1], [60, 1], [62, 1], [64, 1], [65, 1], [67, 1], [69, 1]]), 'Lá menor natural: as notas de Dó maior, começando no Lá.'),
+        'Na menor harmônica o 7º grau sobe meio tom (em Lá menor, Sol vira Sol♯). Ele aparece como acidente na música, não na armadura.',
+        leg(ex([[57, 1], [59, 1], [60, 1], [62, 1], [64, 1], [65, 1], [68, 1, 'Sol♯'], [69, 1]]), 'Lá menor harmônica.')],
+      confira: [['Qual é a relativa menor de Dó maior?', 'Lá menor', 'Mi menor', 'Ré menor', 'Dó menor'], ['A relativa menor usa a armadura:', 'Igual à do tom maior', 'Com um bemol a mais', 'Sempre sem armadura', 'Com um sustenido a mais'],
+        ['Na menor harmônica de Lá, qual nota muda?', 'Sol vira Sol♯', 'Fá vira Fá♯', 'Dó vira Dó♯', 'Si vira Si♭'], ['A relativa menor começa no:', '6º grau da escala maior', '2º grau', '5º grau', '4º grau']],
+      gera: [{ tema: 'relativa', tons: ['Dó', 'Sol', 'Fá', 'Ré'] }],
+      leitura: { nome: 'Lá menor (com o Sol♯)', padrao: [[9, 1], [12, 1], [9, 1], [4, 1], [5, 1], [4, 1], [2, 2], [0, 1], [2, 1], [4, 1], [5, 1], [4, 1], [8, 1], [9, 2]] } },
+    'campo': { titulo: 'Campo harmônico e a cifra na partitura',
+      blocos: ['Os acordes de um tom saem da própria escala: em Dó maior, C – Dm – Em – F – G – Am – Bdim (graus I a VII).',
+        leg(ex([[[60, 64, 67], 1, 'C'], [[62, 65, 69], 1, 'Dm'], [[64, 67, 71], 1, 'Em'], [[65, 69, 72], 1, 'F'], [[67, 71, 74], 1, 'G'], [[69, 72, 76], 1, 'Am'], [[71, 74, 77], 1, 'Bdim']]), 'O campo harmônico de Dó maior.'),
+        'Funções: tônica (I, vi, iii) dá repouso; subdominante (IV, ii) afasta; dominante (V, vii) cria tensão que pede a volta para o I.',
+        'Na partitura popular, a cifra vem escrita em cima da melodia: você lê a melodia e acompanha com os acordes.'],
+      confira: [['No campo harmônico de Dó, o acorde do V grau é:', 'G', 'F', 'Am', 'Em'], ['Quais graus do campo maior são acordes menores?', 'II, III e VI', 'I, IV e V', 'Só o VI', 'II, V e VII'],
+        ['A dominante (V) tem a função de:', 'Criar tensão que pede a tônica', 'Dar repouso', 'Afastar sem tensão', 'Encerrar o compasso'], ['Na partitura popular, a cifra fica:', 'Em cima da melodia', 'Embaixo da tablatura', 'Só no fim', 'Na armadura']],
+      gera: [{ tema: 'campo', tons: ['Dó', 'Sol', 'Fá'] }, { tema: 'funcao', tons: ['Dó', 'Sol', 'Fá'] }],
+      leitura: { nome: 'Melodia para acompanhar com C, F e G', padrao: [[4, 1], [5, 1], [7, 2], [9, 1], [7, 1], [5, 2], [4, 1], [2, 1], [0, 1], [2, 1], [0, 4]] } },
+    'sinais': { titulo: 'Dinâmica, repetição e andamento',
+      blocos: ['Dinâmica é o volume. p (piano) = suave; mf (mezzo forte) = meio forte; f (forte) = forte. O sinal < é crescendo e > é decrescendo.',
+        'Repetição: o ritornello (‖: … :‖) manda repetir o trecho; D.C. (da capo) volta ao começo; Fine marca onde a música termina.',
+        'Fermata (𝄐) segura a nota mais que o valor. Staccato (ponto em cima ou embaixo da nota) deixa a nota curta. Andamento: Adagio = lento, Moderato = moderado, Allegro = rápido.'],
+      confira: [['O que significa p (piano) na partitura?', 'Tocar suave', 'Tocar forte', 'Tocar rápido', 'Repetir'], ['O sinal < (crescendo) pede:', 'Aumentar o volume aos poucos', 'Diminuir o volume', 'Acelerar', 'Parar'],
+        ['O ritornello indica:', 'Repetir o trecho', 'Fim da música', 'Mudar de tom', 'Tocar suave'], ['A fermata indica:', 'Segurar a nota além do valor', 'Repetir', 'Tocar curto', 'Voltar ao começo'],
+        ['Allegro é um andamento:', 'Rápido', 'Lento', 'Moderado', 'Livre'], ['O staccato deixa a nota:', 'Curta, destacada', 'Longa', 'Mais forte', 'Mais aguda']],
+      gera: [], leitura: { nome: 'Ode à Alegria (toque a 1ª vez p e a 2ª vez f)', padrao: [[4, 1], [4, 1], [5, 1], [7, 1], [7, 1], [5, 1], [4, 1], [2, 1], [0, 1], [0, 1], [2, 1], [4, 1], [4, 1.5], [2, 0.5], [2, 2]] } },
+    'sincope': { titulo: 'Síncope e contratempo',
+      blocos: ['Síncope é quando a nota começa no tempo fraco (no "e") e se prolonga por cima do tempo forte. É o balanço da música brasileira e do pop.',
+        leg(ex([[67, 0.5, '1'], [69, 1, 'e'], [71, 0.5, 'e'], [72, 2]], { compasso: 4 }), 'Colcheia, semínima, colcheia: a nota do meio começa no "e" e atravessa o tempo 2.'),
+        'Contratempo é tocar no "e" e deixar o tempo em silêncio (pausa de colcheia no tempo, nota no "e").'],
+      confira: [['Síncope é:', 'Uma nota que começa no tempo fraco e se prolonga pelo forte', 'Uma nota muito forte', 'Uma pausa longa', 'Repetir o compasso'],
+        ['Colcheia + semínima + colcheia somam:', '2 tempos', '1 tempo', '3 tempos', '1 tempo e meio'], ['Contratempo é tocar:', 'No "e", com o tempo em silêncio', 'Só no tempo 1', 'Mais rápido', 'Mais devagar']],
+      gera: [{ tema: 'compasso', formulas: [2, 4], valores: [1, 0.5] }],
+      leitura: { nome: 'Síncope', padrao: [[0, 0.5], [2, 1], [4, 0.5], [5, 1], [4, 1], [7, 0.5], [5, 1], [4, 0.5], [2, 2], [0, 0.5], [2, 1], [4, 0.5], [2, 1], [0, 1], [0, 4]] } },
+    'tablatura': { titulo: 'Lendo tablatura',
+      blocos: ['A tablatura tem 6 linhas, uma para cada corda. A linha de cima é a 1ª corda (Mi agudo) e a de baixo é a 6ª (Mi grave). O número é a casa; 0 é corda solta.',
+        leg(ex([[52, 1], [55, 1], [57, 2], [52, 1], [55, 1], [58, 0.5], [57, 1.5]], { tab: true, compasso: 4 }), 'Partitura e tablatura juntas: a pauta mostra o ritmo, a tab mostra corda e casa.'),
+        'A tablatura sozinha não mostra bem o ritmo. Por isso ela costuma vir junto da partitura: leia o ritmo na pauta e a posição na tab.'],
+      confira: [['Na tablatura, a linha de cima é a:', '1ª corda (Mi agudo)', '6ª corda (Mi grave)', '3ª corda', '5ª corda'], ['O número 0 na tablatura quer dizer:', 'Corda solta', 'Não tocar', 'Pausa', 'Casa 10'],
+        ['A tablatura sozinha não mostra bem:', 'O ritmo', 'A corda', 'A casa', 'A ordem das notas']],
+      gera: [{ tema: 'tab' }],
+      leitura: { nome: 'Riff nas cordas graves', padrao: [[-8, 1], [-5, 1], [-3, 2], [-8, 1], [-5, 1], [-2, 0.5], [-3, 1.5], [-8, 1], [-5, 1], [-3, 2], [-5, 1], [-8, 3]] } },
+    'cifra': { titulo: 'Lendo cifras',
+      blocos: ['A cifra usa letras: A = Lá, B = Si, C = Dó, D = Ré, E = Mi, F = Fá, G = Sol. A letra sozinha é um acorde maior.',
+        'm = menor (Am); 7 = com sétima (G7); 7M = com sétima maior (C7M); sus4 = troca a 3ª pela 4ª; ° ou dim = diminuto; a barra / mostra o baixo (C/E = Dó com Mi no baixo).'],
+      confira: [['Na cifra, B é a nota:', 'Si', 'Bé', 'Sol', 'Ré'], ['A cifra C/E quer dizer:', 'Dó com Mi no baixo', 'Dó e depois Mi', 'Dó menor', 'Mi com sétima'],
+        ['Am7 é:', 'Lá menor com sétima', 'Lá maior com sétima maior', 'Lá com sétima', 'Lá diminuto'], ['O "sus4" troca a 3ª do acorde pela:', '4ª', '2ª', '5ª', '7ª']],
+      gera: [{ tema: 'cifra' }],
+      leitura: { nome: 'Brilha, brilha, estrelinha (leia e depois acompanhe com C, F e G)', padrao: [[0, 1], [0, 1], [7, 1], [7, 1], [9, 1], [9, 1], [7, 2], [5, 1], [5, 1], [4, 1], [4, 1], [2, 1], [2, 1], [0, 2]] } },
+    'primeira-vista': { titulo: 'Leitura à primeira vista',
+      blocos: ['Ler à primeira vista é tocar uma música que você nunca viu. O segredo é olhar antes de tocar: clave, armadura, compasso e o ritmo mais difícil.',
+        'Escolha um andamento lento, nunca pare (se errar, siga no tempo) e leia um pouco à frente da nota que está tocando.'],
+      confira: [['Na leitura à primeira vista, se errar uma nota:', 'Siga no tempo, sem parar', 'Volte ao começo', 'Pare e corrija', 'Toque mais rápido'],
+        ['Antes de começar, olhe:', 'Clave, armadura, compasso e o ritmo mais difícil', 'Só a primeira nota', 'Só a letra', 'O nome do compositor'],
+        ['O andamento certo para ler à primeira vista é:', 'Lento, que dê para não parar', 'O mais rápido possível', 'O da gravação', 'Sem andamento']],
+      gera: [{ tema: 'compasso', formulas: [2, 3, 4], valores: [2, 1, 0.5] }],
+      leitura: { nome: 'Melodia nova', padrao: [[0, 1], [4, 0.5], [5, 0.5], [7, 1], [12, 1], [11, 1.5], [9, 0.5], [7, 2], [5, 1], [4, 1], [2, 0.5], [4, 0.5], [5, 1], [4, 2], [2, 1], [0, 1]] } },
+    // ----- trilha profissional -----
+    'sistema': { titulo: 'Pauta dupla: lendo as duas mãos', notasFa: [43, 45, 47, 48, 50, 52, 53, 55, 57],
+      blocos: ['Piano e teclado leem no sistema: duas pautas unidas por uma chave. Em cima a clave de sol (mão direita), embaixo a clave de fá (mão esquerda). Notas na mesma linha vertical tocam juntas.',
+        { pauta: { compasso: 4, vozes: [{ clave: 'sol', notas: [[64, 1], [64, 1], [65, 1], [67, 1], [67, 1], [65, 1], [64, 1], [62, 1]] }, { clave: 'fa', notas: [[48, 2], [43, 2], [48, 2], [43, 2]] }] }, legenda: 'Melodia na direita, baixo na esquerda.' },
+        'Para ler: primeiro o ritmo e a mão esquerda (o baixo), depois junte a direita. O Dó central é a linha suplementar entre as duas pautas.'],
+      confira: [['No sistema do piano, a pauta de cima é lida pela:', 'Mão direita (clave de sol)', 'Mão esquerda', 'Pedal', 'Voz'], ['Notas na mesma linha vertical nas duas pautas:', 'Tocam juntas', 'Tocam uma depois da outra', 'São pausas', 'São de outra música'],
+        ['A chave que une as duas pautas indica:', 'Que as duas são lidas juntas', 'Repetição', 'Mudança de tom', 'Fim da música']],
+      gera: [], leitura: { nome: 'Duas mãos', maos: { E: { raiz: 48, padrao: [[0, 4], [7, 4], [0, 4]] }, D: { raiz: 60, padrao: [[4, 1], [4, 1], [5, 1], [7, 1], [7, 1], [5, 1], [4, 1], [2, 1], [0, 1], [0, 1], [2, 1], [4, 1]] } } } },
+    'armaduras-sust': { titulo: 'Armaduras com sustenidos',
+      blocos: ['Ordem dos sustenidos: Fá – Dó – Sol – Ré – Lá – Mi – Si. Truque: o tom maior fica meio tom acima do último sustenido (último Dó♯ → Ré maior).',
+        leg(ex([], { armadura: 3 }), 'Três sustenidos (Fá♯, Dó♯, Sol♯): Lá maior.'),
+        'Tons com sustenido: Sol (1), Ré (2), Lá (3), Mi (4), Si (5), Fá♯ (6).'],
+      confira: [['Qual tom maior tem 3 sustenidos?', 'Lá maior', 'Ré maior', 'Mi maior', 'Sol maior'], ['Se o último sustenido é Sol♯, o tom é:', 'Lá maior', 'Sol maior', 'Mi maior', 'Si maior'],
+        ['Mi maior tem quantos sustenidos?', '4', '3', '5', '2']],
+      gera: [{ tema: 'armadura', tons: ['Sol', 'Ré', 'Lá', 'Mi', 'Si'] }, { tema: 'escala', tons: ['Sol', 'Ré', 'Lá', 'Mi'] }],
+      leitura: { nome: 'Em Ré maior', armadura: 2, padrao: [[2, 1], [4, 1], [6, 1], [7, 1], [9, 1], [11, 1], [9, 2], [7, 1], [6, 1], [4, 1], [2, 1], [4, 0.5], [6, 0.5], [1, 1], [2, 2]] } },
+    'armaduras-bem': { titulo: 'Armaduras com bemóis',
+      blocos: ['Ordem dos bemóis: Si – Mi – Lá – Ré – Sol – Dó – Fá (a dos sustenidos ao contrário). Truque: o penúltimo bemol é o nome do tom (Si♭, Mi♭ → Si♭ maior). Fá maior tem um só bemol: decore.',
+        leg(ex([], { armadura: -3 }), 'Três bemóis (Si♭, Mi♭, Lá♭): Mi♭ maior.')],
+      confira: [['Qual tom maior tem 2 bemóis?', 'Si♭ maior', 'Fá maior', 'Mi♭ maior', 'Lá♭ maior'], ['Si♭–Mi♭–Lá♭ na armadura é o tom de:', 'Mi♭ maior', 'Lá♭ maior', 'Si♭ maior', 'Ré♭ maior'],
+        ['A ordem dos bemóis é:', 'Si – Mi – Lá – Ré – Sol – Dó – Fá', 'Fá – Dó – Sol – Ré – Lá – Mi – Si', 'Si – Lá – Sol – Fá – Mi – Ré – Dó', 'Mi – Si – Fá – Dó – Sol – Ré – Lá']],
+      gera: [{ tema: 'armadura', tons: ['Fá', 'Si♭', 'Mi♭', 'Lá♭'] }, { tema: 'escala', tons: ['Fá', 'Si♭', 'Mi♭'] }],
+      leitura: { nome: 'Em Fá maior', armadura: -1, padrao: [[5, 1], [7, 1], [9, 1], [10, 1], [12, 1], [10, 1], [9, 1], [7, 1], [5, 1], [9, 1], [12, 2], [9, 1], [7, 1], [5, 2]] } },
+    'tetrades-pauta': { titulo: 'Tétrades na pauta e na cifra',
+      blocos: ['Tétrade é a tríade com a 7ª: quatro notas empilhadas em terças (linha-linha-linha-linha ou espaço-espaço-espaço-espaço).',
+        leg(ex([[[60, 64, 67, 71], 1, 'C7M'], [[60, 64, 67, 70], 1, 'C7'], [[60, 63, 67, 70], 1, 'Cm7'], [[60, 63, 66, 70], 1, 'Cm7(♭5)']], { bemois: true }), 'As quatro tétrades mais usadas, em Dó.'),
+        'Na cifra: 7M (ou maj7) = 7ª maior; 7 = 3ª maior com 7ª menor (dominante); m7 = menor com 7ª; m7(♭5) = meio-diminuto; °7 = diminuto.'],
+      confira: [['Tétrade é:', 'Tríade + 7ª', 'Duas tríades', 'Tríade sem 5ª', 'Acorde de 5 notas'], ['C7 tem as notas:', 'Dó – Mi – Sol – Si♭', 'Dó – Mi – Sol – Si', 'Dó – Mi♭ – Sol – Si♭', 'Dó – Mi♭ – Sol♭ – Si♭'],
+        ['m7(♭5) se chama:', 'Meio-diminuto', 'Diminuto', 'Dominante', 'Sétima maior']],
+      gera: [{ tema: 'tetrade', tons: ['Dó', 'Fá', 'Sol', 'Si♭'] }],
+      leitura: { nome: 'Arpejos do ii-V-I', padrao: [[2, 1], [5, 1], [9, 1], [12, 1], [7, 1], [11, 1], [14, 1], [17, 1], [12, 1], [16, 1], [19, 1], [23, 1], [24, 4]] } },
+    'tensoes': { titulo: 'Tensões: 9ª, 11ª e 13ª',
+      blocos: ['Depois da 7ª, as terças continuam: 9ª (a 2ª uma oitava acima), 11ª (a 4ª) e 13ª (a 6ª). Na cifra elas vêm entre parênteses: C7M(9), G7(13).',
+        leg(ex([[[60, 64, 67, 71, 74], 2, 'C7M(9)'], [[55, 59, 65, 76], 2, 'G7(13)']]), 'A 9ª fica em cima; na 13ª a 5ª costuma sair.'),
+        'No voicing, a tônica muitas vezes sai (o baixista toca) e as tensões ficam em cima, dando a cor do acorde.'],
+      confira: [['A 9ª é a mesma nota que a:', '2ª', '3ª', '4ª', '6ª'], ['A 13ª é a mesma nota que a:', '6ª', '5ª', '7ª', '4ª'], ['A 9ª de Dó é:', 'Ré', 'Mi', 'Fá', 'Lá']],
+      gera: [{ tema: 'harmonia', tipos: ['tensao'] }],
+      leitura: { nome: 'Melodia com 9ª e 13ª', padrao: [[14, 1], [12, 1], [11, 2], [9, 1], [7, 1], [4, 2], [2, 1], [4, 1], [7, 1], [9, 1], [14, 4]] } },
+    'dominantes': { titulo: 'Dominantes secundários e SubV',
+      blocos: ['Todo acorde do campo (menos o vii) pode ganhar o seu próprio dominante, o V7 dele. Em Dó, o V7 do Dm é A7 (A7 → Dm).',
+        'O SubV7 (substituto de trítono) fica meio tom acima do alvo: em vez de G7 → C, toca D♭7 → C. Os dois têm o mesmo trítono (Fá e Si).'],
+      confira: [['Em Dó, o dominante secundário de Am é:', 'E7', 'A7', 'D7', 'G7'], ['O SubV7 que resolve em C é:', 'D♭7', 'G7', 'F7', 'B7'], ['G7 e D♭7 têm em comum:', 'O trítono (Fá e Si)', 'A tônica', 'A 5ª', 'Nada']],
+      gera: [{ tema: 'harmonia', tipos: ['subV', 'secundario'] }],
+      leitura: { nome: 'Linha cromática (Lá♭ de passagem)', bemois: true, padrao: [[7, 1], [8, 1], [9, 2], [5, 1], [6, 1], [7, 2], [4, 1], [3, 1], [2, 1], [1, 1], [0, 4]] } },
+    'tercinas': { titulo: 'Tercinas e swing',
+      blocos: ['Tercina é um grupo de três notas no tempo de duas. Aparece com um 3 em cima do grupo. Fale "tri-pe-ra" em cada tempo.',
+        'No swing, as colcheias escritas iguais soam longa-curta (como a 1ª e a 3ª nota de uma tercina). Na partitura de jazz vem escrito "Swing" no começo.',
+        leg(ex([[67, 0.5, 'lon-'], [69, 0.5, 'ga'], [71, 0.5, 'lon-'], [72, 0.5, 'ga'], [71, 2]]), 'Escrito assim, tocado longa-curta.')],
+      confira: [['Tercina é:', 'Três notas no tempo de duas', 'Três tempos por compasso', 'Uma nota de três tempos', 'Três acordes'], ['Colcheias em swing soam:', 'Longa-curta', 'Curta-longa', 'Todas iguais', 'Como semínimas'],
+        ['A tercina é indicada por:', 'Um 3 em cima do grupo', 'Um ponto', 'Uma ligadura sem número', 'Uma pausa']],
+      gera: [{ tema: 'figura', valores: [2, 1, 0.5, 0.25] }],
+      leitura: { nome: 'Frase em colcheias (toque com swing)', padrao: [[0, 0.5], [2, 0.5], [4, 0.5], [7, 0.5], [9, 0.5], [7, 0.5], [4, 0.5], [2, 0.5], [0, 2], [null, 2]] } },
+    'nashville': { titulo: 'Números de Nashville',
+      blocos: ['No sistema Nashville cada acorde vira o número do grau no tom. Em Dó: C = 1, Dm = 2m, Em = 3m, F = 4, G = 5, Am = 6m.',
+        'A vantagem: o mesmo papel serve em qualquer tom. 1 – 5 – 6m – 4 em Sol é G – D – Em – C; em Ré é D – A – Bm – G.'],
+      confira: [['No tom de Dó, o número 5 é:', 'G', 'F', 'A', 'E'], ['1 – 4 – 5 em Ré é:', 'D – G – A', 'D – F – G', 'D – E – F♯', 'C – F – G'], ['A vantagem do Nashville é:', 'Servir em qualquer tom', 'Mostrar a melodia', 'Indicar o andamento', 'Dispensar o ensaio']],
+      gera: [{ tema: 'nashville', tons: ['Dó', 'Sol', 'Ré', 'Fá', 'Lá'] }],
+      leitura: { nome: 'Melodia sobre 1 – 5 – 6m – 4', padrao: [[4, 2], [2, 2], [0, 2], [-1, 2], [-3, 2], [0, 2], [2, 4]] } },
+    'modos': { titulo: 'Modos da escala maior',
+      blocos: ['Tocando a escala de Dó a partir de cada grau nascem os modos: Jônio (I), Dórico (II), Frígio (III), Lídio (IV), Mixolídio (V), Eólio (VI) e Lócrio (VII).',
+        leg(ex([[62, 1, 'Ré'], [64, 1], [65, 1], [67, 1], [69, 1], [71, 1], [72, 1], [74, 1]]), 'Ré dórico: as notas de Dó maior, com centro no Ré.'),
+        'Na prática: sobre m7 use dórico; sobre um dominante (7) use mixolídio; sobre 7M use jônio ou lídio.'],
+      confira: [['O modo que começa no II grau é o:', 'Dórico', 'Frígio', 'Lídio', 'Eólio'], ['Sobre um acorde dominante (G7), o modo mais usado é:', 'Mixolídio', 'Dórico', 'Lócrio', 'Frígio'],
+        ['O modo eólio é a mesma coisa que a:', 'Escala menor natural', 'Escala maior', 'Pentatônica', 'Escala blues']],
+      gera: [{ tema: 'modo' }],
+      leitura: { nome: 'Ré dórico', padrao: [[2, 1], [4, 1], [5, 1], [7, 1], [9, 1], [11, 1], [12, 1], [14, 1], [12, 1], [11, 1], [9, 1], [7, 1], [5, 1], [4, 1], [2, 2]] } },
+    'lead-sheet': { titulo: 'Lead sheet: melodia com cifra',
+      blocos: ['Lead sheet é a partitura da música popular: só a melodia na clave de sol e a cifra em cima. O tecladista lê a cifra e cria o acompanhamento; a melodia mostra o que o cantor faz.',
+        leg(ex([[64, 2, 'C'], [67, 2], [69, 2, 'F'], [65, 2], [67, 2, 'G'], [71, 2], [72, 4, 'C']], { compasso: 4 }), 'A cifra aparece onde o acorde muda.'),
+        'Repare nos sinais de repetição e nas casas 1 e 2 (1ª vez / 2ª vez) para não se perder.'],
+      confira: [['Lead sheet tem:', 'Melodia e cifra', 'Só a cifra', 'Todas as vozes do arranjo', 'Só a letra'], ['No lead sheet, o acompanhamento:', 'É criado pelo músico a partir da cifra', 'Vem escrito nota por nota', 'Não existe', 'É tocado pelo cantor'],
+        ['Casa 1 e casa 2 indicam:', 'Finais diferentes na 1ª e na 2ª vez', 'Duas mãos', 'Dois instrumentos', 'Dois andamentos']],
+      gera: [{ tema: 'campo', tons: ['Dó', 'Sol', 'Fá'], tetrades: true }],
+      leitura: { nome: 'Melodia de lead sheet', padrao: [[4, 2], [7, 2], [9, 2], [5, 2], [7, 2], [11, 2], [12, 4]] } },
+    'transposicao': { titulo: 'Transposição',
+      blocos: ['Transpor é mudar o tom mantendo os mesmos graus. Pense em números: em Dó, C – Am – F – G é 1 – 6m – 4 – 5; em Ré vira D – Bm – G – A.',
+        'Na partitura, a armadura muda e todas as notas sobem ou descem o mesmo intervalo.'],
+      confira: [['C – Am – F – G transposto para Ré fica:', 'D – Bm – G – A', 'D – Am – G – A', 'E – C♯m – A – B', 'D – B – G – A'], ['Transpor muda:', 'O tom, mantendo os graus', 'Os graus, mantendo o tom', 'Só o andamento', 'A melodia toda']],
+      gera: [{ tema: 'transpor', tons: ['Sol', 'Ré', 'Fá', 'Lá'] }],
+      leitura: { nome: 'A mesma melodia em Ré maior', armadura: 2, padrao: [[2, 1], [2, 1], [9, 1], [9, 1], [11, 1], [11, 1], [9, 2], [7, 1], [7, 1], [6, 1], [6, 1], [4, 1], [4, 1], [2, 2]] } },
+    'roteiro': { titulo: 'Lendo uma partitura de verdade',
+      blocos: ['Antes de tocar, faça o roteiro: 1) clave e armadura (qual é o tom?); 2) fórmula de compasso; 3) andamento e caráter; 4) repetições (ritornello, casas 1 e 2, D.C., D.S., Coda, Fine); 5) dinâmicas.',
+        'D.S. (dal segno) volta ao sinal 𝄋. "To Coda" manda pular para a coda (𝄌) na última vez. D.C. al Fine volta ao começo e termina no Fine.'],
+      confira: [['D.S. (dal segno) quer dizer:', 'Voltar ao sinal 𝄋', 'Voltar ao começo', 'Ir para o fim', 'Tocar mais devagar'], ['D.C. al Fine quer dizer:', 'Voltar ao começo e terminar no Fine', 'Pular para a coda', 'Repetir o último compasso', 'Parar'],
+        ['O primeiro passo do roteiro antes de ler é:', 'Clave e armadura (o tom)', 'A dinâmica', 'O título', 'A letra']],
+      gera: [], leitura: { nome: 'Leitura final', padrao: [[0, 1], [4, 0.5], [5, 0.5], [7, 1], [12, 1], [11, 1.5], [9, 0.5], [7, 2], [5, 1], [4, 1], [2, 0.5], [4, 0.5], [5, 1], [4, 2], [2, 1], [0, 1]] } }
   };
-  function leituraDaAula(instrumento, i, total, inicio) {
-    var cfg = LER[instrumento]; if (!cfg) return null;
-    var k = Math.min(LEITURAS.length - 1, (inicio || 0) + Math.floor(i * (LEITURAS.length - (inicio || 0)) / total)), L = LEITURAS[k];
-    var fa = !!cfg.raizFa && i % 2 === 1;
-    var extra = { pauta: fa ? 'fa' : true, leitura: true, repeticoes: 2 };
-    if (L.compasso) extra.compasso = L.compasso;
-    if (L.armadura) extra.armadura = L.armadura;
-    if (cfg.maos) extra.mao = fa ? 'E' : 'D';
-    var raiz = (fa ? cfg.raizFa : cfg.raiz) + (L.desloc || 0);
-    if (fa && raiz > 52) raiz -= 12;   // na clave de fá a melodia fica dentro da pauta
-    return t(cfg.texto(L.nome, fa), 4, demo(L.padrao, raiz, L.compasso === 3 ? 84 : 66, 'Leia na pauta', extra));
+  // ordem das lições em cada curso (uma por aula; Teoria tem duas em algumas aulas)
+  var SEQ = {
+    'Violão': ['pauta', 'figuras', 'compasso', 'oitava', 'pausas', 'colcheias', 'tres', 'ponto', 'graves-violao', 'acidentes', 'agudas', 'escala-maior',
+      'intervalos', 'armadura-sol', 'armadura-fa', 'semicolcheias', 'triades', 'menor', 'sincope', 'campo', 'tablatura', 'cifra', 'primeira-vista', 'sinais'],
+    'Guitarra': ['pauta', 'figuras', 'compasso', 'tablatura', 'colcheias', 'cifra', 'intervalos', 'pausas'],
+    'Teclado': ['pauta', 'figuras', 'compasso', 'oitava', 'clave-fa', 'colcheias', 'triades', 'campo', 'acidentes', 'escala-maior', 'armadura-sol', 'menor', 'pausas', 'ponto', 'intervalos', 'sincope'],
+    'Teclado Pro': ['primeira-vista', 'semicolcheias', 'armaduras-sust', 'armaduras-bem', 'tetrades-pauta', 'sistema', 'campo', 'tensoes', 'intervalos', 'cifra', 'escala-maior', 'dominantes',
+      'tercinas', 'sinais', 'sincope', 'tres', 'menor', 'triades', 'nashville', 'modos', 'ponto', 'lead-sheet', 'transposicao', 'roteiro'],
+    'Piano': ['pauta', 'figuras', 'clave-fa', 'compasso', 'oitava', 'armadura-sol', 'sinais', 'triades'],
+    'Canto': ['pauta', 'figuras', 'compasso', 'oitava', 'pausas', 'colcheias', 'intervalos', 'triades'],
+    'Teoria': [['pauta', 'clave-fa'], ['figuras', 'compasso'], ['intervalos', 'acidentes'], ['escala-maior', 'armadura-sol'], ['menor', 'armadura-fa'], ['triades'], ['campo'], ['sinais', 'sincope']]
+  };
+
+  // ---------- Perguntas de cada aula (a prova do módulo sorteia entre elas) ----------
+  var PERGUNTAS = {
+    'Canto': {
+      'Respiração e apoio': [['Na respiração do canto, ao inspirar:', 'A barriga se expande e os ombros não sobem', 'Os ombros sobem', 'A barriga entra', 'O peito estufa e trava'], ['No exercício 4-4-8, os 8 tempos são para:', 'Soltar o ar em "sss" controlado', 'Inspirar', 'Segurar o ar', 'Descansar']],
+      'Afinação': [['Quando a nota não "encaixa", o certo é:', 'Parar, ouvir a nota de novo e tentar outra vez', 'Cantar mais forte', 'Continuar sem parar', 'Cantar mais rápido'], ['O arpejo 1-3-5-3-1 usa quais graus?', '1º, 3º e 5º', '1º, 2º e 3º', '1º, 4º e 5º', 'Todos os sete']],
+      'Resistência': [['Resistência vocal vem:', 'Do apoio da respiração', 'De apertar a garganta', 'De cantar sempre forte', 'De cantar mais agudo'], ['Messa di voce é:', 'Começar fraco, crescer e voltar a diminuir na mesma nota', 'Cantar staccato', 'Cantar muito rápido', 'Deslizar como sirene']],
+      'Tessitura e extensão': [['Extensão vocal é:', 'Da nota mais grave à mais aguda que você canta', 'O volume máximo da voz', 'O tempo que você segura uma nota', 'A velocidade da voz'], ['Para ganhar extensão, o certo é:', 'Ir aos poucos, só até onde a voz sai sem apertar', 'Forçar o agudo todo dia', 'Gritar no agudo', 'Cantar só no grave']],
+      'Articulação e dicção': [['No coral, boa dicção serve para:', 'O público entender a letra', 'Cantar mais alto', 'Respirar menos', 'Afinar o piano'], ['Trocar as vogais numa nota longa sem mudar a nota treina:', 'Articulação sem perder a afinação', 'Extensão', 'Respiração 4-4-8', 'Staccato']],
+      'Registros: voz de peito e de cabeça': [['A voz de peito é:', 'A voz da fala, mais cheia', 'A voz mais leve e aguda', 'O falsete', 'O sussurro'], ['O objetivo nos registros é:', 'Passar de um para o outro sem a voz quebrar', 'Cantar só de peito', 'Cantar só de cabeça', 'Evitar o agudo']],
+      'Ressonância': [['Ressonância é:', 'Onde o som vibra no corpo', 'A força do ar', 'A afinação', 'O ritmo'], ['O "Mmm" de boca fechada deve vibrar:', 'Nos lábios e no nariz', 'Na barriga', 'Na garganta apertada', 'Nos ombros']],
+      'Cantando em vozes': [['No coral, cada naipe:', 'Canta uma nota do acorde', 'Canta a melodia junto', 'Toca um instrumento', 'Canta sem acompanhamento'], ['Qual naipe canta mais agudo?', 'Soprano', 'Contralto', 'Tenor', 'Baixo']]
+    },
+    'Teclado': {
+      'Conhecendo o teclado': [['No teclado, o dedo 1 é o:', 'Polegar', 'Indicador', 'Mínimo', 'Médio'], ['O Dó fica:', 'À esquerda do grupo de 2 teclas pretas', 'À direita do grupo de 3 pretas', 'Entre duas pretas', 'Sempre no centro do teclado']],
+      'Escala de Dó maior': [['Na escala de Dó (mão direita), o polegar passa por baixo depois de qual nota?', 'Mi (dedo 3)', 'Sol', 'Ré', 'Si'], ['Quando subir o andamento do metrônomo?', 'Quando tocar 3 vezes seguidas sem erro', 'A cada exercício', 'Nunca', 'Quando cansar']],
+      'Acordes maiores: C, F e G': [['O acorde de Dó maior (C) é:', 'Dó, Mi e Sol', 'Dó, Fá e Lá', 'Ré, Fá e Lá', 'Dó, Mi♭ e Sol'], ['Com quais dedos da mão direita se toca o acorde de 3 notas?', '1, 3 e 5', '1, 2 e 3', '2, 3 e 4', '1, 4 e 5']],
+      'Acordes menores e a progressão mais usada': [['Para transformar C em Cm:', 'Abaixe meio tom a nota do meio (a 3ª)', 'Suba a nota de cima', 'Tire a nota de baixo', 'Toque uma oitava acima'], ['A progressão "de milhares de músicas" da aula é:', 'C – G – Am – F', 'C – D – E – F', 'Am – Bm – Cm – Dm', 'C – Cm – C – Cm']],
+      'Mão esquerda no baixo': [['Nesta aula, a mão esquerda toca:', 'Só a nota que dá nome ao acorde (o baixo)', 'O acorde completo', 'A melodia', 'Nada'], ['Em Am, o baixo é:', 'Lá', 'Dó', 'Mi', 'Sol']],
+      'Levadas e ritmo': [['Na levada pop da aula, o baixo cai nos tempos:', '1 e 3', '2 e 4', 'Só no 4', 'Em todos'], ['Acorde duas vezes por tempo é tocar em:', 'Colcheias', 'Semínimas', 'Mínimas', 'Semibreves']],
+      'Inversões': [['Inversão é:', 'O mesmo acorde com as notas em outra ordem', 'Um acorde menor', 'Tocar a música de trás para frente', 'Um acorde de 4 notas'], ['Para que servem as inversões?', 'Para a mão quase não sair do lugar', 'Para mudar o tom', 'Para tocar mais forte', 'Para tocar mais rápido']],
+      'Campo harmônico e primeira música': [['Os acordes do campo harmônico de Dó são:', 'C, Dm, Em, F, G, Am e Bdim', 'C, D, E, F, G, A e B', 'C, Cm, D, Dm, E, Em e F', 'Am, Bm, Cm, Dm, Em, Fm e Gm'], ['No tom de Dó, I – vi – ii – V é:', 'C – Am – Dm – G', 'C – A – D – G', 'C – Em – F – G', 'Am – C – G – F']],
+      'Escalas maiores: Sol, Ré e Fá': [['Na escala de Sol maior, o Fá♯ (mão direita) é tocado com o dedo:', '4', '3', '5', '1'], ['Fá maior tem qual acidente?', 'Si♭', 'Fá♯', 'Dó♯', 'Mi♭']],
+      'Escalas menores': [['A relativa menor de Dó maior é:', 'Lá menor', 'Mi menor', 'Ré menor', 'Dó menor'], ['A menor harmônica de Lá tem:', 'Sol♯', 'Fá♯', 'Dó♯', 'Si♭']],
+      'Arpejos maiores e menores': [['Arpejo é:', 'O acorde tocado uma nota de cada vez', 'Uma escala rápida', 'Um acorde com 7ª', 'Tocar as duas mãos juntas'], ['A digitação do arpejo na mão direita é:', '1-2-3-5', '1-2-3-4', '1-3-4-5', '2-3-4-5']],
+      'Arpejos em duas oitavas': [['No arpejo em duas oitavas subindo (mão direita), o polegar passa depois do dedo:', '3', '2', '4', '5'], ['Ao passar o polegar, o punho:', 'Não pula, fica nivelado', 'Sobe bastante', 'Gira para fora', 'Para o movimento']],
+      'Blues: escala, baixo e 12 compassos': [['Quantos compassos tem o blues da aula?', '12', '8', '16', '4'], ['A escala blues de Dó tem:', 'Dó, Mi♭, Fá, Fá♯, Sol, Si♭', 'Dó, Ré, Mi, Fá, Sol, Lá, Si', 'Dó, Mi, Sol, Si', 'Dó, Ré, Mi, Sol, Lá']],
+      'Frases de blues': [['Lick é:', 'Uma frase curta para usar no improviso', 'Um acorde com sétima', 'Um tipo de compasso', 'Uma pausa'], ['A "nota triste" da aula é o Mi♭ indo para:', 'Mi', 'Ré', 'Fá', 'Dó']],
+      'Jazz: tétrades e o ii-V-I': [['O ii-V-I em Dó é:', 'Dm7 – G7 – C7M', 'C – F – G', 'Am – Dm – G', 'Em – A7 – D'], ['Colcheias com swing soam:', 'Longa-curta, longa-curta', 'Todas iguais', 'Curta-longa', 'Como semínimas']],
+      'Independência das mãos': [['Se as mãos travarem juntas, o certo é:', 'Tocar cada mão sozinha e juntar de novo, devagar', 'Acelerar', 'Tocar só a direita', 'Parar de estudar'], ['A mão esquerda é a "bateria", por isso:', 'Não pode atrasar', 'Pode mudar o tempo', 'Toca mais forte que tudo', 'Fica parada']]
+    },
+    'Teclado Pro': {
+      'Rotina de estudo profissional': [['Prática deliberada é:', 'Estudar no limite do que consegue, devagar, corrigindo na hora', 'Repetir o que já sai fácil', 'Estudar muitas horas sem parar', 'Tocar só músicas conhecidas'], ['O ciclo das quartas começa:', 'C – F – B♭ – E♭', 'C – G – D – A', 'C – D – E – F', 'C – E – G – B']],
+      'Técnica: Hanon e independência dos dedos': [['No Hanon, quais dedos pedem mais atenção?', '4 e 5', '1 e 2', '2 e 3', '1 e 5'], ['Quando subir o bpm no Hanon?', 'Só quando sair limpo', 'Todo dia, mesmo errando', 'Nunca', 'Quando o punho doer']],
+      'Escalas em todos os tons: sustenidos': [['Dó, Sol, Ré, Lá, Mi e Si maior usam na mão direita:', '1-2-3, polegar, 1-2-3-4-5', '1-2-3-4, polegar, 1-2-3', '2-3-4, polegar, 1-2-3', '1-2, polegar, 1-2-3-4-5'], ['Lá maior tem quantos sustenidos?', '3', '2', '4', '1']],
+      'Escalas em todos os tons: bemóis': [['Nos tons com bemol, a regra dos polegares é:', 'Polegares no Dó e no Fá', 'Polegares no Si♭', 'Polegar só na tônica', 'Polegares no Mi e no Si'], ['Nos tons com bemol, o dedo 4 cai sempre em:', 'Si♭', 'Mi♭', 'Fá', 'Dó']],
+      'Tétrades nos 12 tons': [['C7 tem as notas:', 'Dó – Mi – Sol – Si♭', 'Dó – Mi – Sol – Si', 'Dó – Mi♭ – Sol – Si♭', 'Dó – Mi♭ – Sol♭ – Si♭'], ['Cm7(♭5) se chama:', 'Meio-diminuto', 'Diminuto', 'Aumentado', 'Sétima maior']],
+      'Inversões e condução de vozes': [['Condução de vozes é:', 'Cada voz andar o mínimo possível de um acorde para o outro', 'Tocar todas as vozes forte', 'Mudar de timbre', 'Tocar a melodia na esquerda'], ['C7M/E quer dizer:', 'C7M com o Mi no baixo (1ª inversão)', 'C7M e depois E', 'Mi com sétima maior', 'C7M sem a terça']],
+      'ii-V-I nos 12 tons': [['O ii-V-I de Fá maior é:', 'Gm7 – C7 – F7M', 'Dm7 – G7 – C7M', 'Cm7 – F7 – B♭7M', 'Am7 – D7 – G7M'], ['O ii-V-i menor de Dó é:', 'Dm7(♭5) – G7 – Cm7', 'Dm7 – G7 – C7M', 'D7 – G7 – Cm', 'Dm – Gm – Cm']],
+      'Voicings sem tônica (estilo Bill Evans)': [['No voicing sem tônica, quem toca a tônica é:', 'O baixista', 'A mão direita', 'O baterista', 'Ninguém'], ['O voicing sem tônica da aula usa:', '3ª, 5ª, 7ª e 9ª', 'Tônica, 3ª e 5ª', 'Só tônica e 5ª', 'Tônica e oitava']],
+      'Shells e notas-guia': [['Notas-guia são:', 'A 3ª e a 7ª do acorde', 'A tônica e a 5ª', 'A 9ª e a 13ª', 'Só a tônica'], ['Shell é:', 'Tônica + 3ª ou 7ª na mão esquerda', 'Um acorde de 5 notas', 'Uma escala', 'Um timbre de órgão']],
+      'Tensões: 9ª, 11ª, 13ª e sus': [['Pela regra da aula, a 13ª e a ♭9 ficam bem em:', 'Acordes dominantes', 'Acordes menores', 'Acordes diminutos', 'Qualquer tríade'], ['O sus4 troca a 3ª pela:', '4ª', '2ª', '6ª', '7ª']],
+      'Voicings em quartas (som modal)': [['O voicing em quartas empilha:', 'Intervalos de 4ª', 'Terças', 'Segundas', 'Oitavas'], ['Ré dórico tem as notas:', 'Ré, Mi, Fá, Sol, Lá, Si, Dó', 'Ré, Mi, Fá♯, Sol, Lá, Si, Dó♯', 'Ré, Fá, Sol, Lá, Dó', 'Ré, Mi♭, Fá, Sol, Lá, Si♭, Dó']],
+      'Rearmonização: dominantes secundários e trítono': [['O dominante secundário de Dm7 é:', 'A7', 'G7', 'E7', 'D7'], ['O SubV7 de G7 é:', 'D♭7', 'D7', 'C♯m7', 'A♭7']],
+      'Tempo de verdade: 2 e 4 e subdivisões': [['O clique só no 2 e no 4 imita:', 'A caixa da bateria', 'O bumbo', 'O baixo', 'A melodia'], ['Tercina é:', 'Três notas no espaço de um tempo', 'Três tempos por compasso', 'Três acordes', 'Uma nota de três tempos']],
+      'Pop e balada': [['Na balada da aula, a mão esquerda:', 'Segura a tônica', 'Faz as colcheias', 'Toca a melodia', 'Fica parada'], ['Para a balada crescer no refrão, a aula sugere:', 'Acordes longos no começo e colcheias só no refrão', 'Tocar tudo forte desde o início', 'Tirar o baixo no refrão', 'Mudar de tom no verso']],
+      'Bossa nova': [['Na bossa, o tecladista:', 'Não marca o tempo: a direita flutua no contratempo', 'Marca todos os tempos forte', 'Toca só a melodia', 'Faz o baixo em colcheias'], ['O baixo da bossa da aula toca:', 'Tônica e quinta', 'Só a tônica', 'A escala inteira', 'A terça e a sétima']],
+      'Samba e baião': [['No samba, a mão esquerda imita:', 'O surdo', 'A zabumba', 'O triângulo', 'A caixa'], ['No baião, a mão esquerda imita:', 'A zabumba', 'O surdo', 'O pandeiro', 'O agogô']],
+      'Louvor e gospel: acordes de passagem': [['Para que servem os acordes de passagem?', 'Ligar os acordes principais e criar movimento', 'Mudar de tom', 'Terminar a música', 'Substituir a melodia'], ['F♯°7 entre F e C/G é um acorde:', 'Diminuto de passagem', 'Dominante', 'Meio-diminuto', 'Sus4']],
+      'Percepção: intervalos e acordes': [['No ditado, o certo é:', 'Ouvir, escrever e só depois conferir', 'Olhar o gabarito antes', 'Adivinhar rápido', 'Pular os difíceis'], ['O acorde aumentado tem:', 'Duas 3ªs maiores', 'Duas 3ªs menores', '3ª menor e 3ª maior', 'Uma 4ª e uma 5ª']],
+      'Tirar de ouvido, transcrever e Nashville': [['O 1º passo para tirar uma música de ouvido é:', 'Achar a tônica (a nota de repouso)', 'Tirar o solo', 'Escrever a letra', 'Ajustar o timbre'], ['1 – 5 – 6m – 4 no tom de Ré é:', 'D – A – Bm – G', 'D – G – Em – A', 'C – G – Am – F', 'D – A – B – G']],
+      'Improvisação: modos e pentatônicas': [['Sobre G7 no tom de Dó, a aula usa:', 'Sol mixolídio', 'Sol jônio', 'Sol dórico', 'Sol lócrio'], ['A pentatônica menor de Ré tem:', 'Ré, Fá, Sol, Lá, Dó', 'Ré, Mi, Fá♯, Lá, Si', 'Ré, Fá, Lá, Dó, Mi', 'Ré, Mi, Sol, Lá, Si']],
+      'Linguagem: frases de ii-V-I em vários tons': [['A aula ensina a improvisar como quem aprende uma língua:', 'Decorando frases e levando para todos os tons', 'Inventando tudo na hora', 'Tocando só escalas', 'Tocando só arpejos'], ['Aproximação cromática é chegar na nota do acorde:', 'Por meio tom abaixo', 'Por um salto de oitava', 'Por uma 5ª', 'Por uma pausa']],
+      'O tecladista na banda: timbres e arranjo': [['O maior erro do tecladista na banda, segundo a aula:', 'Tocar demais', 'Tocar pouco', 'Usar pad', 'Usar piano'], ['Split é:', 'Cada metade do teclado com um timbre', 'Dois timbres juntos', 'Um efeito de eco', 'Trocar de tom']],
+      'Ao vivo: click, playback, in-ear e direção musical': [['No in-ear, o que vem primeiro na mixagem?', 'O click e a voz principal', 'O seu teclado', 'A bateria', 'A plateia'], ['No roteiro de cada música, anote:', 'Tom, andamento, timbre e quem começa', 'Só o nome', 'Só a letra', 'O figurino']],
+      'Estúdio e carreira': [['Dor no punho ao tocar é sinal para:', 'Parar e descansar', 'Insistir até passar', 'Tocar mais forte', 'Aumentar o bpm'], ['A aula sugere um repertório de:', '30 músicas de cor, em pelo menos 2 tons', '5 músicas', 'Só músicas novas', 'Só instrumentais']]
+    },
+    'Piano': {
+      'Postura e o Dó central': [['A altura certa do banco deixa:', 'O antebraço reto', 'Os ombros levantados', 'Os punhos abaixo das teclas', 'Os pés pendurados'], ['O Dó central fica:', 'No meio do piano, à esquerda das 2 teclas pretas', 'Na ponta esquerda', 'À direita das 3 pretas', 'Na ponta direita']],
+      'Leitura: clave de sol e ritmo': [['As linhas da clave de sol (de baixo para cima) são:', 'Mi – Sol – Si – Ré – Fá', 'Fá – Lá – Dó – Mi – Sol', 'Sol – Si – Ré – Fá – Lá', 'Dó – Mi – Sol – Si – Ré'], ['Bater palmas numa semibreve é:', 'Uma palma e segurar 4 tempos', 'Quatro palmas', 'Duas palmas', 'Meia palma']],
+      'Clave de fá e mão esquerda': [['Na clave de fá, o Fá fica na:', '4ª linha', '2ª linha', '3º espaço', '1ª linha'], ['Os espaços da clave de fá (de baixo para cima) são:', 'Lá – Dó – Mi – Sol', 'Fá – Lá – Dó – Mi', 'Sol – Si – Ré – Fá', 'Mi – Sol – Si – Ré']],
+      'Mãos juntas': [['Movimento paralelo é quando:', 'As duas mãos vão para o mesmo lado', 'As mãos se abrem', 'Uma mão para', 'As mãos se cruzam'], ['O movimento contrário começa com:', 'Os dois polegares no Dó', 'Os dois mínimos no Dó', 'As mãos uma oitava longe', 'Só a mão direita']],
+      'Escala de Dó com passagem do polegar': [['Na passagem do polegar, o punho:', 'Não levanta', 'Sobe', 'Gira', 'Bate na tecla'], ['A digitação da mão direita subindo é:', '1-2-3-1-2-3-4-5', '1-2-3-4-1-2-3-4', '1-2-1-2-3-4-5-1', '5-4-3-2-1-3-2-1']],
+      'Escalas de Sol e Fá maior': [['Sol maior tem:', 'Um sustenido (Fá♯)', 'Um bemol (Si♭)', 'Dois sustenidos', 'Nenhum acidente'], ['Em Fá maior (mão direita), o polegar passa depois do:', 'Si♭ (dedo 4)', 'Lá (dedo 3)', 'Dó (dedo 5)', 'Sol (dedo 2)']],
+      'Dinâmica e articulação': [['Legato é:', 'Notas ligadas', 'Notas curtas', 'Notas fortes', 'Notas com pausa'], ['f (forte) na partitura quer dizer:', 'Tocar forte', 'Tocar fraco', 'Tocar rápido', 'Repetir']],
+      'Arpejos, cadência e primeira peça': [['A cadência mais usada da música é:', 'I – IV – V – I', 'I – II – III – IV', 'V – IV – III – II', 'I – VI – I – VI'], ['Em Dó, I – IV – V – I é:', 'C – F – G – C', 'C – D – E – C', 'C – Am – Dm – C', 'C – E – G – C']]
+    },
+    'Violão': {
+      'Conhecendo o violão e afinação': [['A afinação padrão, da 6ª para a 1ª corda, é:', 'Mi – Lá – Ré – Sol – Si – Mi', 'Mi – Si – Sol – Ré – Lá – Mi', 'Ré – Lá – Ré – Sol – Si – Mi', 'Dó – Fá – Si♭ – Mi♭ – Sol – Dó'], ['Na mão direita, o polegar (p) toca as cordas:', '6, 5 e 4', '1, 2 e 3', 'Só a 1ª', 'Todas juntas'], ['A 1ª corda é:', 'A mais fina (Mi agudo)', 'A mais grossa (Mi grave)', 'A corda Lá', 'A corda Sol']],
+      'Primeiros acordes: Em e Am': [['No desenho do acorde, o × em cima de uma corda quer dizer:', 'Não tocar essa corda', 'Tocar solta', 'Fazer pestana', 'Tocar com o polegar'], ['O círculo vazio (○) no desenho quer dizer:', 'Corda solta', 'Corda abafada', 'Dedo 1', 'Pestana']],
+      'Leitura: Sol, Lá, Si e Dó nas cordas 3 e 2': [['O Sol da 2ª linha se toca no violão na:', '3ª corda solta', '2ª corda solta', '1ª corda, casa 3', '4ª corda, casa 5'], ['O Dó do 3º espaço se toca na:', '2ª corda, casa 1', '3ª corda, casa 2', '2ª corda solta', '1ª corda, casa 1']],
+      'Acordes D, A e E': [['Na troca entre dois acordes, a dica da aula é:', 'Deixar parado o dedo que fica no mesmo lugar', 'Tirar todos os dedos', 'Olhar para a mão direita', 'Tocar mais rápido'], ['No acorde D, quais cordas não se tocam?', '6ª e 5ª', 'Nenhuma', 'Só a 1ª', '4ª e 3ª']],
+      'G e C: a primeira progressão': [['Em G – Em – C – D, o primeiro acorde é:', 'Sol maior', 'Dó maior', 'Mi menor', 'Ré maior'], ['O desafio da aula é:', 'Trocar de G para C em menos de 1 tempo', 'Tocar G com pestana', 'Tocar sem metrônomo', 'Tocar só C']],
+      'Ritmo: batidas': [['Na batida, a mão direita:', 'Nunca para: sobe e desce o tempo todo', 'Para entre os tempos', 'Só desce', 'Só sobe'], ['Na levada pop ↓ ↓↑ ↑↓↑, a seta ↑ quer dizer:', 'Batida para cima', 'Batida para baixo', 'Pausa', 'Dedilhado']],
+      'Leitura: Dó, Ré, Mi e Fá e a primeira melodia': [['O Dó da linha suplementar, no violão, fica na:', '5ª corda, casa 3', '2ª corda, casa 1', '6ª corda solta', '4ª corda, casa 2'], ['O Ré logo abaixo da pauta fica na:', '4ª corda solta', '3ª corda solta', '5ª corda, casa 2', '2ª corda, casa 3']],
+      'Dedilhado': [['No dedilhado, o polegar toca:', 'O baixo, a nota que dá nome ao acorde', 'A 1ª corda', 'Todas as cordas', 'Só cordas soltas'], ['p-i-m-a quer dizer:', 'Polegar, indicador, médio, anelar', 'Palma, índice, meio, alto', 'Pestana, indicador, mínimo, anelar', 'Polegar, indicador, mínimo, anelar']],
+      'Leitura: as cordas graves': [['O Mi da 6ª corda solta aparece na pauta:', 'Bem abaixo, com 3 linhas suplementares', 'Na 1ª linha', 'No 1º espaço', 'Na 5ª linha'], ['A 5ª corda solta é a nota:', 'Lá', 'Mi', 'Ré', 'Sol']],
+      'Acordes com sétima': [['Para que serve a sétima no acorde?', 'Criar tensão que pede resolução', 'Deixar o acorde menor', 'Tirar o baixo', 'Abafar o som'], ['Em Em – Am – B7 – Em, qual acorde cria a tensão?', 'B7', 'Am', 'Em', 'Nenhum']],
+      'Baixo alternado e valsa': [['Na valsa, a mão direita faz:', 'Baixo no 1, acorde no 2 e no 3', 'Acorde nos três tempos', 'Baixo nos três tempos', 'Acorde no 1, baixo no 2 e no 3'], ['A valsa é em compasso:', '3/4', '4/4', '2/4', '6/8']],
+      'Escala de Dó maior na primeira posição': [['"Um dedo por casa" quer dizer:', 'Casa 1 = dedo 1, casa 2 = dedo 2, casa 3 = dedo 3', 'Usar só o dedo 1', 'Tocar só cordas soltas', 'Pular casas'], ['A escala de Dó maior da aula começa na:', '5ª corda, casa 3', '6ª corda solta', '4ª corda solta', '1ª corda solta']],
+      'Pestana e primeira música': [['Na pestana, o dedo 1 deve ficar:', 'Reto e perto do traste', 'Dobrado no meio da casa', 'Em cima do traste', 'Só na 1ª corda'], ['Se a pestana doer, o certo é:', 'Parar e descansar', 'Apertar mais forte', 'Continuar até passar', 'Trocar de violão']],
+      'Leitura: Sol maior e o Fá♯': [['Na escala de Sol maior da aula, o Fá♯ agudo fica na:', '1ª corda, casa 2', '1ª corda, casa 1', '2ª corda, casa 3', '3ª corda, casa 4'], ['A armadura com um ♯ é do tom de:', 'Sol maior', 'Ré maior', 'Fá maior', 'Dó maior']],
+      'Pestana na 2ª casa: Bm, F♯m e o tom de Ré': [['Bm e F♯m usam pestana na casa:', '2', '1', '3', '5'], ['O campo harmônico de Ré maior é:', 'D – Em – F♯m – G – A – Bm', 'D – E – F♯ – G – A – B', 'D – Em – Fm – G – Am – Bm', 'D – G – A – D – G – A']],
+      'Levadas brasileiras: baião e xote': [['No baião, o polegar imita:', 'A zabumba', 'O surdo', 'O pandeiro', 'A caixa'], ['No xote, o acento cai nos tempos:', '2 e 4', '1 e 3', 'Só no 1', 'Em nenhum']],
+      'Campo harmônico de Dó e funções': [['No tom de Dó, G7 tem função de:', 'Dominante (tensão)', 'Tônica (repouso)', 'Subdominante', 'Nenhuma'], ['Quais acordes têm função de tônica em Dó?', 'C, Am e Em', 'F e Dm', 'G7 e Bdim', 'C, F e G']],
+      'Tonalidades menores': [['Em Lá menor, o acorde do V grau é:', 'E7', 'Em', 'Dm', 'G'], ['O Sol♯ em Lá menor vem da escala:', 'Menor harmônica', 'Maior', 'Pentatônica', 'Blues']],
+      'Leitura: colcheias, ponto de aumento e pausas': [['Na pausa, a mão do violonista:', 'Abafa as cordas para o silêncio ficar limpo', 'Continua tocando', 'Toca mais forte', 'Troca de acorde'], ['Contar "1 e 2 e" ajuda a ler:', 'Colcheias', 'Semibreves', 'Mínimas', 'Pausas de semibreve']],
+      'Arpejos e dedilhado de balada': [['No dedilhado de balada da aula, cada nota vale:', 'Uma colcheia (meio tempo)', 'Um tempo', 'Dois tempos', 'Um compasso'], ['Arpejo é:', 'O acorde tocado uma nota de cada vez', 'Um acorde abafado', 'Uma escala', 'Uma batida']],
+      'Pentatônica no violão': [['As notas da pentatônica de Lá menor são:', 'Lá – Dó – Ré – Mi – Sol', 'Lá – Si – Dó – Ré – Mi', 'Lá – Dó♯ – Mi – Fá♯ – Sol', 'Dó – Ré – Mi – Sol – Lá – Si'], ['A posição da pentatônica da aula começa na casa:', '5', '1', '3', '7']],
+      'Pestana na 5ª corda: B, Cm e C♯m': [['O desenho de Cm com pestana é o de qual acorde aberto?', 'Am', 'Em', 'D', 'G'], ['Movendo o mesmo desenho de pestana pelo braço:', 'Muda o acorde e mantém o tipo (maior ou menor)', 'O acorde vira menor', 'Sempre dá Dó', 'Não muda nada']],
+      'Cifra, tablatura e partitura juntas': [['A tablatura mostra:', 'A corda e a casa de cada nota', 'O ritmo exato', 'A dinâmica', 'Os acordes'], ['Dsus4 troca a 3ª do acorde pela:', '4ª', '2ª', '5ª', '7ª']],
+      'Repertório e apresentação': [['Tocando com metrônomo, se errar:', 'Não para: continua no tempo', 'Volta ao começo', 'Desliga o metrônomo', 'Pula a parte'], ['Antes de tocar, a aula pede para marcar na cifra:', 'As partes: introdução, verso e refrão', 'Só o primeiro acorde', 'O nome do autor', 'O ano da música']]
+    },
+    'Guitarra': {
+      'Guitarra, afinação e palheta': [['Como segurar a palheta?', 'Entre o polegar e a lateral do indicador, com a ponta para fora', 'Com a mão fechada', 'Entre o indicador e o médio', 'Só com o polegar'], ['Palhetada alternada é:', '↓ no tempo e ↑ no "e"', 'Só para baixo', 'Só para cima', 'Duas para baixo e uma para cima']],
+      'Exercício cromático': [['No exercício cromático, "um dedo por casa" é:', 'Dedo 1 na casa 1, dedo 2 na 2, dedo 3 na 3, dedo 4 na 4', 'Só o dedo 1', 'Dedos 1 e 3', 'Pular casas'], ['Quando subir o bpm?', 'Quando sair limpo 3 vezes', 'Sempre', 'Nunca', 'Quando errar']],
+      'Power chords': [['Power chord é formado por:', 'Tônica e quinta', 'Tônica e terça', 'Terça e quinta', 'Tônica e sétima'], ['O desenho do power chord:', 'Se move pelo braço e muda de nota', 'Só funciona na 1ª casa', 'Precisa de cordas soltas', 'É sempre menor']],
+      'Pentatônica menor de Lá': [['A pentatônica menor tem quantas notas?', '5', '7', '6', '4'], ['A posição 1 da pentatônica de Lá começa na casa:', '5', '1', '7', '12']],
+      'Palm mute e ritmo': [['Palm mute é:', 'Abafar as cordas com a lateral da mão perto da ponte', 'Tocar sem palheta', 'Fazer bend', 'Tocar com distorção'], ['No palm mute da aula, a palhetada é:', 'Só para baixo', 'Só para cima', 'Alternada rápida', 'Com os dedos']],
+      'Acordes abertos para base': [['Na guitarra base, os acordes abertos são tocados:', 'Com palheta', 'Só com o polegar', 'Sempre com pestana', 'Sem a mão direita'], ['Em E – A – D – A, o acorde de repouso (tônica) é:', 'A (Lá)', 'E (Mi)', 'D (Ré)', 'Nenhum']],
+      'Ligados e bends': [['Hammer-on é:', 'Martelar um dedo na corda para soar a nota sem palhetar', 'Puxar a corda para baixo', 'Abafar a corda', 'Tocar duas cordas juntas'], ['No bend da aula (3ª corda, casa 7), o alvo soa como a casa:', '9', '8', '10', '12']],
+      'Primeiro improviso': [['No primeiro improviso, a aula pede:', 'Poucas notas, frases curtas e respirar entre elas', 'Tocar o mais rápido possível', 'Usar todas as notas', 'Não parar nunca'], ['Sobre Am – G – F – G, a escala usada é:', 'Pentatônica de Lá menor', 'Escala de Sol maior', 'Escala cromática', 'Pentatônica de Fá']]
+    },
+    'Teoria': {
+      'Notas, pauta e claves': [['A clave de dó dá nome à nota:', 'Da linha em que ela está', 'Da 2ª linha sempre', 'Da 4ª linha sempre', 'Do 1º espaço'], ['Em cifra, a nota Lá é:', 'A', 'L', 'La', 'H']],
+      'Ritmo, figuras e compassos': [['A semicolcheia vale:', '1/4 de tempo', 'Meio tempo', '1 tempo', '2 tempos'], ['Os acentos do compasso quaternário são:', 'FORTE – fraco – meio forte – fraco', 'FORTE – fraco – fraco – fraco', 'fraco – FORTE – fraco – FORTE', 'Todos iguais']],
+      'Intervalos': [['Dó–Mi♭ é uma:', '3ª menor', '3ª maior', '2ª maior', '4ª justa'], ['O trítono tem:', '3 tons', '2 tons', '2 tons e meio', '3 tons e meio']],
+      'Escalas maiores e armaduras': [['Lá maior tem quantos sustenidos?', '3', '2', '4', '1'], ['Mi♭ maior tem quantos bemóis?', '3', '2', '4', '1']],
+      'Escalas menores': [['A menor melódica sobe com:', '6º e 7º graus elevados', 'Só o 7º elevado', 'Só o 3º abaixado', 'Todos os graus naturais'], ['A relativa menor de Fá maior é:', 'Ré menor', 'Lá menor', 'Mi menor', 'Sol menor']],
+      'Tríades e tétrades': [['A tríade aumentada tem:', '3ª maior + 3ª maior', '3ª menor + 3ª menor', '3ª maior + 3ª menor', '3ª menor + 3ª maior'], ['Tétrade é:', 'Tríade + 7ª', 'Duas tríades', 'Acorde sem 5ª', 'Acorde de 2 notas']],
+      'Campo harmônico e funções': [['A função subdominante no tom maior fica com:', 'IV e ii', 'V e vii°', 'I e vi', 'iii e V'], ['Bm7(♭5) no tom de Dó é o grau:', 'VII', 'II', 'V', 'III']],
+      'Percepção e simulado': [['No ditado melódico, o certo é:', 'Ouvir quantas vezes precisar e escrever antes de ver o gabarito', 'Ver o gabarito antes', 'Escrever sem ouvir', 'Ouvir uma vez só'], ['No ditado harmônico em Dó, F é o grau:', 'IV', 'V', 'II', 'VI']]
+    }
+  };
+
+  // como cada instrumento lê: nota de partida (o violão soa uma oitava abaixo do escrito) e o texto do exercício
+  var LER = {
+    'Violão': { raiz: 48, texto: function (n, lp) { return 'Leitura de partitura: ' + n + '. Use o que aprendeu em "' + lp + '": diga o nome das notas no ritmo e depois toque junto (a tablatura embaixo mostra corda e casa).'; } },
+    'Guitarra': { raiz: 48, texto: function (n, lp) { return 'Leitura de partitura: ' + n + '. Use o que aprendeu em "' + lp + '": diga as notas no ritmo e depois toque junto, com palhetada alternada.'; } },
+    'Teclado': { raiz: 60, raizFa: 48, maos: true, texto: function (n, lp, fa) { return 'Leitura de partitura: ' + n + (fa ? ', mão esquerda' : ', mão direita') + '. Use o que aprendeu em "' + lp + '": diga as notas no ritmo e depois toque junto.'; } },
+    'Piano': { raiz: 60, raizFa: 48, maos: true, texto: function (n, lp, fa) { return 'Leitura de partitura: ' + n + (fa ? ', mão esquerda' : ', mão direita') + '. Use o que aprendeu em "' + lp + '": diga as notas no ritmo e depois toque junto.'; } },
+    'Canto coral': { raiz: 60, texto: function (n, lp) { return 'Solfejo: ' + n + '. Use o que aprendeu em "' + lp + '": leia na pauta e cante dizendo o nome das notas, junto com o piano.'; } },
+    'Concurso': { raiz: 60, raizFa: 48, texto: function (n, lp) { return 'Leitura e solfejo: ' + n + '. Use o que aprendeu em "' + lp + '": diga as notas no ritmo antes de ouvir e depois confira.'; } }
+  };
+  function itemTeoria(id) {
+    var L = LICOES[id];
+    return { texto: 'Teoria: ' + L.titulo, minutos: 5, vocalize: { tipo: 'teoria', titulo: L.titulo, blocos: L.blocos, confira: L.confira, n: 3 } };
+  }
+  function itemLeitura(instrumento, id) {
+    var cfg = LER[instrumento], L = LICOES[id], le = L.leitura; if (!cfg || !le) return null;
+    var fa = le.clave === 'fa' && !!cfg.raizFa, v;
+    if (le.maos) v = { tipo: 'notas', demo: true, maos: le.maos, de: le.maos.E.raiz, ate: le.maos.E.raiz, bpm: 66, silaba: 'Leia na pauta', repeticoes: 1, pauta: 'sol', leitura: true };
+    else {
+      var extra = { pauta: fa ? 'fa' : true, leitura: true, repeticoes: 2 };
+      if (le.compasso) extra.compasso = le.compasso;
+      if (le.armadura) extra.armadura = le.armadura;
+      if (le.bemois) extra.bemois = true;
+      if (cfg.maos) extra.mao = fa ? 'E' : 'D';
+      v = demo(le.padrao, fa ? cfg.raizFa : cfg.raiz, le.compasso === 3 ? 84 : 66, 'Leia na pauta', extra);
+    }
+    return t(cfg.texto(le.nome, L.titulo, fa), 4, v);
   }
   // Exercícios de notas que cabem certinho nos compassos ganham a partitura (sem cortar nota na barra de compasso)
   function cabeNaPauta(v) {
@@ -148,66 +571,82 @@
     return { texto: it.texto, minutos: it.minutos, vocalize: v };
   }
 
-  // ---------- Módulos e provas: cada módulo tem 4 aulas e termina com uma prova de teoria ----------
-  // [nome do módulo, temas sorteados, bancos de questões fixas, nº de questões]
+  // ---------- Módulos e provas: cada módulo tem 4 aulas e termina com a prova do que foi estudado nele ----------
   var MODULOS = {
-    'Canto': [['Respiração e afinação', ['notas-sol', 'figuras', 'compassos', 'intervalos-ouvido'], ['canto', 'pauta']],
-      ['Dicção, registros e vozes', ['notas-sol', 'intervalos', 'intervalos-ouvido', 'escalas', 'pausas'], ['canto', 'sinais']]],
-    'Teclado': [['Primeiros passos', ['notas-sol', 'figuras', 'triades', 'cifras'], ['teclado', 'pauta']],
-      ['Ritmo e harmonia', ['notas-fa', 'notas-sol', 'compassos', 'campo', 'triades'], ['teclado']],
-      ['Escalas e arpejos', ['escalas', 'armaduras', 'notas-sol-sup', 'notas-fa', 'intervalos'], ['escalas', 'acidentes']],
-      ['Blues, jazz e independência', ['tetrades', 'campo', 'funcoes', 'acordes-ouvido', 'intervalos-ouvido'], ['harmonia']]],
-    'Teclado Pro': [['Técnica e escalas nos 12 tons', ['escalas', 'armaduras', 'notas-sol-sup', 'notas-fa'], ['escalas']],
-      ['Tétrades, ii-V-I e voicings', ['tetrades', 'harmonia', 'campo', 'funcoes'], ['harmonia']],
-      ['Tensões e rearmonização', ['harmonia', 'tetrades', 'intervalos', 'acordes-ouvido'], []],
-      ['Groove e ritmos brasileiros', ['compassos', 'figuras', 'pausas', 'notas-fa', 'campo'], ['sinais']],
-      ['Gospel, percepção e improviso', ['intervalos-ouvido', 'acordes-ouvido', 'harmonia', 'escalas', 'campo'], []],
-      ['Banda, palco e estúdio', ['harmonia', 'tetrades', 'funcoes', 'armaduras', 'intervalos-ouvido'], ['sinais'], 12]],
-    'Piano': [['Leitura e as duas claves', ['notas-sol', 'notas-fa', 'figuras', 'compassos'], ['teclado', 'pauta']],
-      ['Escalas, dinâmica e primeira peça', ['escalas', 'armaduras', 'notas-sol-sup', 'notas-fa', 'intervalos'], ['sinais', 'acidentes']]],
-    'Violão': [['Primeiros passos', ['notas-violao', 'violao-casa', 'figuras', 'cifras'], ['violao', 'pauta']],
-      ['Ritmo e primeiras músicas', ['notas-violao', 'violao-casa', 'figuras', 'pausas', 'compassos', 'tab'], ['violao', 'sinais']],
-      ['Baixos, sétimas e a escala', ['notas-violao', 'notas-violao-graves', 'violao-casa-graves', 'escalas', 'intervalos', 'cifras'], ['violao']],
-      ['Pestana e tonalidades', ['armaduras', 'escalas', 'campo', 'notas-violao', 'violao-casa', 'compassos'], ['violao', 'acidentes']],
-      ['Harmonia no violão', ['campo', 'funcoes', 'triades', 'notas-violao', 'pausas', 'figuras', 'acordes-ouvido'], ['harmonia']],
-      ['Rumo ao repertório', ['notas-violao', 'violao-casa', 'tab', 'campo', 'funcoes', 'armaduras', 'intervalos-ouvido'], ['violao', 'sinais'], 12]],
-    'Guitarra': [['Técnica e base', ['notas-violao', 'tab', 'cifras', 'figuras'], ['guitarra', 'pauta']],
-      ['Ritmo, ligados e improviso', ['tab', 'notas-violao', 'intervalos', 'compassos', 'campo'], ['guitarra', 'sinais']]],
-    'Teoria': [['Leitura, ritmo e intervalos', ['notas-sol', 'notas-fa', 'figuras', 'compassos', 'intervalos', 'escalas'], ['pauta', 'acidentes', 'sinais'], 12],
-      ['Escalas, acordes e percepção', ['armaduras', 'triades', 'tetrades', 'campo', 'funcoes', 'intervalos-ouvido', 'acordes-ouvido'], ['escalas', 'harmonia'], 12]]
+    'Canto': ['Respiração, afinação e leitura', 'Dicção, registros e vozes'],
+    'Teclado': ['Primeiros passos', 'Ritmo e harmonia', 'Escalas e arpejos', 'Blues, jazz e independência'],
+    'Teclado Pro': ['Técnica e escalas nos 12 tons', 'Tétrades, ii-V-I e voicings', 'Tensões e rearmonização', 'Groove e ritmos brasileiros', 'Gospel, percepção e improviso', 'Banda, palco e estúdio'],
+    'Piano': ['Leitura e as duas claves', 'Escalas, dinâmica e primeira peça'],
+    'Violão': ['Primeiros passos', 'Ritmo e primeiras músicas', 'Baixos, sétimas e a escala', 'Pestana e tonalidades', 'Harmonia no violão', 'Rumo ao repertório'],
+    'Guitarra': ['Técnica e base', 'Ritmo, ligados e improviso'],
+    'Teoria': ['Leitura, ritmo e intervalos', 'Escalas, acordes e percepção']
   };
-  var PROVA_FIXAS = {
-    'Teclado Pro': [['No sistema Nashville, os acordes são escritos como:', 'Números dos graus (1, 4, 5, 6m)', 'Letras da cifra (C, F, G)', 'Notas na pauta', 'Nomes das funções (T, S, D)'],
-      ['Para que serve o click no ao vivo?', 'Manter a banda no mesmo andamento e sincronizar o playback', 'Afinar os instrumentos', 'Aumentar o volume do retorno', 'Gravar o show'],
-      ['O baterista conta "1, 2, 3, 4" e a banda entra no:', 'Tempo 1 do compasso seguinte', 'Tempo 4', 'Meio do compasso', 'Quando o cantor entrar']]
-  };
-  function aulaDeProva(prefixo, instrumento, k, md, nivel) {
-    var titulo = 'Prova do Módulo ' + (k + 1) + ' (' + md[0] + ')';
+  var CORDAS = { 'Violão': 1, 'Guitarra': 1 }, TECLAS = { 'Teclado': 1, 'Piano': 1 };
+  // acordes treinados nas aulas do módulo (viram questões de desenho no braço ou de notas do acorde)
+  function acordesDoModulo(info, instrumento) {
+    var C = window.AmaralCanto, l = [];
+    info.forEach(function (a) {
+      a.itens.forEach(function (it) {
+        var v = it.vocalize; if (!v || v.tipo !== 'acordes' || v.ocultar) return;
+        (v.acordes || []).forEach(function (x) {
+          var c = x[0], ok = CORDAS[instrumento] ? !!C.DIAGRAMAS[c] : !!C.lerAcorde(c);
+          if (ok && l.indexOf(c) < 0) l.push(c);
+        });
+      });
+    });
+    return l;
+  }
+  function aulaDeProva(prefixo, instrumento, k, md, nivel, info, acum, ultimo) {
+    var titulo = 'Prova do Módulo ' + (k + 1) + ' (' + md + ')', blocos = [], gera = [], vistos = {};
+    function addGera(g) { var key = JSON.stringify(g); if (!vistos[key]) { vistos[key] = 1; gera.push(g); } }
+    var licoes = [];
+    info.forEach(function (a) {
+      var pp = (PERGUNTAS[prefixo] || {})[a.nome]; if (pp && pp.length) blocos.push(pp);
+      a.licoes.forEach(function (id) { var L = LICOES[id]; licoes.push(L.titulo); if (L.confira) blocos.push(L.confira); (L.gera || []).forEach(addGera); });
+    });
+    if (acum.sol.length >= 3) addGera({ tema: 'nota', clave: 'sol', notas: acum.sol.slice().sort() });
+    if (acum.fa.length >= 3) addGera({ tema: 'nota', clave: 'fa', notas: acum.fa.slice().sort() });
+    if (CORDAS[instrumento] && acum.sol.length >= 3) addGera({ tema: 'casa', notas: acum.sol.slice().sort() });
+    var acordes = acordesDoModulo(info, instrumento);
+    if (acordes.length >= 2) {
+      addGera(CORDAS[instrumento] ? { tema: 'acorde-desenho', acordes: acordes } : { tema: 'acorde-notas', acordes: acordes });
+      if (TECLAS[instrumento]) addGera({ tema: 'acorde-teclado', acordes: acordes });
+      addGera({ tema: 'cifra', acordes: acordes });
+    }
+    var n = prefixo === 'Teoria' || ultimo ? 12 : 10;
     return { titulo: titulo, instrumento: instrumento, nivel: nivel,
-      observacao: 'Prova de teoria musical do módulo. As questões são sorteadas e você precisa de 70% de acertos para liberar o próximo módulo. Pode refazer quantas vezes precisar.',
+      observacao: 'Prova sobre o que você estudou neste módulo: as lições de partitura e os assuntos das aulas. Precisa de 70% para liberar o próximo módulo. Atenção: 3 erros seguidos encerram a prova e o módulo recomeça.',
       itens: [
-        t('Revisão: releia a explicação de cada aula do módulo e refaça o exercício de leitura de partitura mais difícil.', 5),
-        { texto: 'Prova de teoria musical: ' + (md[3] || 10) + ' questões. Responda tudo e entregue.', minutos: 20,
-          vocalize: { tipo: 'prova', titulo: titulo, temas: md[1], bancos: md[2], fixas: PROVA_FIXAS[prefixo] || [], n: md[3] || 10, minimo: 70 } }
+        t('Revisão antes da prova: releia a teoria do módulo (' + licoes.join('; ') + ') e refaça a leitura de partitura em que teve mais dificuldade.', 5),
+        { texto: 'Prova do módulo: ' + n + ' questões, uma por vez.', minutos: 20,
+          vocalize: { tipo: 'prova', titulo: titulo, blocos: blocos, gera: gera, n: n, minimo: 70, errosSeguidos: 3 } }
       ] };
   }
 
   function curso(instrumento, prefixo, aulas, nome) {
-    var mods = MODULOS[prefixo] || [], lista = [], n = 0;
+    var mods = MODULOS[prefixo] || [], seq = SEQ[prefixo] || [], lista = [], n = 0, acum = { sol: [], fa: [] };
     var porMod = mods.length ? Math.ceil(aulas.length / mods.length) : aulas.length;
     function nova(a, modulo, prova) {
       a.titulo = prefixo + ' · Aula ' + (++n) + ': ' + a.titulo; a.modulo = modulo; if (prova) a.prova = true;
       lista.push(a);
     }
     (mods.length ? mods : [null]).forEach(function (md, k) {
-      var modulo = md ? 'Módulo ' + (k + 1) + ' · ' + md[0] : '';
-      var parte = aulas.slice(k * porMod, (k + 1) * porMod);
+      var modulo = md ? 'Módulo ' + (k + 1) + ' · ' + md : '', parte = aulas.slice(k * porMod, (k + 1) * porMod), info = [];
       parte.forEach(function (a, j) {
-        var i = k * porMod + j, itens = a[3].map(comPauta), ler = leituraDaAula(instrumento, i, aulas.length, prefixo === 'Teclado Pro' ? 8 : 0);
+        var licoes = [].concat(seq[k * porMod + j] || []);
+        licoes.forEach(function (id) {
+          var L = LICOES[id];
+          (L.notas || []).forEach(function (m) { if (acum.sol.indexOf(m) < 0) acum.sol.push(m); });
+          (L.notasFa || []).forEach(function (m) { if (acum.fa.indexOf(m) < 0) acum.fa.push(m); });
+        });
+        // a aula: teoria primeiro, depois a prática do instrumento e, no fim, a leitura com o que acabou de aprender
+        var itens = licoes.map(itemTeoria).concat(a[3].map(comPauta));
+        var ler = licoes.length ? itemLeitura(instrumento, licoes[licoes.length - 1]) : null;
         if (ler) itens.push(ler);
         nova({ titulo: a[0], instrumento: instrumento, nivel: a[1], observacao: a[2], itens: itens }, modulo);
+        info.push({ nome: a[0], licoes: licoes, itens: itens });
       });
-      if (md && parte.length) nova(aulaDeProva(prefixo, instrumento, k, md, parte[parte.length - 1][1]), modulo, true);
+      if (md && parte.length) nova(aulaDeProva(prefixo, instrumento, k, md, parte[parte.length - 1][1], info, acum, k === mods.length - 1), modulo, true);
     });
     return { instrumento: instrumento, nome: nome || instrumento, aulas: lista };
   }
@@ -675,16 +1114,17 @@
         t('Toque corda por corda: todas precisam soar limpas. Se alguma abafar, ajuste o dedo.', 3),
         t('Mais rápido, sem parar antes do tempo 1', 5, acordes('Em:4 Am:4', 76, { braco: true, repeticoes: 6 }))
       ]],
-      ['Leitura: notas da 1ª e da 2ª corda', 'Iniciante', '1ª corda: Mi (solta), Fá (casa 1, dedo 1) e Sol (casa 3, dedo 3). 2ª corda: Si (solta), Dó (casa 1) e Ré (casa 3). Toque alternando i e m.', [
-        t('1ª corda: Mi, Fá e Sol (o Mi fica no 4º espaço da pauta)', 4, demo([[0, 1], [1, 1], [3, 1], [1, 1], [0, 2], [null, 2]], 64, 60, 'Leia e toque', { repeticoes: 3 })),
-        t('2ª corda: Si, Dó e Ré (o Si fica na 3ª linha, bem no meio da pauta)', 4, demo([[0, 1], [1, 1], [3, 1], [1, 1], [0, 2], [null, 2]], 59, 60, 'Leia e toque', { repeticoes: 3 })),
-        t('Juntando as duas cordas: Dó, Ré, Mi, Fá e Sol', 5, demo([[0, 1], [2, 1], [4, 1], [5, 1], [7, 2], [5, 1], [4, 1], [2, 1], [4, 1], [0, 2]], 60, 63, 'Leia e toque', { repeticoes: 2, leitura: true })),
-        t('No caderno: desenhe uma pauta e escreva Mi, Fá, Sol, Si, Dó e Ré. Embaixo de cada uma, escreva a corda e a casa.', 3)
+      ['Leitura: Sol, Lá, Si e Dó nas cordas 3 e 2', 'Iniciante', 'As notas da lição de partitura no violão: Sol = 3ª corda solta; Lá = 3ª corda, casa 2 (dedo 2); Si = 2ª corda solta; Dó = 2ª corda, casa 1 (dedo 1). Toque alternando i e m.', [
+        t('3ª corda: Sol e Lá', 4, demo([[0, 1], [2, 1], [0, 1], [2, 1], [0, 2], [2, 2]], 55, 60, 'Leia e toque', { repeticoes: 3 })),
+        t('2ª corda: Si e Dó', 4, demo([[0, 1], [1, 1], [0, 1], [1, 1], [0, 2], [1, 2]], 59, 60, 'Leia e toque', { repeticoes: 3 })),
+        t('As quatro notas juntas', 5, demo([[0, 1], [2, 1], [4, 1], [5, 1], [4, 1], [2, 1], [0, 2]], 55, 63, 'Leia e toque', { repeticoes: 2, leitura: true })),
+        t('No caderno: desenhe uma pauta e escreva Sol, Lá, Si e Dó. Embaixo de cada nota, escreva a corda e a casa.', 3)
       ]],
       ['Acordes D, A e E', 'Iniciante', 'Dica: quando dois acordes têm um dedo no mesmo lugar, deixe esse dedo parado na troca.', [
         t('D e A', 5, acordes('D:4 A:4', 60, { braco: true, repeticoes: 4 })),
         t('A e E', 5, acordes('A:4 E:4', 60, { braco: true, repeticoes: 4 })),
-        t('E - A - D - A', 6, acordes('E:4 A:4 D:4 A:4', 66, { braco: true, repeticoes: 4 }))
+        t('E - A - D - A', 6, acordes('E:4 A:4 D:4 A:4', 66, { braco: true, repeticoes: 4 })),
+        t('As notas novas da lição no violão: Dó (5ª corda, casa 3), Ré (4ª solta), Mi (4ª, casa 2) e Fá (4ª, casa 3)', 4, demo([[0, 1], [2, 1], [4, 1], [5, 1], [4, 1], [2, 1], [0, 2]], 48, 60, 'Leia e toque', { repeticoes: 2 }))
       ]],
       // ----- Módulo 2: Ritmo e primeiras músicas -----
       ['G e C: a primeira progressão', 'Iniciante', 'G e C são os acordes mais usados do violão popular. Vale cada minuto de treino.', [
@@ -700,9 +1140,9 @@
         t('Levada pop: ↓ ↓↑ ↑↓↑', 5, metronomo(80, 4, '↓ · ↓↑ · ↑↓↑ (1 · 2 e · e 4 e)', 16)),
         t('Levada pop na progressão', 6, acordes('G:4 D:4 Em:4 C:4', 80, { braco: true, repeticoes: 4, texto: 'Levada: ↓ ↓↑ ↑↓↑' }))
       ]],
-      ['Leitura: 3ª corda e a primeira melodia', 'Iniciante', '3ª corda: Sol (solta) e Lá (casa 2, dedo 2). Com as três primeiras cordas já dá para ler uma melodia inteira na primeira posição.', [
-        t('3ª corda: Sol e Lá, e a volta para o Si da 2ª corda', 4, demo([[0, 1], [2, 1], [4, 2], [2, 1], [0, 1], [2, 2]], 55, 60, 'Leia e toque', { repeticoes: 3 })),
-        t('Ode à Alegria (Beethoven) lendo a partitura', 8, demo(ODE, 60, 80, 'Leia e toque', { repeticoes: 2, leitura: true })),
+      ['Leitura: Dó, Ré, Mi e Fá e a primeira melodia', 'Iniciante', 'Com as notas da oitava completa (do Dó da 5ª corda ao Dó da 2ª corda) já dá para ler uma melodia inteira na primeira posição.', [
+        t('Dó e Ré: 5ª corda, casa 3, e 4ª corda solta', 4, demo([[0, 1], [2, 1], [0, 1], [2, 1], [0, 2], [2, 2]], 48, 60, 'Leia e toque', { repeticoes: 3 })),
+        t('Ode à Alegria (Beethoven) lendo a partitura', 8, demo(ODE, 48, 80, 'Leia e toque', { repeticoes: 2, leitura: true })),
         t('Grave a Ode à Alegria lendo a partitura e poste na Comunidade.', 3)
       ]],
       ['Dedilhado', 'Intermediário', 'p = polegar, i = indicador, m = médio, a = anelar. O polegar toca o baixo (a corda que dá nome ao acorde).', [
@@ -725,7 +1165,8 @@
       ['Baixo alternado e valsa', 'Intermediário', 'O polegar toca o baixo e os dedos i-m-a tocam o acorde juntos. Na valsa (compasso 3/4): baixo no 1, acorde no 2 e no 3.', [
         t('Valsa em 3/4: C - G7 - G7 - C', 6, acordes('C:3 G7:3 G7:3 C:3', 90, { braco: true, repeticoes: 4, texto: 'Baixo · acorde · acorde (1 2 3)' })),
         t('Valsa em Lá menor: Am - E7 - E7 - Am', 6, acordes('Am:3 E7:3 E7:3 Am:3', 90, { braco: true, repeticoes: 4, texto: 'Baixo · acorde · acorde (1 2 3)' })),
-        t('Baixo alternado em 4/4: baixo, acorde, outro baixo do acorde, acorde', 6, acordes('C:4 G7:4 Am:4 E7:4', 76, { braco: true, repeticoes: 4, texto: 'Baixo · acorde · baixo · acorde' }))
+        t('Baixo alternado em 4/4: baixo, acorde, outro baixo do acorde, acorde', 6, acordes('C:4 G7:4 Am:4 E7:4', 76, { braco: true, repeticoes: 4, texto: 'Baixo · acorde · baixo · acorde' })),
+        t('As notas agudas da lição no violão: Ré (2ª corda, casa 3), Mi (1ª solta), Fá (1ª, casa 1) e Sol (1ª, casa 3)', 4, demo([[2, 1], [4, 1], [5, 1], [7, 1], [5, 1], [4, 1], [2, 2]], 60, 60, 'Leia e toque', { repeticoes: 2 }))
       ]],
       ['Escala de Dó maior na primeira posição', 'Intermediário', 'A escala de Dó usa as notas que você já leu nas cordas graves e agudas. Um dedo por casa: casa 1 = dedo 1, casa 2 = dedo 2, casa 3 = dedo 3.', [
         t('Escala de Dó maior, do Dó da 5ª corda ao Dó da 2ª corda', 6, demo(seq(MAIOR, 1, 2), 48, 60, 'Leia na pauta e toque', { leitura: true })),
@@ -739,15 +1180,15 @@
         t('C - G - Am - F com a levada pop', 6, acordes('C:4 G:4 Am:4 F:4', 76, { braco: true, repeticoes: 4, texto: 'Levada: ↓ ↓↑ ↑↓↑' })),
         t('Escolha uma música com G, D, Em e C e toque inteira com a levada pop. Poste na Comunidade!', 4)
       ]],
-      ['Pestana na 2ª casa: Bm, F♯m e o tom de Ré', 'Intermediário', 'Bm e F♯m usam pestana na casa 2. Com eles você toca todo o campo harmônico de Ré maior: D, Em, F♯m, G, A e Bm.', [
-        t('Bm e F♯m', 5, acordes('Bm:4 F#m:4', 56, { braco: true, repeticoes: 4, texto: 'Pestana na casa 2' })),
-        t('Campo harmônico de Ré: D - Em - F♯m - G - A - Bm', 6, acordes('D:4 Em:4 F#m:4 G:4 A:4 Bm:4', 66, { braco: true, repeticoes: 2 })),
-        t('D - Bm - G - A com a levada pop', 6, acordes('D:4 Bm:4 G:4 A:4', 76, { braco: true, repeticoes: 4, texto: 'Levada: ↓ ↓↑ ↑↓↑' }))
-      ]],
       ['Leitura: Sol maior e o Fá♯', 'Intermediário', 'O sustenido no começo da pauta (armadura de clave) quer dizer: todo Fá vira Fá♯. Isso é o tom de Sol maior.', [
         t('Escala de Sol maior: o Fá♯ fica na 1ª corda, casa 2', 5, demo(seq(MAIOR, 1, 2), 55, 60, 'Leia a armadura!', { armadura: 1, leitura: true })),
         t('Melodia em Sol maior: lembre do Fá♯ (4ª corda, casa 4, e 1ª corda, casa 2)', 6, demo([[0, 1], [4, 1], [7, 1], [4, 1], [5, 1], [2, 1], [-1, 1], [0, 1], [4, 0.5], [5, 0.5], [7, 0.5], [9, 0.5], [11, 1], [12, 1], [11, 1], [9, 1], [7, 2]], 55, 63, 'Leia e toque', { armadura: 1, leitura: true, repeticoes: 2 })),
         t('Acompanhe em Sol: G - Em - C - D', 4, acordes('G:4 Em:4 C:4 D:4', 72, { braco: true, repeticoes: 4 }))
+      ]],
+      ['Pestana na 2ª casa: Bm, F♯m e o tom de Ré', 'Intermediário', 'Bm e F♯m usam pestana na casa 2. Com eles você toca todo o campo harmônico de Ré maior: D, Em, F♯m, G, A e Bm.', [
+        t('Bm e F♯m', 5, acordes('Bm:4 F#m:4', 56, { braco: true, repeticoes: 4, texto: 'Pestana na casa 2' })),
+        t('Campo harmônico de Ré: D - Em - F♯m - G - A - Bm', 6, acordes('D:4 Em:4 F#m:4 G:4 A:4 Bm:4', 66, { braco: true, repeticoes: 2 })),
+        t('D - Bm - G - A com a levada pop', 6, acordes('D:4 Bm:4 G:4 A:4', 76, { braco: true, repeticoes: 4, texto: 'Levada: ↓ ↓↑ ↑↓↑' }))
       ]],
       ['Levadas brasileiras: baião e xote', 'Intermediário', 'No baião, o polegar faz a célula da zabumba (1 · e 2) e os dedos respondem no contratempo. No xote, a levada balança com acento no 2 e no 4.', [
         t('Célula do baião só no baixo: 1 · e 2', 4, metronomo(84, 2, 'p · p p (1 · e 2)', 16)),
@@ -767,8 +1208,8 @@
         t('Escala de Lá menor harmônica lida na pauta (repare no Sol♯)', 5, demo(seq(MENOR_HAR, 1, 2), 57, 60, 'Leia e toque', { leitura: true }))
       ]],
       ['Leitura: colcheias, ponto de aumento e pausas', 'Intermediário', 'Colcheia = meio tempo (conte "1 e 2 e"). O ponto soma metade do valor: semínima pontuada = 1 tempo e meio. Pausa também se conta.', [
-        t('Colcheias', 5, demo(LEITURAS[7].padrao, 48, 63, 'Conte "1 e 2 e"', { leitura: true, repeticoes: 2 })),
-        t('Ponto de aumento', 5, demo(LEITURAS[8].padrao, 48, 63, 'Segure o ponto', { leitura: true, repeticoes: 2 })),
+        t('Colcheias', 5, demo(LICOES.colcheias.leitura.padrao, 48, 63, 'Conte "1 e 2 e"', { leitura: true, repeticoes: 2 })),
+        t('Ponto de aumento', 5, demo(LICOES.ponto.leitura.padrao, 48, 63, 'Segure o ponto', { leitura: true, repeticoes: 2 })),
         t('Pausas: abafe a corda no silêncio', 4, demo([[0, 1], [null, 1], [4, 1], [null, 1], [7, 0.5], [null, 0.5], [7, 0.5], [null, 0.5], [4, 1], [null, 1], [0, 2], [null, 2]], 48, 66, 'Silêncio também é música', { leitura: true, repeticoes: 2 }))
       ]],
       ['Arpejos e dedilhado de balada', 'Intermediário', 'Na balada, o polegar toca o baixo e i-m-a-m-i desenham o acorde, uma nota de cada vez, em colcheias.', [
@@ -789,7 +1230,7 @@
       ['Cifra, tablatura e partitura juntas', 'Avançado', 'Na vida real a música chega em cifra (acordes), tablatura (riffs e solos) ou partitura (melodia). Aqui você treina as três.', [
         t('Riff nas cordas graves: leia a tablatura (corda e casa) e confira na pauta', 5, demo([[0, 1], [3, 1], [5, 2], [0, 1], [3, 1], [6, 0.5], [5, 1.5], [0, 1], [3, 1], [5, 2], [3, 1], [0, 3]], 40, 80, 'Leia a tablatura', { repeticoes: 2 })),
         t('Cifras novas: C7M, Am7, Dsus4 e Asus4', 5, acordes('Cmaj7:4 Am7:4 Dsus4:2 D:2 Asus4:2 A:2', 66, { braco: true, repeticoes: 3 })),
-        t('Brilha, brilha, estrelinha: leia a melodia na partitura', 5, demo(LEITURAS[5].padrao, 48, 72, 'Leia e toque', { leitura: true, repeticoes: 2 })),
+        t('Brilha, brilha, estrelinha: leia a melodia na partitura', 5, demo(LICOES.oitava.leitura.padrao, 48, 72, 'Leia e toque', { leitura: true, repeticoes: 2 })),
         t('Agora acompanhe a mesma melodia com a cifra', 4, acordes('C:4 F:2 C:2 F:2 C:2 G:2 C:2', 72, { braco: true, repeticoes: 3 }))
       ]],
       ['Repertório e apresentação', 'Avançado', 'Hora de juntar tudo: escolher uma música, montar o arranjo (introdução, levada, dedilhado) e tocar do começo ao fim.', [

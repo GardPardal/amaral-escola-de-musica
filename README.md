@@ -52,14 +52,19 @@ Site e área do aluno da Amaral Escola de Música (Wenceslau Braz, PR).
   (teclado com dedos ou braço do violão) e a tabela nota por nota com dedo e função (3ª, 7ª, 9ª…). O cartão do
   acorde que está tocando fica destacado.
 - O aluno só passa para o próximo exercício depois de praticar os minutos dele (o professor não tem trava).
-- **Leitura de partitura em todos os cursos**: toda aula termina com uma leitura (16 melodias em ordem de dificuldade:
-  semínimas, pausas, 3/4, colcheias, ponto de aumento, armaduras, síncope, semicolcheias). Teclado, Piano e Teoria alternam
-  clave de sol e clave de fá. Exercícios de notas que cabem nos compassos também mostram a pauta (`pauta: true` no exercício),
-  com cada nota acendendo enquanto toca. No Violão e na Guitarra a pauta vem com o 8 da clave e a tablatura embaixo.
-- **Prova de teoria no fim de cada módulo**: tipo `prova` no `canto.js`. As questões são sorteadas a cada tentativa (notas
-  na pauta, figuras, pausas, compassos, intervalos, escalas, armaduras, tríades, tétrades, cifras, campo harmônico, funções,
-  ii-V-I, tablatura e percepção com som), mais questões fixas por assunto. O aluno precisa de 70% para finalizar a prova, e as
-  aulas do módulo seguinte ficam trancadas até lá (o professor não tem trava).
+- **Partitura ensinada passo a passo**: cada aula começa com uma lição de teoria (`LICOES` no `cursos.js`: explicação,
+  exemplos na pauta que tocam e um "Confira se entendeu" que o aluno precisa acertar para seguir) e termina com uma leitura que
+  usa só o que já foi ensinado. A ordem das lições de cada curso fica em `SEQ` (pauta e clave de sol → figuras → compasso →
+  oitava → pausas → colcheias → acidentes → armaduras → intervalos → tríades → campo harmônico…). Exercícios de notas que cabem
+  nos compassos também mostram a pauta, com a nota acendendo enquanto toca; no Violão e na Guitarra vem a tablatura embaixo.
+- **Prova no fim de cada módulo** (tipo `prova` no `canto.js`), uma questão por vez, corrigida na hora. Só cai o que o módulo
+  ensinou: as perguntas das aulas (`PERGUNTAS`), as das lições, as notas já aprendidas (nome na pauta e, no violão, corda e casa)
+  e os acordes treinados nas aulas do módulo (desenho no braço, teclas marcadas, notas do acorde, cifra). 70% para passar.
+  **3 erros seguidos encerram a prova e o módulo recomeça**: o progresso das aulas do módulo é apagado e o aluno refaz.
+- As aulas abrem em sequência (cada uma depois da anterior); o módulo seguinte só abre com a prova aprovada. O professor não tem trava.
+- Layout: no computador e notebook a aula tem duas colunas (painel da aula com a lista de exercícios fixo à esquerda e o
+  exercício largo à direita); no tablet e no celular fica em uma coluna, com a lista de exercícios rolando para o lado e os
+  botões Anterior/Próximo presos embaixo.
 - Notas das provas: rode no SQL Editor a parte **Notas das provas** do `supabase/schema.sql` (tabela `notas`). O painel do
   professor mostra a melhor nota e as tentativas de cada aluno. Sem a tabela, a prova funciona e só não guarda a nota.
 - Quando os cursos mudam, o botão **Atualizar** no painel do professor também corrige a numeração das aulas já cadastradas

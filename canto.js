@@ -256,6 +256,7 @@
     var L = 26, H = 112, W = brancas.length * L;
     var svg = svgEl('svg', { viewBox: '0 0 ' + W + ' ' + (H + 2), class: 'piano', role: 'group', 'aria-label': 'Piano de ' + nomeNota(lo) + ' a ' + nomeNota(hi) });
     svg.style.maxWidth = (brancas.length * 46) + 'px';
+    svg.style.minWidth = Math.min(brancas.length * 30, 640) + 'px';
     var porMidi = {}, centro = {}, pretas = svgEl('g', {});
     function tecla(x, w, alt, classe, midi) {
       centro[midi] = { x: x + w / 2, y: classe === 'preta' ? 54 : H - 30 };
@@ -393,6 +394,7 @@
     var W = X0 + n * FW + 10, H = Y0 + 5 * SP + 34;
     var svg = svgEl('svg', { viewBox: '0 0 ' + W + ' ' + H, class: 'braco-h', role: 'img', 'aria-label': 'Braço do violão, da casa ' + lo + ' à ' + hi });
     svg.style.maxWidth = Math.round(W * 1.35) + 'px';
+    svg.style.minWidth = Math.min(Math.round(W * 0.85), 560) + 'px';
     function xT(k) { return X0 + (k - lo) * FW; }
     function xC(casa) { return casa === 0 ? X0 - 15 : xT(casa) - FW / 2; }
     function yC(c) { return Y0 + (c - 1) * SP; }
@@ -687,7 +689,9 @@
     var ataques = [];
     for (var m0 = 0; m0 < nComp; m0++) ataques.push({});
     vozes.forEach(function (vz) { vz.eventos.forEach(function (e) { var m = compDe(e.b); ataques[m][(e.b - (solto ? 0 : m * bpc)).toFixed(3)] = 1; }); });
-    var posNoComp = [], largComp = [], MIN = 25, ESQ = 16;
+    // rótulos embaixo das notas (nome da nota, valor da figura…) pedem mais espaço entre elas
+    var temRot = vozes.some(function (vz) { return vz.eventos.some(function (e) { return e.rotulo; }); });
+    var posNoComp = [], largComp = [], MIN = temRot ? 48 : 25, ESQ = temRot ? 24 : 16;
     ataques.forEach(function (a, m) {
       var ts = Object.keys(a).map(Number).sort(function (x, y) { return x - y; });
       if (!ts.length) ts = [0];
@@ -711,7 +715,7 @@
       st.comps.forEach(function (m) { sisDoComp[m] = s; iniDoComp[m] = x; x += largComp[m] * st.escala; });
       st.fim = x;
     });
-    var CIMA = 38, ENTRE = 70, TAB_GAP = 30, BAIXO = 34;
+    var CIMA = 38, ENTRE = 70, TAB_GAP = 30, BAIXO = temRot ? 52 : 34;
     var altSis = CIMA + nv * 4 * L + (nv - 1) * ENTRE + (temTab ? TAB_GAP + 5 * 8 : 0) + BAIXO;
     var W = (linhas > 1 ? largCab + util : sistemas[0].fim) + 6, H = linhas * altSis;
     var svg = svgEl('svg', { viewBox: '0 0 ' + W + ' ' + H, class: 'pauta-svg', role: 'img', 'aria-label': cfg.rotulo || 'Partitura' });
@@ -764,6 +768,7 @@
         var m = Math.floor(e.b / bpc + 1e-6); if (m !== compAtual) { compAtual = m; memo = {}; }
         var g = svgEl('g', { class: 'pt-evento' }); svg.appendChild(g);
         if (e.chave != null) (porChave[e.chave] = porChave[e.chave] || []).push(g);
+        if (e.rotulo) g.appendChild(svgEl('text', { x: x, y: topo + 4 * L + (temTab && k === nv - 1 ? TAB_GAP + 58 : 36), class: 'pt-rotulo' }, String(e.rotulo)));
         if (!e.midis || !e.midis.length) { pausa(g, x, topo, f); return; }
         var sol = e.midis.map(function (mi) { var q = soletrar(mi + tr, arm, cfg.bemois); q.midi = mi; return q; }).sort(function (a, z) { return a.passo - z.passo; });
         var ys = [];
@@ -879,15 +884,15 @@
       tab: cordas ? opcoes.posicao : null, rotulo: 'Partitura do exercício' });
   }
 
-  // ---------- Prova de teoria (fim de cada módulo) ----------
-  // { tipo: 'prova', titulo, temas: ['notas-sol', 'figuras', ...], fixas: [[pergunta, certa, errada, errada, errada], ...], n, minimo (%) }
-  // As questões dos temas são sorteadas a cada tentativa. opcoes.aoTerminar({ acertos, total, nota, aprovado }).
+  // ---------- Questões de teoria (lições e provas) ----------
+  // Cada questão vem de uma especificação com os parâmetros do que o aluno já estudou, por exemplo
+  //   { tema: 'nota', clave: 'sol', notas: [67, 69, 71, 72] }  ou  { tema: 'acorde-desenho', acordes: ['Em', 'Am', 'D'] }.
   function sorteio(n) { return Math.floor(Math.random() * n); }
   function escolher(l) { return l[sorteio(l.length)]; }
   function embaralhar(l) { l = l.slice(); for (var i = l.length - 1; i > 0; i--) { var j = sorteio(i + 1), t = l[i]; l[i] = l[j]; l[j] = t; } return l; }
   function questao(p, certa, erradas, extra) {
     var o = [certa];
-    embaralhar(erradas).forEach(function (e) { if (o.indexOf(e) < 0 && o.length < 4) o.push(e); });
+    embaralhar(erradas).forEach(function (e) { if (e != null && o.indexOf(e) < 0 && o.length < 4) o.push(e); });
     o = embaralhar(o);
     var r = { p: p, o: o, c: o.indexOf(certa) };
     Object.keys(extra || {}).forEach(function (k) { r[k] = extra[k]; });
@@ -896,9 +901,11 @@
   function notaDe(letra, pcAlvo) { var l = ((letra % 7) + 7) % 7; return { letra: l, alt: ((pcAlvo - LETRA_PC[l]) % 12 + 18) % 12 - 6 }; }
   function nomeLA(n) { return LETRA_NOME[n.letra] + (n.alt ? ACIDENTE[String(n.alt)] : ''); }
   function cifraLA(n) { return LETRAS[n.letra] + (n.alt === 1 ? '#' : n.alt === -1 ? 'b' : n.alt === 2 ? '##' : n.alt === -2 ? 'bb' : ''); }
-  function midiLA(n, oit) { return (oit + 1) * 12 + LETRA_PC[n.letra] + n.alt; }
   var TONS = [{ n: 'Dó', l: 0, pc: 0, arm: 0 }, { n: 'Sol', l: 4, pc: 7, arm: 1 }, { n: 'Ré', l: 1, pc: 2, arm: 2 }, { n: 'Lá', l: 5, pc: 9, arm: 3 },
-    { n: 'Fá', l: 3, pc: 5, arm: -1 }, { n: 'Si♭', l: 6, pc: 10, arm: -2 }, { n: 'Mi♭', l: 2, pc: 3, arm: -3 }, { n: 'Mi', l: 2, pc: 4, arm: 4 }, { n: 'Lá♭', l: 5, pc: 8, arm: -4 }];
+    { n: 'Fá', l: 3, pc: 5, arm: -1 }, { n: 'Si♭', l: 6, pc: 10, arm: -2 }, { n: 'Mi♭', l: 2, pc: 3, arm: -3 }, { n: 'Mi', l: 2, pc: 4, arm: 4 },
+    { n: 'Lá♭', l: 5, pc: 8, arm: -4 }, { n: 'Si', l: 6, pc: 11, arm: 5 }, { n: 'Ré♭', l: 1, pc: 1, arm: -5 }];
+  function tomDe(nome) { return TONS.filter(function (t) { return t.n === nome; })[0] || TONS[0]; }
+  function tonsDe(s) { return (s.tons || ['Dó']).map(tomDe); }
   var MAIOR_ST = [0, 2, 4, 5, 7, 9, 11];
   function escalaMaior(t) { return MAIOR_ST.map(function (s, i) { return notaDe(t.l + i, t.pc + s); }); }
   var GRAUS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
@@ -906,312 +913,401 @@
   var INTERVALOS = [[1, '2ª menor', 1], [2, '2ª maior', 1], [3, '3ª menor', 2], [4, '3ª maior', 2], [5, '4ª justa', 3], [6, '4ª aumentada (trítono)', 3],
     [7, '5ª justa', 4], [8, '6ª menor', 5], [9, '6ª maior', 5], [10, '7ª menor', 6], [11, '7ª maior', 6], [12, '8ª justa', 7]];
   var VALOR_TXT = { 4: '4 tempos', 3: '3 tempos', 2: '2 tempos', 1.5: '1 tempo e meio', 1: '1 tempo', 0.75: '3/4 de tempo', 0.5: 'meio tempo', 0.25: '1/4 de tempo' };
+  var MODOS = ['Jônio', 'Dórico', 'Frígio', 'Lídio', 'Mixolídio', 'Eólio', 'Lócrio'];
   function pautaSolta(clave, eventos, extra) {
     var c = { vozes: [{ clave: clave, eventos: eventos }], semCompasso: true };
     Object.keys(extra || {}).forEach(function (k) { c[k] = extra[k]; });
     return c;
   }
-  function vizinhas(letra) { return [1, -1, 2, -2, 3].map(function (d) { return LETRA_NOME[((letra + d) % 7 + 7) % 7]; }); }
-  function questaoNota(clave, ini, fim, texto, tr) {
-    var passo = ini + sorteio(fim - ini + 1), letra = passo % 7, midi = (Math.floor(passo / 7) + 1) * 12 + LETRA_PC[letra] - (tr || 0);
-    return questao(texto, LETRA_NOME[letra], vizinhas(letra), { pauta: pautaSolta(clave, [{ b: 0, dur: 4, midis: [midi] }], { transpor: tr || 0 }) });
-  }
+  function nomeMidi(m) { var q = soletrar(m, 0); return LETRA_NOME[q.letra] + (q.alt ? ACIDENTE[String(q.alt)] : ''); }
   function posTxt(p) { return p.corda + 'ª corda, ' + (p.casa ? 'casa ' + p.casa : 'solta'); }
-  function questaoCasa(ini, fim) {
-    function pos(passo) { var midi = (Math.floor(passo / 7) + 1) * 12 + LETRA_PC[passo % 7] - 12; return posicaoNaRegiao(midi, 0); }
-    var passo = ini + sorteio(fim - ini + 1), certa = pos(passo);
-    var erradas = [1, -1, 2, -2, 3].map(function (d) { var p = pos(passo + d); return p ? posTxt(p) : null; }).filter(Boolean);
-    var midi = (Math.floor(passo / 7) + 1) * 12 + LETRA_PC[passo % 7] - 12;
-    return questao('Onde se toca esta nota no violão (primeira posição)?', posTxt(certa), erradas.concat([certa.corda === 1 ? '2ª corda, solta' : '1ª corda, casa 1']),
-      { pauta: pautaSolta('sol', [{ b: 0, dur: 4, midis: [midi] }], { transpor: 12 }) });
-  }
-  function qualidadeTxt(q) { return { '': 'maior', m: 'menor', dim: 'diminuto', aug: 'aumentado', '7': 'com sétima (dominante)', m7: 'menor com sétima', '7M': 'com sétima maior', 'm7(b5)': 'meio-diminuto' }[q]; }
+  function qualidadeTxt(q) { return { '': 'maior', m: 'menor', dim: 'diminuto', aug: 'aumentado', '7': 'com sétima', m7: 'menor com sétima', '7M': 'com sétima maior', maj7: 'com sétima maior', 'm7(b5)': 'meio-diminuto', sus4: 'com 4ª suspensa', '5': 'power chord (tônica e 5ª)' }[q]; }
+  var PASSO_INTERVALO = { 0: 0, 3: 2, 4: 2, 5: 3, 6: 4, 7: 4, 8: 4, 10: 6, 11: 6, 12: 7 };
   function notasDoAcordeLA(raiz, q) {
-    var st = QUALIDADE[q], passos = { 0: 0, 3: 2, 4: 2, 6: 4, 7: 4, 8: 4, 10: 6, 11: 6 };
-    return st.map(function (s) { return notaDe(raiz.letra + passos[s], LETRA_PC[raiz.letra] + raiz.alt + s); });
+    return (QUALIDADE[q] || []).map(function (s) { return notaDe(raiz.letra + PASSO_INTERVALO[s], LETRA_PC[raiz.letra] + raiz.alt + s); });
   }
   function listaTxt(ns) { return ns.map(nomeLA).join(' – '); }
+  // cifra simples que dá para soletrar (sem baixo trocado e sem tensões)
+  function lerAcorde(c) {
+    var x = lerCifra(c); if (!x || x.baixo || qualidadeTxt(x.q) == null) return null;
+    var alt = /^[A-G]#/.test(c) ? 1 : /^[A-G]b/.test(c) ? -1 : 0;
+    var raiz = { letra: LETRAS.indexOf(x.letra), alt: alt };
+    if ((QUALIDADE[x.q] || []).some(function (s) { return PASSO_INTERVALO[s] == null; })) return null;
+    return { cifra: c, raiz: raiz, q: x.q, notas: notasDoAcordeLA(raiz, x.q) };
+  }
+  var COMUNS = ['C', 'G', 'D', 'A', 'E', 'Am', 'Em', 'Dm', 'F', 'G7', 'E7', 'A7', 'D7', 'B7', 'Bm'];
+  // compasso incompleto feito só com as figuras estudadas
+  function compassoIncompleto(bpc, valores, pausas) {
+    var vs = valores.slice().sort(function (a, b) { return b - a; }), menor = vs[vs.length - 1];
+    var faltas = vs.filter(function (v) { return v <= bpc - menor + 1e-6 && VALOR_TXT[v]; });
+    var falta = escolher(faltas.length ? faltas : [menor]), resto = bpc - falta, ev = [], b = 0, guard = 0;
+    while (resto > 1e-6 && guard++ < 20) {
+      var cand = vs.filter(function (x) { return x <= resto + 1e-6; }); if (!cand.length) break;
+      var d = escolher(cand);
+      ev.push({ b: b, dur: d, midis: pausas && Math.random() < 0.3 ? null : [escolher([64, 65, 67, 69, 71, 72])] }); b += d; resto -= d;
+    }
+    return { falta: falta, eventos: ev };
+  }
 
-  var TEMAS = {
-    'notas-sol': function () { return questaoNota('sol', 28, 40, 'Qual é o nome desta nota na clave de sol?'); },
-    'notas-sol-sup': function () { return (function (x) { return questaoNota('sol', x, x, 'Qual é esta nota (com linha suplementar)?'); })(escolher([24, 25, 26, 27, 41, 42, 43])); },
-    'notas-fa': function () { return questaoNota('fa', 16, 28, 'Qual é o nome desta nota na clave de fá?'); },
-    'notas-violao': function () { return questaoNota('sol', 30, 39, 'Na partitura de violão e guitarra, qual é esta nota?', 12); },
-    'notas-violao-graves': function () { return questaoNota('sol', 23, 30, 'Na partitura de violão e guitarra, qual é esta nota grave?', 12); },
-    'violao-casa': function () { return questaoCasa(30, 39); },
-    'violao-casa-graves': function () { return questaoCasa(23, 31); },
-    'figuras': function () {
-      var v = escolher([4, 2, 1, 0.5, 0.25, 3, 1.5]), nome = figura(v).nome, outros = FIGURAS.map(function (f) { return f[1]; });
-      if (Math.random() < 0.5) return questao('Qual é o nome desta figura?', nome, outros, { pauta: pautaSolta('sol', [{ b: 0, dur: v, midis: [71] }]) });
-      return questao('No compasso de 4/4, quanto vale a ' + nome + '?', VALOR_TXT[v], Object.keys(VALOR_TXT).map(function (k) { return VALOR_TXT[k]; }));
+  var GERA = {
+    // nome da nota na pauta, só com as notas já estudadas
+    'nota': function (s) {
+      var clave = s.clave || 'sol', midi = escolher(s.notas), certa = nomeMidi(midi);
+      var outras = s.notas.map(nomeMidi).filter(function (x) { return x !== certa; });
+      var q = soletrar(midi, 0), viz = [1, -1, 2, -2].map(function (d) { return LETRA_NOME[((q.letra + d) % 7 + 7) % 7]; });
+      return questao('Qual é o nome desta nota' + (clave === 'fa' ? ' na clave de fá?' : '?'), certa, embaralhar(outras).concat(viz),
+        { pauta: pautaSolta(clave, [{ b: 0, dur: 4, midis: [midi] }]) });
     },
-    'pausas': function () {
-      var v = escolher([4, 2, 1, 0.5, 0.25]), nome = 'pausa de ' + figura(v).nome;
-      return questao('Qual é o nome desta pausa?', nome, [4, 2, 1, 0.5, 0.25].map(function (x) { return 'pausa de ' + figura(x).nome; }),
-        { pauta: pautaSolta('sol', [{ b: 0, dur: v, midis: null }]) });
+    // violão e guitarra: onde se toca a nota escrita (as notas da lista são escritas; o som é uma oitava abaixo)
+    'casa': function (s) {
+      var pos = function (m) { return posicaoNaRegiao(m - 12, 0); };
+      var lista = s.notas.filter(function (m) { var p = pos(m); return p && p.casa <= 4; });
+      var midi = escolher(lista), certa = pos(midi);
+      var erradas = lista.filter(function (m) { return m !== midi; }).map(function (m) { return posTxt(pos(m)); })
+        .concat([posTxt({ corda: certa.corda, casa: certa.casa + 1 }), posTxt({ corda: certa.corda === 1 ? 2 : certa.corda - 1, casa: certa.casa })]);
+      return questao('Onde se toca esta nota no violão (primeira posição)?', posTxt(certa), erradas,
+        { pauta: pautaSolta('sol', [{ b: 0, dur: 4, midis: [midi - 12] }], { transpor: 12 }) });
     },
-    'compassos': function () {
-      var bpc = escolher([2, 3, 4]);
-      var tipo = sorteio(3);
-      if (tipo === 0) return questao('Num compasso ' + bpc + '/4, quantas colcheias cabem?', String(bpc * 2), [String(bpc), String(bpc * 4), String(bpc * 2 + 2), String(bpc + 1)]);
-      if (tipo === 1) {
-        var nomes = { 2: 'binário', 3: 'ternário', 4: 'quaternário' };
-        return questao('O compasso ' + bpc + '/4 é:', nomes[bpc], ['binário', 'ternário', 'quaternário', 'composto']);
+    'figura': function (s) {
+      var vs = s.valores || [4, 2, 1], v = escolher(vs), nome = figura(v).nome;
+      var nomes = vs.map(function (x) { return figura(x).nome; }).concat(['semibreve', 'mínima', 'semínima', 'colcheia']);
+      if (Math.random() < 0.5) return questao('Qual é o nome desta figura?', nome, nomes, { pauta: pautaSolta('sol', [{ b: 0, dur: v, midis: [71] }]) });
+      return questao('No compasso de 4/4, quanto vale a ' + nome + '?', VALOR_TXT[v], vs.map(function (x) { return VALOR_TXT[x]; }).concat(['4 tempos', '2 tempos', '1 tempo', 'meio tempo', '3 tempos']));
+    },
+    'pausa': function (s) {
+      var vs = s.valores || [4, 2, 1], v = escolher(vs);
+      var nomes = vs.concat([4, 2, 1, 0.5]).map(function (x) { return 'pausa de ' + figura(x).nome; });
+      if (Math.random() < 0.5) return questao('Qual é esta pausa?', 'pausa de ' + figura(v).nome, nomes, { pauta: pautaSolta('sol', [{ b: 0, dur: v, midis: null }]) });
+      return questao('Quanto vale esta pausa?', VALOR_TXT[v], ['4 tempos', '2 tempos', '1 tempo', 'meio tempo', '3 tempos'], { pauta: pautaSolta('sol', [{ b: 0, dur: v, midis: null }]) });
+    },
+    'compasso': function (s) {
+      var bpc = escolher(s.formulas || [4]), vs = s.valores || [2, 1];
+      if (Math.random() < 0.35) {
+        if (vs.indexOf(0.5) >= 0 && Math.random() < 0.5) return questao('Num compasso ' + bpc + '/4, quantas colcheias cabem?', String(bpc * 2), [String(bpc), String(bpc * 4), String(bpc * 2 + 2), String(bpc + 1)]);
+        return questao('Quantos tempos tem cada compasso ' + bpc + '/4?', String(bpc), ['2', '3', '4', '6', '8']);
       }
-      var falta = escolher(bpc === 2 ? [0.5, 1] : [0.5, 1, 2]), resto = bpc - falta, ev = [], b = 0;
-      while (resto > 1e-6) { var d = escolher([2, 1, 1, 0.5].filter(function (x) { return x <= resto + 1e-6; })); ev.push({ b: b, dur: d, midis: [escolher([67, 69, 71, 72, 74])] }); b += d; resto -= d; }
-      return questao('Quantos tempos faltam para completar este compasso ' + bpc + '/4?', VALOR_TXT[falta], ['meio tempo', '1 tempo', '2 tempos', '1 tempo e meio', '3 tempos'],
-        { pauta: { vozes: [{ clave: 'sol', eventos: ev }], compasso: bpc } });
+      var c = compassoIncompleto(bpc, vs, s.pausas);
+      return questao('Quantos tempos faltam para completar este compasso ' + bpc + '/4?', VALOR_TXT[c.falta],
+        ['meio tempo', '1 tempo', '2 tempos', '1 tempo e meio', '3 tempos', '1/4 de tempo'], { pauta: { vozes: [{ clave: 'sol', eventos: c.eventos }], compasso: bpc } });
     },
-    'acidentes': function () {
+    'acidente': function () {
       var l = sorteio(7), base = LETRA_PC[l], tipo = sorteio(3), certa, txt;
       if (tipo === 0) { txt = 'Qual nota está meio tom acima de ' + LETRA_NOME[l] + '?'; certa = l === 2 || l === 6 ? notaDe(l + 1, base + 1) : notaDe(l, base + 1); }
       else if (tipo === 1) { txt = 'Qual nota está meio tom abaixo de ' + LETRA_NOME[l] + '?'; certa = l === 0 || l === 3 ? notaDe(l - 1, base - 1) : notaDe(l, base - 1); }
       else { txt = 'Qual nota está um tom acima de ' + LETRA_NOME[l] + '?'; certa = notaDe(l + 1, base + 2); }
       var erradas = [notaDe(l, base + (tipo === 1 ? 1 : -1)), notaDe(l + 1, base + 3), notaDe(l - 1, base - 2), notaDe(l + 1, base + 1), notaDe(l + 1, LETRA_PC[(l + 1) % 7]), notaDe(l, base)]
-        .filter(function (x) { return Math.abs(x.alt) <= 1; }).map(nomeLA).filter(function (x) { return x !== nomeLA(certa); });
+        .filter(function (x) { return Math.abs(x.alt) <= 1; }).map(nomeLA);
       return questao(txt, nomeLA(certa), erradas);
     },
-    'intervalos': function () {
-      var iv, raiz, alvo;
-      do { iv = escolher(INTERVALOS.filter(function (x) { return x[0] !== 6; })); raiz = notaDe(sorteio(7), 0); raiz = { letra: raiz.letra, alt: 0 }; alvo = notaDe(raiz.letra + iv[2], LETRA_PC[raiz.letra] + iv[0]); } while (Math.abs(alvo.alt) > 1);
-      var m1 = midiLA(raiz, 4), m2 = m1 + iv[0];
-      var k = INTERVALOS.indexOf(iv), erradas = [INTERVALOS[k - 1], INTERVALOS[k + 1], INTERVALOS[k + 2], INTERVALOS[k - 2], INTERVALOS[k + 3], INTERVALOS[k - 3]].filter(Boolean).map(function (x) { return x[1]; });
-      return questao('Qual é o intervalo entre ' + nomeLA(raiz) + ' e ' + nomeLA(alvo) + '?', iv[1], erradas,
-        { pauta: pautaSolta('sol', [{ b: 0, dur: 1, midis: [m1] }, { b: 1, dur: 1, midis: [m2] }], { bemois: alvo.alt < 0 }) });
+    'armadura': function (s) {
+      var ts = tonsDe(s).filter(function (t) { return t.arm; }), t = escolher(ts);
+      var outros = ts.concat(TONS).filter(function (x) { return x !== t; }).map(function (x) { return x.n + ' maior'; });
+      if (Math.random() < 0.6) return questao('Esta armadura de clave é de qual tom maior?', t.n + ' maior', outros,
+        { pauta: { vozes: [{ clave: 'sol', eventos: [] }], semCompasso: true, armadura: t.arm, bw: 10 } });
+      var n = Math.abs(t.arm), qual = t.arm > 0 ? (n > 1 ? 'sustenidos' : 'sustenido') : (n > 1 ? 'bemóis' : 'bemol');
+      return questao('Quantos acidentes tem a armadura de ' + t.n + ' maior?', n + ' ' + qual,
+        [(n + 1) + (t.arm > 0 ? ' sustenidos' : ' bemóis'), Math.max(1, n - 1) + (t.arm > 0 ? ' sustenido' + (n - 1 > 1 ? 's' : '') : ' bemol' + (n - 1 > 1 ? '' : '')), n + (t.arm > 0 ? ' bemóis' : ' sustenidos'), 'Nenhum']);
     },
-    'intervalos-ouvido': function () {
-      var opc = [[3, '3ª menor'], [4, '3ª maior'], [5, '4ª justa'], [7, '5ª justa'], [9, '6ª maior'], [12, '8ª justa'], [2, '2ª maior']];
-      var iv = escolher(opc), r = 55 + sorteio(8);
-      return questao('Ouça (toque em Ouvir) e diga qual é o intervalo:', iv[1], opc.map(function (x) { return x[1]; }), { ouvir: [[r], [r + iv[0]]] });
+    'relativa': function (s) {
+      var t = escolher(tonsDe(s)), e = escalaMaior(t);
+      return questao('Qual é a relativa menor de ' + t.n + ' maior?', nomeLA(e[5]) + ' menor', [nomeLA(e[2]) + ' menor', nomeLA(e[3]) + ' menor', t.n + ' menor', nomeLA(e[4]) + ' menor']);
     },
-    'acordes-ouvido': function () {
-      var opc = [['', 'maior'], ['m', 'menor'], ['dim', 'diminuto'], ['aug', 'aumentado']], a = escolher(Math.random() < 0.7 ? opc.slice(0, 2) : opc), r = 52 + sorteio(9);
-      return questao('Ouça o acorde e diga se ele é:', a[1], opc.map(function (x) { return x[1]; }), { ouvir: [QUALIDADE[a[0]].map(function (s) { return r + s; })] });
-    },
-    'escalas': function () {
-      var t = escolher(TONS.slice(0, 7)), esc = escalaMaior(t), g = 1 + sorteio(6);
-      if (Math.random() < 0.3) {
-        var n = Math.abs(t.arm), qual = t.arm > 0 ? 'sustenidos' : 'bemóis';
-        if (!t.arm) return questao('Quantos acidentes tem a escala de Dó maior?', 'Nenhum', ['1 sustenido', '1 bemol', '2 sustenidos']);
-        return questao('Quantos ' + qual + ' tem a escala de ' + t.n + ' maior?', String(n), [String(n + 1), String(Math.max(0, n - 1)), String(n + 2), '0'].filter(function (x) { return x !== String(n); }));
-      }
-      var certa = esc[g], erradas = [{ letra: certa.letra, alt: certa.alt + 1 }, { letra: certa.letra, alt: certa.alt - 1 }, esc[(g + 1) % 7], esc[g - 1]].filter(function (x) { return Math.abs(x.alt) <= 1; }).map(nomeLA);
+    'escala': function (s) {
+      var t = escolher(tonsDe(s)), esc = escalaMaior(t), g = 1 + sorteio(6), certa = esc[g];
+      var erradas = [{ letra: certa.letra, alt: certa.alt + 1 }, { letra: certa.letra, alt: certa.alt - 1 }, esc[(g + 1) % 7], esc[g - 1]].filter(function (x) { return Math.abs(x.alt) <= 1; }).map(nomeLA);
       return questao('Qual é o ' + (g + 1) + 'º grau da escala de ' + t.n + ' maior?', nomeLA(certa), erradas);
     },
-    'armaduras': function () {
-      var t = escolher(TONS.slice(1, 9));
-      if (Math.random() < 0.5) {
-        return questao('Esta armadura de clave é de qual tom maior?', t.n + ' maior', TONS.filter(function (x) { return x !== t; }).map(function (x) { return x.n + ' maior'; }).sort(function (a, b) { return Math.abs(a.length - b.length); }),
-          { pauta: { vozes: [{ clave: 'sol', eventos: [] }], semCompasso: true, armadura: t.arm, bw: 10 } });
-      }
-      var rel = escalaMaior(t)[5];
-      return questao('Qual é a relativa menor de ' + t.n + ' maior?', nomeLA(rel) + ' menor',
-        [nomeLA(escalaMaior(t)[2]) + ' menor', nomeLA(escalaMaior(t)[3]) + ' menor', t.n + ' menor', nomeLA(escalaMaior(t)[4]) + ' menor']);
+    'intervalo': function (s) {
+      var lista = INTERVALOS.filter(function (x) { return (s.lista || [2, 3, 4, 5, 7, 12]).indexOf(x[0]) >= 0; }), iv, raiz, alvo, guard = 0;
+      do { iv = escolher(lista); raiz = { letra: sorteio(7), alt: 0 }; alvo = notaDe(raiz.letra + iv[2], LETRA_PC[raiz.letra] + iv[0]); } while (Math.abs(alvo.alt) > 1 && guard++ < 30);
+      var m1 = 60 + LETRA_PC[raiz.letra], nomeIv = function (x) { return s.simples ? x[1].split(' ')[0] : x[1]; };
+      var erradas = INTERVALOS.filter(function (x) { return x !== iv; }).sort(function (a, b) { return Math.abs(a[0] - iv[0]) - Math.abs(b[0] - iv[0]); }).map(nomeIv);
+      return questao('Qual é o intervalo entre ' + nomeLA(raiz) + ' e ' + nomeLA(alvo) + '?', nomeIv(iv), erradas,
+        { pauta: pautaSolta('sol', [{ b: 0, dur: 1, midis: [m1] }, { b: 1, dur: 1, midis: [m1 + iv[0]] }], { bemois: alvo.alt < 0 }) });
     },
-    'triades': function () {
-      var t = escolher(TONS.slice(0, 6)), g = escolher([0, 1, 3, 4, 5]), esc = escalaMaior(t), raiz = esc[g], q = CAMPO_TRI[g];
-      var certas = notasDoAcordeLA(raiz, q), outra = notasDoAcordeLA(raiz, q === 'm' ? '' : 'm');
+    'intervalo-ouvido': function (s) {
+      var opc = INTERVALOS.filter(function (x) { return (s.lista || [3, 4, 7, 12]).indexOf(x[0]) >= 0; }), iv = escolher(opc), r = 55 + sorteio(8);
+      return questao('Toque em Ouvir e diga qual é o intervalo:', iv[1], opc.map(function (x) { return x[1]; }).concat(['2ª maior', '4ª justa', '6ª maior']), { ouvir: [[r], [r + iv[0]]] });
+    },
+    'acorde-ouvido': function (s) {
+      var nomes = { '': 'maior', m: 'menor', dim: 'diminuto', aug: 'aumentado' }, tipos = s.tipos || ['', 'm'], q = escolher(tipos), r = 52 + sorteio(9);
+      return questao('Toque em Ouvir: o acorde é…', nomes[q], tipos.map(function (x) { return nomes[x]; }).concat(['maior', 'menor', 'diminuto', 'aumentado']), { ouvir: [QUALIDADE[q].map(function (x) { return r + x; })] });
+    },
+    'triade': function (s) {
+      var t = escolher(tonsDe(s)), g = escolher([0, 1, 3, 4, 5]), esc = escalaMaior(t), raiz = esc[g], q = CAMPO_TRI[g];
+      var certas = notasDoAcordeLA(raiz, q);
       if (Math.random() < 0.4) return questao('O acorde ' + listaTxt(certas) + ' é:', qualidadeTxt(q), ['maior', 'menor', 'diminuto', 'aumentado']);
-      var errada2 = notasDoAcordeLA(esc[(g + 1) % 7], CAMPO_TRI[(g + 1) % 7]), errada3 = [certas[0], certas[1], { letra: certas[2].letra, alt: certas[2].alt + (q === 'm' ? 1 : -1) }];
-      return questao('Quais notas formam o acorde ' + cifraLA(raiz) + q + '?', listaTxt(certas), [listaTxt(outra), listaTxt(errada2), listaTxt(errada3)]);
-    },
-    'tetrades': function () {
-      var t = escolher(TONS.slice(0, 6)), g = sorteio(7), esc = escalaMaior(t), raiz = esc[g], q = CAMPO_TET[g];
-      var certas = notasDoAcordeLA(raiz, q), alt = { '7M': '7', '7': '7M', m7: 'm7(b5)', 'm7(b5)': 'm7' }[q];
       return questao('Quais notas formam o acorde ' + cifraLA(raiz) + q + '?', listaTxt(certas),
+        [listaTxt(notasDoAcordeLA(raiz, q === 'm' ? '' : 'm')), listaTxt(notasDoAcordeLA(esc[(g + 1) % 7], CAMPO_TRI[(g + 1) % 7])), listaTxt(notasDoAcordeLA(esc[(g + 3) % 7], CAMPO_TRI[(g + 3) % 7]))]);
+    },
+    'tetrade': function (s) {
+      var t = escolher(tonsDe(s)), g = sorteio(7), esc = escalaMaior(t), raiz = esc[g], q = CAMPO_TET[g];
+      var alt = { '7M': '7', '7': '7M', m7: 'm7(b5)', 'm7(b5)': 'm7' }[q];
+      return questao('Quais notas formam o acorde ' + cifraLA(raiz) + q + '?', listaTxt(notasDoAcordeLA(raiz, q)),
         [listaTxt(notasDoAcordeLA(raiz, alt)), listaTxt(notasDoAcordeLA(raiz, q === '7M' ? 'm7' : '7M')), listaTxt(notasDoAcordeLA(raiz, q === 'm7' ? '7' : 'm7')), listaTxt(notasDoAcordeLA(esc[(g + 1) % 7], CAMPO_TET[(g + 1) % 7]))]);
     },
-    'cifras': function () {
-      var qs = [['', 'maior'], ['m', 'menor'], ['7', 'com sétima'], ['m7', 'menor com sétima'], ['7M', 'com sétima maior'], ['dim', 'diminuto']];
-      var r = { letra: sorteio(7), alt: Math.random() < 0.2 ? escolher([1, -1]) : 0 }, q = escolher(Math.random() < 0.6 ? qs.slice(0, 3) : qs);
-      if (Math.random() < 0.25) return questao('Na cifra, qual letra representa a nota ' + LETRA_NOME[r.letra] + '?', LETRAS[r.letra], LETRAS.filter(function (x, i) { return i !== r.letra; }));
-      var nome = function (n, qq) { return nomeLA(n) + ' ' + qq[1]; };
-      return questao('O que significa a cifra ' + cifraLA(r) + q[0] + '?', nome(r, q),
-        qs.filter(function (x) { return x !== q; }).map(function (x) { return nome(r, x); }).concat([nome({ letra: (r.letra + 1) % 7, alt: r.alt }, q), nome({ letra: (r.letra + 6) % 7, alt: r.alt }, q)]).slice(0, 5));
+    // acordes treinados no módulo
+    'acorde-notas': function (s) {
+      var lista = (s.acordes || []).map(lerAcorde).filter(Boolean), a = escolher(lista);
+      var erradas = lista.filter(function (x) { return x.cifra !== a.cifra; }).map(function (x) { return listaTxt(x.notas); })
+        .concat([listaTxt(notasDoAcordeLA(a.raiz, a.q === 'm' ? '' : 'm')), listaTxt(notasDoAcordeLA(a.raiz, a.q === '7' ? '' : '7'))]);
+      return questao('Quais notas formam o acorde ' + a.cifra + '?', listaTxt(a.notas), erradas);
     },
-    'campo': function () {
-      var t = escolher(TONS.slice(0, 7)), g = sorteio(7), esc = escalaMaior(t), tet = Math.random() < 0.4, Q = tet ? CAMPO_TET : CAMPO_TRI;
+    'acorde-desenho': function (s) {
+      var lista = (s.acordes || []).filter(function (c) { return DIAGRAMAS[c]; }), c = escolher(lista);
+      var d = diagramaDe(c), copia = { nome: '', pontos: d.pontos, abafadas: d.abafadas, soltas: d.soltas, pestana: d.pestana };
+      return questao('Qual acorde é este desenho?', c, lista.filter(function (x) { return x !== c; }).concat(embaralhar(COMUNS)),
+        { desenho: function () { var e = h('div', { class: 'prova-braco' }); e.appendChild(desenharBraco(copia)); return e; } });
+    },
+    'acorde-teclado': function (s) {
+      var lista = (s.acordes || []).map(lerAcorde).filter(Boolean), a = escolher(lista);
+      var midis = QUALIDADE[a.q].map(function (x) { return 60 + LETRA_PC[a.raiz.letra] + a.raiz.alt + x; });
+      return questao('Qual acorde está marcado no teclado?', a.cifra, lista.map(function (x) { return x.cifra; }).filter(function (x) { return x !== a.cifra; }).concat(embaralhar(COMUNS)),
+        { desenho: function () { var t = criarTeclado(57, 84, function (m) { somNota(m, 0, 0.6, 1, true); }, false); t.marcar(midis); var e = h('div', { class: 'prova-teclado' }); e.appendChild(t.el); return e; } });
+    },
+    'cifra': function (s) {
+      var lista = (s.acordes || COMUNS).map(lerAcorde).filter(function (x) { return x && x.q !== '5'; });
+      if (!lista.length) lista = COMUNS.map(lerAcorde).filter(Boolean);
+      var a = escolher(lista);
+      if (Math.random() < 0.25) return questao('Na cifra, qual letra representa a nota ' + LETRA_NOME[a.raiz.letra] + '?', LETRAS[a.raiz.letra], LETRAS.filter(function (x, i) { return i !== a.raiz.letra; }));
+      var nome = function (r, q) { return nomeLA(r) + ' ' + qualidadeTxt(q); };
+      return questao('O que significa a cifra ' + a.cifra + '?', nome(a.raiz, a.q),
+        ['', 'm', '7', 'm7', '7M'].filter(function (q) { return q !== a.q; }).map(function (q) { return nome(a.raiz, q); }).concat([nome({ letra: (a.raiz.letra + 1) % 7, alt: 0 }, a.q)]));
+    },
+    'campo': function (s) {
+      var t = escolher(tonsDe(s)), g = sorteio(7), esc = escalaMaior(t), Q = s.tetrades ? CAMPO_TET : CAMPO_TRI;
       var c = function (i, q) { return cifraLA(esc[(i + 7) % 7]) + (q != null ? q : Q[(i + 7) % 7]); };
-      return questao('No campo harmônico de ' + t.n + ' maior' + (tet ? ' (tétrades)' : '') + ', qual é o acorde do grau ' + GRAUS[g] + '?', c(g),
-        [c(g + 1), c(g - 1), c(g, Q[g] === Q[1] ? Q[0] : Q[1]), c(g + 2)]);
+      return questao('No campo harmônico de ' + t.n + ' maior, qual é o acorde do grau ' + GRAUS[g] + '?', c(g), [c(g + 1), c(g - 1), c(g, Q[g] === Q[1] ? Q[0] : Q[1]), c(g + 2)]);
     },
-    'funcoes': function () {
+    'funcao': function (s) {
       if (Math.random() < 0.5) {
-        var g = escolher([[0, 'Tônica'], [3, 'Subdominante'], [4, 'Dominante'], [1, 'Subdominante'], [5, 'Tônica (relativa)'], [6, 'Dominante']]);
-        return questao('Qual é a função harmônica do grau ' + GRAUS[g[0]] + '?', g[1], ['Tônica', 'Subdominante', 'Dominante', 'Tônica (relativa)'].filter(function (x) { return x !== g[1]; }));
+        var g = escolher([[0, 'Tônica'], [3, 'Subdominante'], [4, 'Dominante'], [1, 'Subdominante'], [5, 'Tônica'], [6, 'Dominante']]);
+        return questao('Qual é a função harmônica do grau ' + GRAUS[g[0]] + '?', g[1], ['Tônica', 'Subdominante', 'Dominante', 'Nenhuma']);
       }
-      var t = escolher(TONS.slice(0, 7)), esc = escalaMaior(t);
-      return questao('No tom de ' + t.n + ' maior, qual acorde é a dominante (V7)?', cifraLA(esc[4]) + '7',
-        [cifraLA(esc[3]) + '7', cifraLA(esc[1]) + 'm7', cifraLA(esc[0]) + '7', cifraLA(esc[5]) + '7']);
+      var t = escolher(tonsDe(s)), esc = escalaMaior(t);
+      return questao('No tom de ' + t.n + ' maior, qual acorde é a dominante (V7)?', cifraLA(esc[4]) + '7', [cifraLA(esc[3]) + '7', cifraLA(esc[1]) + 'm7', cifraLA(esc[0]) + '7', cifraLA(esc[5]) + '7']);
     },
-    'harmonia': function () {
-      var t = escolher(TONS.slice(0, 7)), esc = escalaMaior(t), tipo = sorteio(4);
+    'harmonia': function (s) {
+      var t = escolher(TONS.slice(0, 7)), esc = escalaMaior(t), tipo = escolher(s.tipos || ['iiVI', 'subV', 'secundario', 'tensao']);
       var iiVI = function (e) { return cifraLA(e[1]) + 'm7 – ' + cifraLA(e[4]) + '7 – ' + cifraLA(e[0]) + '7M'; };
-      if (tipo === 0) return questao('Qual é o ii-V-I de ' + t.n + ' maior?', iiVI(esc),
-        TONS.filter(function (x) { return x !== t; }).slice(0, 4).map(function (x) { return iiVI(escalaMaior(x)); }).concat([cifraLA(esc[1]) + '7 – ' + cifraLA(esc[4]) + 'm7 – ' + cifraLA(esc[0]) + '7M']));
-      if (tipo === 1) {
-        var sub = notaDe(t.l + 1, t.pc + 1);
-        return questao('Qual é o SubV7 (substituto de trítono) que resolve em ' + cifraLA(esc[0]) + '?', cifraLA(sub) + '7',
-          [cifraLA(esc[4]) + '7', cifraLA(notaDe(t.l + 4, t.pc + 6)) + '7', cifraLA(esc[1]) + '7', cifraLA(notaDe(t.l + 6, t.pc + 10)) + '7']);
+      if (tipo === 'iiVI') return questao('Qual é o ii-V-I de ' + t.n + ' maior?', iiVI(esc), TONS.filter(function (x) { return x !== t; }).slice(0, 5).map(function (x) { return iiVI(escalaMaior(x)); }));
+      if (tipo === 'subV') return questao('Qual é o SubV7 (substituto de trítono) que resolve em ' + cifraLA(esc[0]) + '?', cifraLA(notaDe(t.l + 1, t.pc + 1)) + '7',
+        [cifraLA(esc[4]) + '7', cifraLA(notaDe(t.l + 4, t.pc + 6)) + '7', cifraLA(esc[1]) + '7', cifraLA(notaDe(t.l + 6, t.pc + 10)) + '7']);
+      if (tipo === 'secundario') {
+        var alvo = esc[escolher([1, 2, 5])], pa = LETRA_PC[alvo.letra] + alvo.alt;
+        return questao('Em ' + t.n + ' maior, qual é o dominante secundário (V7) de ' + cifraLA(alvo) + 'm?', cifraLA(notaDe(alvo.letra + 4, pa + 7)) + '7',
+          [cifraLA(esc[4]) + '7', cifraLA(notaDe(alvo.letra + 3, pa + 5)) + '7', cifraLA(notaDe(alvo.letra + 1, pa + 2)) + '7', cifraLA(alvo) + '7']);
       }
-      if (tipo === 2) {
-        var g = escolher([1, 2, 5]), alvo = esc[g], dom = notaDe(alvo.letra + 4, LETRA_PC[alvo.letra] + alvo.alt + 7);
-        return questao('Em ' + t.n + ' maior, qual é o dominante secundário (V7) de ' + cifraLA(alvo) + 'm?', cifraLA(dom) + '7',
-          [cifraLA(esc[4]) + '7', cifraLA(notaDe(alvo.letra + 3, LETRA_PC[alvo.letra] + alvo.alt + 5)) + '7', cifraLA(notaDe(alvo.letra + 1, LETRA_PC[alvo.letra] + alvo.alt + 2)) + '7', cifraLA(alvo) + '7']);
-      }
-      var tens = escolher([[2, 1, '9ª'], [5, 3, '11ª'], [9, 5, '13ª']]), r = esc[0];
-      return questao('Qual nota é a ' + tens[2] + ' do acorde ' + cifraLA(r) + '7M?', nomeLA(notaDe(r.letra + tens[1], t.pc + tens[0])),
+      var tens = escolher([[2, 1, '9ª'], [5, 3, '11ª'], [9, 5, '13ª']]);
+      return questao('Qual nota é a ' + tens[2] + ' do acorde ' + cifraLA(esc[0]) + '7M?', nomeLA(notaDe(t.l + tens[1], t.pc + tens[0])),
         [nomeLA(esc[(tens[1] + 1) % 7]), nomeLA(esc[(tens[1] + 6) % 7]), nomeLA(esc[(tens[1] + 2) % 7]), nomeLA(esc[(tens[1] + 4) % 7])]);
     },
+    'nashville': function (s) {
+      var t = escolher(tonsDe(s)), esc = escalaMaior(t), g = escolher([0, 1, 3, 4, 5]), num = [1, 2, 3, 4, 5, 6][g] + (CAMPO_TRI[g] === 'm' ? 'm' : '');
+      var c = function (i) { return cifraLA(esc[(i + 7) % 7]) + CAMPO_TRI[(i + 7) % 7]; };
+      return questao('No sistema Nashville, no tom de ' + t.n + ', o número ' + num + ' é qual acorde?', c(g), [c(g + 1), c(g - 1), c(g + 3), c(g + 4)]);
+    },
+    'transpor': function (s) {
+      var ts = tonsDe(s), de = TONS[0], para = escolher(ts.filter(function (x) { return x !== de; }).concat([TONS[1], TONS[2]])), g = escolher([1, 3, 4, 5]);
+      var ed = escalaMaior(de), ep = escalaMaior(para), c = function (e, i) { return cifraLA(e[i]) + CAMPO_TRI[i]; };
+      return questao('Uma música em Dó maior tem o acorde ' + c(ed, g) + '. Transpondo para ' + para.n + ' maior, ele vira:', c(ep, g), [c(ep, (g + 1) % 7), c(ep, (g + 6) % 7), c(ed, g), c(ep, (g + 3) % 7)]);
+    },
+    'modo': function () {
+      var g = sorteio(7);
+      return questao('Qual modo começa no ' + (g + 1) + 'º grau da escala maior?', MODOS[g], MODOS.filter(function (x, i) { return i !== g; }));
+    },
     'tab': function () {
-      var corda = 1 + sorteio(6), casa = sorteio(6), midi = CORDAS_SOLTAS[6 - corda] + casa;
+      var corda = 1 + sorteio(6), casa = sorteio(5), midi = CORDAS_SOLTAS[6 - corda] + casa;
       if (Math.random() < 0.5) return questao('Na tablatura, o número ' + casa + ' na ' + corda + 'ª linha (de cima para baixo) quer dizer:', posTxt({ corda: corda, casa: casa }),
-        [posTxt({ corda: 7 - corda, casa: casa }), posTxt({ corda: corda, casa: casa + 1 }), 'Dedo ' + Math.min(4, Math.max(1, casa)) + ' na ' + corda + 'ª corda', posTxt({ corda: (corda % 6) + 1, casa: casa })]);
-      var nome = NOMES[pc(midi)];
-      return questao('Qual nota soa na ' + posTxt({ corda: corda, casa: casa }) + '?', nome, [NOMES[pc(midi + 1)], NOMES[pc(midi - 1)], NOMES[pc(midi + 2)], NOMES[pc(midi - 2)]]);
+        [posTxt({ corda: 7 - corda, casa: casa }), posTxt({ corda: corda, casa: casa + 1 }), 'Dedo ' + Math.max(1, Math.min(4, casa)) + ' na ' + corda + 'ª corda', posTxt({ corda: (corda % 6) + 1, casa: casa })]);
+      return questao('Qual nota soa na ' + posTxt({ corda: corda, casa: casa }) + '?', NOMES[pc(midi)], [NOMES[pc(midi + 1)], NOMES[pc(midi - 1)], NOMES[pc(midi + 2)], NOMES[pc(midi - 2)]]);
     }
   };
-  var BANCO = {
-    pauta: [['Quantas linhas tem a pauta (pentagrama)?', '5', '4', '6', '7'],
-      ['A clave de sol dá nome à nota de qual linha?', '2ª linha', '1ª linha', '3ª linha', '4ª linha'],
-      ['A clave de fá (usada pela mão esquerda do piano) dá nome à nota de qual linha?', '4ª linha', '2ª linha', '3ª linha', '5ª linha'],
-      ['Para que servem as linhas suplementares?', 'Escrever notas acima ou abaixo da pauta', 'Separar os compassos', 'Indicar o andamento', 'Mostrar a dinâmica'],
-      ['Na clave de sol, as notas dos 4 espaços (de baixo para cima) são:', 'Fá – Lá – Dó – Mi', 'Mi – Sol – Si – Ré', 'Dó – Mi – Sol – Si', 'Sol – Si – Ré – Fá'],
-      ['Na clave de sol, as notas das 5 linhas (de baixo para cima) são:', 'Mi – Sol – Si – Ré – Fá', 'Fá – Lá – Dó – Mi – Sol', 'Dó – Mi – Sol – Si – Ré', 'Sol – Si – Ré – Fá – Lá'],
-      ['Para que serve a barra de compasso?', 'Separar os compassos', 'Indicar o fim da música', 'Aumentar o som', 'Mudar a clave']],
-    acidentes: [['O sustenido (♯):', 'Sobe a nota meio tom', 'Desce a nota meio tom', 'Anula o acidente', 'Dobra o valor da nota'],
-      ['O bemol (♭):', 'Desce a nota meio tom', 'Sobe a nota meio tom', 'Anula o acidente', 'Indica silêncio'],
-      ['O bequadro (♮):', 'Anula o acidente e volta à nota natural', 'Sobe a nota um tom', 'Desce a nota um tom', 'Repete o compasso'],
-      ['Quantos semitons tem um tom?', '2', '1', '3', '4'],
-      ['Entre quais notas naturais existe semitom?', 'Mi-Fá e Si-Dó', 'Dó-Ré e Fá-Sol', 'Ré-Mi e Lá-Si', 'Sol-Lá e Dó-Ré'],
-      ['Fá♯ e Sol♭ são o mesmo som com nomes diferentes. Isso se chama:', 'Enarmonia', 'Intervalo', 'Uníssono', 'Síncope']],
-    sinais: [['O que significa p (piano) na partitura?', 'Tocar suave', 'Tocar forte', 'Tocar rápido', 'Repetir'],
-      ['O que significa f (forte)?', 'Tocar forte', 'Tocar suave', 'Tocar devagar', 'Parar'],
-      ['O que significa crescendo (<)?', 'Aumentar o volume aos poucos', 'Diminuir o volume aos poucos', 'Acelerar', 'Desacelerar'],
-      ['O ponto de aumento ao lado da nota:', 'Soma metade do valor da nota', 'Dobra o valor da nota', 'Deixa a nota curta', 'Sobe meio tom'],
-      ['A ligadura entre duas notas iguais (de prolongamento):', 'Soma os valores: toca uma vez e segura', 'Toca as duas notas separadas', 'Deixa as notas curtas', 'Indica um acorde'],
-      ['O ponto em cima ou embaixo da nota (staccato) indica:', 'Nota curta, destacada', 'Nota longa', 'Nota mais forte', 'Pausa'],
-      ['A fermata (𝄐) indica:', 'Sustentar a nota além do valor', 'Repetir o trecho', 'Tocar mais rápido', 'Voltar ao início'],
-      ['O sinal de ritornello (:‖) indica:', 'Repetir o trecho', 'Fim da música', 'Mudar de tom', 'Tocar suave'],
-      ['Allegro é um andamento:', 'Rápido e alegre', 'Muito lento', 'Moderado', 'Livre'],
-      ['Adagio é um andamento:', 'Lento', 'Rápido', 'Muito rápido', 'Moderado'],
-      ['O que é BPM no metrônomo?', 'Batidas por minuto', 'Barras por música', 'Baixo por medida', 'Base para melodia']],
-    escalas: [['Qual é a fórmula da escala maior?', 'T – T – S – T – T – T – S', 'T – S – T – T – S – T – T', 'S – T – T – T – S – T – T', 'T – T – T – S – T – T – S'],
-      ['A escala menor harmônica tem qual grau elevado?', '7º grau', '3º grau', '5º grau', '2º grau'],
-      ['A relativa menor fica quantos semitons abaixo da tônica maior?', '3 (uma 3ª menor)', '2 (um tom)', '5 (uma 4ª)', '7 (uma 5ª)'],
-      ['Qual é a ordem dos sustenidos na armadura?', 'Fá – Dó – Sol – Ré – Lá – Mi – Si', 'Si – Mi – Lá – Ré – Sol – Dó – Fá', 'Dó – Ré – Mi – Fá – Sol – Lá – Si', 'Sol – Ré – Lá – Mi – Si – Fá – Dó']],
-    harmonia: [['Tríade é um acorde de:', '3 notas empilhadas em terças', '2 notas', '4 notas em quartas', '5 notas'],
-      ['A tríade maior é formada por:', '3ª maior + 3ª menor', '3ª menor + 3ª maior', '3ª menor + 3ª menor', '3ª maior + 3ª maior'],
-      ['A tríade diminuta é formada por:', '3ª menor + 3ª menor', '3ª maior + 3ª menor', '3ª maior + 3ª maior', '3ª menor + 3ª maior'],
-      ['Qual é o acorde do grau VII no campo harmônico maior (tríades)?', 'Diminuto', 'Maior', 'Menor', 'Aumentado'],
-      ['Qual grau do campo harmônico maior é um acorde dominante com sétima (X7)?', 'V', 'I', 'IV', 'II'],
-      ['O trítono do G7 (Si e Fá) resolve em:', 'Dó e Mi', 'Ré e Sol', 'Lá e Dó', 'Mi e Sol']],
-    violao: [['Qual é a afinação padrão do violão, da 6ª para a 1ª corda?', 'Mi – Lá – Ré – Sol – Si – Mi', 'Mi – Si – Sol – Ré – Lá – Mi', 'Dó – Fá – Si♭ – Mi♭ – Sol – Dó', 'Ré – Lá – Ré – Sol – Si – Mi'],
-      ['Na mão direita, a letra "p" indica:', 'Polegar', 'Indicador', 'Médio', 'Palheta'],
-      ['Na mão direita, as letras i, m e a são:', 'Indicador, médio e anelar', 'Polegar, indicador e médio', 'Médio, anelar e mínimo', 'Índice, meio e alto'],
-      ['A 1ª corda do violão é:', 'A mais fina (Mi agudo)', 'A mais grossa (Mi grave)', 'A corda Lá', 'A corda Sol'],
-      ['No desenho do acorde, o × em cima de uma corda quer dizer:', 'Não tocar essa corda', 'Tocar a corda solta', 'Fazer pestana', 'Tocar com o polegar'],
-      ['O que é pestana?', 'O dedo 1 deitado apertando várias cordas', 'Tocar só as cordas graves', 'Abafar as cordas com a mão direita', 'Tocar com palheta'],
-      ['A partitura de violão é escrita uma oitava acima do som real. Isso aparece como:', 'Um 8 embaixo da clave de sol', 'Clave de fá', 'Dois sustenidos', 'Um ponto de aumento'],
-      ['Na mão esquerda, o dedo 1 é:', 'Indicador', 'Polegar', 'Mínimo', 'Médio'],
-      ['Onde se aperta a corda para soar limpo?', 'Perto do traste, sem ficar em cima dele', 'Bem no meio da casa', 'Em cima do traste', 'Perto da boca do violão']],
-    guitarra: [['O que é palhetada alternada?', 'Alternar palhetada para baixo e para cima', 'Tocar só para baixo', 'Trocar de palheta', 'Tocar com os dedos'],
-      ['O power chord (E5) é formado por:', 'Tônica e quinta', 'Tônica e terça', 'Terça e quinta', 'Tônica e sétima'],
-      ['A pentatônica menor tem quantas notas?', '5', '7', '6', '4'],
-      ['As notas da pentatônica de Lá menor são:', 'Lá – Dó – Ré – Mi – Sol', 'Lá – Si – Dó – Ré – Mi', 'Lá – Dó♯ – Mi – Fá♯ – Sol', 'Dó – Ré – Mi – Sol – Lá – Si'],
-      ['Palm mute é:', 'Abafar as cordas com a lateral da mão perto da ponte', 'Tocar sem palheta', 'Fazer bend', 'Tocar com distorção'],
-      ['Hammer-on é:', 'Martelar um dedo na corda para soar a nota sem palhetar', 'Puxar a corda para cima', 'Abafar a corda', 'Tocar duas cordas juntas']],
-    teclado: [['No piano, o dedo 1 é o:', 'Polegar', 'Indicador', 'Mínimo', 'Médio'],
-      ['As teclas pretas aparecem em grupos de:', '2 e 3', '3 e 4', '1 e 2', '4 e 5'],
-      ['A nota Dó fica:', 'À esquerda do grupo de 2 teclas pretas', 'À direita do grupo de 3 pretas', 'Entre duas pretas', 'Sempre no centro do teclado'],
-      ['No piano, a mão esquerda normalmente lê a clave de:', 'Fá', 'Sol', 'Dó', 'Percussão'],
-      ['A pauta dupla do piano (sistema) junta:', 'Clave de sol em cima e clave de fá embaixo', 'Duas claves de sol', 'Duas claves de fá', 'Clave de dó e clave de sol'],
-      ['O pedal da direita (sustain) serve para:', 'Deixar as notas soando depois de soltar a tecla', 'Abaixar o volume', 'Mudar o timbre', 'Transpor o tom']],
-    canto: [['A respiração usada no canto é a:', 'Diafragmática (costal-abdominal)', 'Só pelo peito, levantando os ombros', 'Só pela boca, bem rápida', 'Prendendo o ar'],
-      ['As quatro vozes do coral (SATB) são:', 'Soprano, contralto, tenor e baixo', 'Soprano, mezzo, barítono e baixo', 'Alto, médio, grave e agudo', 'Primeira, segunda, terceira e quarta'],
-      ['Solfejar é:', 'Cantar dizendo o nome das notas', 'Cantar sem letra', 'Bater o ritmo com palmas', 'Cantar em uníssono'],
-      ['Uníssono é quando:', 'Todos cantam a mesma nota', 'Cada um canta uma nota', 'Só uma pessoa canta', 'Canta-se sem acompanhamento'],
-      ['A cappella é cantar:', 'Sem acompanhamento de instrumentos', 'Com orquestra', 'Bem forte', 'Em outra língua'],
-      ['Vocalize serve para:', 'Aquecer e treinar a voz', 'Decorar a letra', 'Afinar o piano', 'Descansar a voz']]
-  };
+  function gerarQuestao(spec) { var f = GERA[spec.tema]; return f ? f(spec) : null; }
+  function tocarOuvir(ouvir) {
+    var c = audio(); if (!c) return;
+    var t = c.currentTime + 0.1;
+    ouvir.forEach(function (grupo, i) { grupo.forEach(function (m) { somNota(m, t + i * 1.1, 1, 0.8, true); }); });
+  }
+  function figuraDaQuestao(qq) {
+    var caixa = h('div', { class: 'q-figura' });
+    if (qq.pauta) caixa.appendChild(h('div', { class: 'prova-pauta' }, desenharPauta(qq.pauta).el));
+    if (qq.desenho) caixa.appendChild(qq.desenho());
+    if (qq.ouvir) caixa.appendChild(h('button', { type: 'button', class: 'botao vazado', text: '▶ Ouvir', onclick: function () { tocarOuvir(qq.ouvir); } }));
+    return caixa.children.length ? caixa : null;
+  }
 
+  // ---------- Prova do módulo: uma questão por vez ----------
+  // { tipo: 'prova', titulo, blocos: [[pergunta, certa, errada…], …] (um bloco por aula e por lição), gera: [especificações], n, minimo, errosSeguidos }
+  // Regras: 70% para passar; 3 erros seguidos encerram a prova e o aluno refaz o módulo.
+  // opcoes.aoTerminar({ acertos, total, nota, aprovado, refazer })
   function criarProva(v, opcoes) {
     opcoes = opcoes || {};
-    var caixa = h('div', { class: 'prova' }), n = v.n || 10, minimo = v.minimo || 70, uid = String(Math.random()).slice(2, 8);
+    var caixa = h('div', { class: 'prova' }), n = v.n || 10, minimo = v.minimo || 70, limite = v.errosSeguidos || 3;
     var api = { el: caixa, parar: function () {}, aprovado: false };
-    function gerar() {
-      var temas = (v.temas || []).filter(function (t) { return TEMAS[t]; });
-      var fixas = [];
-      (v.fixas || []).forEach(function (f) { fixas.push(f); });
-      (v.bancos || []).forEach(function (b) { (BANCO[b] || []).forEach(function (f) { fixas.push(f); }); });
-      fixas = embaralhar(fixas);
-      var nFixas = temas.length ? Math.min(fixas.length, Math.round(n * 0.4)) : Math.min(fixas.length, n);
-      var lista = fixas.slice(0, nFixas).map(function (f) { return questao(f[0], f[1], f.slice(2)); });
-      var vistas = {}, tentativas = 0;
-      lista.forEach(function (x) { vistas[x.p + x.o.join()] = 1; });
-      for (var i = 0; lista.length < n && temas.length && tentativas < 200; i++, tentativas++) {
-        var x = TEMAS[temas[i % temas.length]](), k = x.p + '|' + x.o[x.c];
-        if (vistas[k] || x.c < 0) continue;
-        vistas[k] = 1; lista.push(x);
-      }
+    function montar() {
+      var lista = [], vistas = {};
+      function add(q) { if (!q || q.c < 0 || q.o.length < 3) return; var k = q.p + '|' + q.o[q.c]; if (vistas[k]) return; vistas[k] = 1; lista.push(q); }
+      var blocos = embaralhar((v.blocos || []).filter(function (b) { return b.length; }));
+      var gera = embaralhar(v.gera || []), nFixas = gera.length ? Math.ceil(n * 0.6) : n;
+      // uma questão de cada aula e de cada lição; depois as sorteadas; se faltar, mais fixas
+      blocos.forEach(function (b) { if (lista.length < nFixas) { var f = escolher(b); add(questao(f[0], f[1], f.slice(2))); } });
+      for (var i = 0, t = 0; lista.length < n && gera.length && t < 200; i++, t++) { try { add(gerarQuestao(gera[i % gera.length])); } catch (e) { /* especificação sem dados suficientes */ } }
+      embaralhar([].concat.apply([], v.blocos || [])).forEach(function (f) { if (lista.length < n) add(questao(f[0], f[1], f.slice(2))); });
       return embaralhar(lista);
-    }
-    function tocar(ouvir) {
-      var c = audio(); if (!c) return;
-      var t = c.currentTime + 0.1;
-      ouvir.forEach(function (grupo, i) { grupo.forEach(function (m) { somNota(m, t + i * 1.1, 1, 0.8, true); }); });
     }
     function intro() {
       caixa.replaceChildren(
-        h('div', { class: 'prova-cab' }, h('b', { text: v.titulo || 'Prova de teoria musical' }),
-          h('span', { class: 'pequeno suave', text: n + ' questões · passe com ' + minimo + '% de acertos' })),
-        h('p', { class: 'pequeno', text: 'As questões são sorteadas: cada tentativa é uma prova diferente. Responda sem consultar o caderno. Se não passar, revise as aulas do módulo e faça de novo.' }),
-        h('div', null, h('button', { type: 'button', class: 'botao', text: 'Começar a prova', onclick: comecar })));
+        h('div', { class: 'prova-cab' }, h('span', { class: 'rotulo', text: 'Prova do módulo' }), h('b', { class: 'prova-titulo', text: v.titulo || 'Prova de teoria' })),
+        h('ul', { class: 'prova-regras' },
+          h('li', { text: n + ' questões, uma de cada vez, só sobre o que você estudou neste módulo.' }),
+          h('li', { text: 'Para passar: ' + minimo + '% de acertos.' }),
+          h('li', null, h('b', { text: limite + ' erros seguidos encerram a prova' }), ' e o módulo recomeça: você refaz as aulas antes de tentar de novo.'),
+          h('li', { text: 'Sem consulta. Responda com calma: cada resposta é corrigida na hora.' })),
+        h('div', null, h('button', { type: 'button', class: 'botao grande', text: 'Começar a prova', onclick: comecar })));
     }
     function comecar() {
-      var qs = gerar(), resp = [];
-      var lista = h('ol', { class: 'prova-lista' });
-      var enviar = h('button', { type: 'button', class: 'botao', text: 'Entregar prova', disabled: true });
-      var conta = h('span', { class: 'pequeno suave', 'aria-live': 'polite' });
-      function atualizar() { var r = resp.filter(function (x) { return x != null; }).length; conta.textContent = r + ' de ' + qs.length + ' respondidas'; enviar.disabled = r < qs.length; }
-      qs.forEach(function (qq, i) {
-        var li = h('li', { class: 'prova-q' }, h('p', { class: 'prova-perg', text: qq.p }));
-        if (qq.pauta) li.appendChild(h('div', { class: 'prova-pauta' }, desenharPauta(qq.pauta).el));
-        if (qq.ouvir) li.appendChild(h('div', null, h('button', { type: 'button', class: 'botao mini vazado', text: '▶ Ouvir', onclick: function () { tocar(qq.ouvir); } })));
-        var ops = h('div', { class: 'prova-opcoes', role: 'radiogroup', 'aria-label': 'Questão ' + (i + 1) });
+      var qs = montar(), i = 0, acertos = 0, seguidos = 0, escolha = null;
+      var barra = h('i'), contaEl = h('span', { class: 'prova-conta' }), errosEl = h('span', { class: 'prova-erros', 'aria-live': 'polite' });
+      var palco = h('div', { class: 'prova-palco' });
+      caixa.replaceChildren(
+        h('div', { class: 'prova-topo' }, h('b', { class: 'prova-titulo', text: v.titulo || 'Prova' }), contaEl),
+        h('div', { class: 'barra' }, barra), errosEl, palco);
+      function status() {
+        contaEl.textContent = 'Questão ' + Math.min(i + 1, qs.length) + ' de ' + qs.length + ' · ' + acertos + ' certa' + (acertos === 1 ? '' : 's');
+        barra.style.width = Math.round(100 * i / qs.length) + '%';
+        var bolas = ''; for (var k = 0; k < limite; k++) bolas += k < seguidos ? '●' : '○';
+        errosEl.textContent = 'Erros seguidos: ' + bolas + (seguidos === limite - 1 ? '  — atenção: mais um erro e o módulo recomeça' : '');
+        errosEl.className = 'prova-erros' + (seguidos ? ' alerta' : '');
+      }
+      function mostrar() {
+        status(); escolha = null;
+        var qq = qs[i];
+        var ops = h('div', { class: 'prova-opcoes', role: 'radiogroup', 'aria-label': 'Respostas' });
+        var responder = h('button', { type: 'button', class: 'botao grande', text: 'Responder', disabled: true });
         qq.o.forEach(function (o, k) {
-          ops.appendChild(h('label', { class: 'prova-op' },
-            h('input', { type: 'radio', name: 'pq' + uid + '-' + i, value: String(k), onchange: function () { resp[i] = k; atualizar(); } }), h('span', { text: o })));
+          ops.appendChild(h('button', { type: 'button', class: 'prova-op', role: 'radio', 'aria-checked': 'false', text: o, onclick: function (e) {
+            if (responder.dataset.feito) return;
+            escolha = k; [].forEach.call(ops.children, function (b) { b.setAttribute('aria-checked', String(b === e.currentTarget)); });
+            responder.disabled = false;
+          } }));
         });
-        li.appendChild(ops); lista.appendChild(li);
-      });
-      var topo = h('div', { class: 'prova-cab' }, h('b', { text: v.titulo || 'Prova de teoria musical' }), conta);
-      var resultado = h('div', { class: 'prova-resultado', role: 'status', hidden: true });
-      enviar.addEventListener('click', function () {
-        var acertos = 0;
-        qs.forEach(function (qq, i) {
-          var li = lista.children[i], ok = resp[i] === qq.c; if (ok) acertos++;
-          li.classList.add(ok ? 'certa' : 'errada');
-          li.querySelectorAll('input').forEach(function (inp) { inp.disabled = true; });
-          li.querySelectorAll('.prova-op')[qq.c].classList.add('gabarito');
-          li.appendChild(h('p', { class: 'prova-correcao', text: ok ? '✓ Certo' : '✗ Resposta certa: ' + qq.o[qq.c] }));
+        var retorno = h('p', { class: 'prova-retorno', role: 'status' });
+        responder.addEventListener('click', function () {
+          if (responder.dataset.feito) { proxima(); return; }
+          if (escolha == null) return;
+          responder.dataset.feito = '1';
+          var ok = escolha === qq.c;
+          [].forEach.call(ops.children, function (b, k) { b.disabled = true; if (k === qq.c) b.classList.add('certa'); else if (k === escolha) b.classList.add('errada'); });
+          if (ok) { acertos++; seguidos = 0; retorno.textContent = '✓ Certo!'; retorno.className = 'prova-retorno ok'; }
+          else { seguidos++; retorno.textContent = '✗ A resposta certa é: ' + qq.o[qq.c]; retorno.className = 'prova-retorno nao'; }
+          i++; status();
+          if (!ok && seguidos >= limite) { responder.textContent = 'Ver resultado'; responder.onclick = null; responder.dataset.fim = 'refazer'; return; }
+          responder.textContent = i < qs.length ? 'Próxima questão →' : 'Ver resultado';
         });
+        function proxima() {
+          if (responder.dataset.fim === 'refazer') return fimRefazer();
+          if (i < qs.length) mostrar(); else fim();
+        }
+        palco.replaceChildren(h('article', { class: 'prova-q' }, h('p', { class: 'prova-perg', text: qq.p }), figuraDaQuestao(qq), ops, retorno),
+          h('div', { class: 'prova-rodape' }, responder));
+        responder.focus({ preventScroll: true });
+      }
+      function fimRefazer() {
+        var res = { acertos: acertos, total: i, nota: Math.round(100 * acertos / Math.max(1, i)), aprovado: false, refazer: true };
+        caixa.replaceChildren(h('div', { class: 'prova-resultado nao' },
+          h('b', { class: 'prova-nota', text: limite + ' erros seguidos' }),
+          h('p', { text: 'A prova parou aqui e o módulo vai recomeçar. Isso não é castigo: é sinal de que alguns assuntos ainda não firmaram. Refaça as aulas com atenção na teoria e na leitura e volte para a prova.' }),
+          h('p', { class: 'suave', text: 'Você acertou ' + acertos + ' de ' + i + ' questões respondidas.' })));
+        if (opcoes.aoTerminar) opcoes.aoTerminar(res);
+      }
+      function fim() {
         var nota = Math.round(100 * acertos / qs.length), passou = nota >= minimo;
         if (passou) api.aprovado = true;
-        resultado.hidden = false; resultado.className = 'prova-resultado ' + (passou ? 'ok' : 'nao');
-        resultado.replaceChildren(
+        caixa.replaceChildren(h('div', { class: 'prova-resultado ' + (passou ? 'ok' : 'nao') },
           h('b', { class: 'prova-nota', text: acertos + ' de ' + qs.length + ' (' + nota + '%)' }),
-          h('span', { text: passou ? 'Aprovado! Pode seguir para o próximo módulo.' : 'Ainda não foi desta vez (mínimo ' + minimo + '%). Veja as correções, revise e tente de novo.' }),
-          h('div', null, h('button', { type: 'button', class: 'botao mini vazado', text: passou ? 'Fazer outra prova (treino)' : 'Tentar de novo', onclick: function () { comecar(); caixa.scrollIntoView({ block: 'start' }); } })));
-        enviar.hidden = true;
-        caixa.scrollIntoView({ block: 'start', behavior: 'smooth' });
+          h('p', { text: passou ? 'Aprovado! O próximo módulo está liberado. Finalize a aula para seguir.' : 'Ainda não foi desta vez (mínimo ' + minimo + '%). Revise os assuntos em que errou e tente de novo: as questões mudam a cada tentativa.' }),
+          passou ? null : h('div', null, h('button', { type: 'button', class: 'botao', text: 'Tentar de novo', onclick: comecar }))));
         if (opcoes.aoTerminar) opcoes.aoTerminar({ acertos: acertos, total: qs.length, nota: nota, aprovado: passou });
-      });
-      caixa.replaceChildren(topo, resultado, lista, h('div', { class: 'prova-rodape' }, enviar));
-      atualizar();
+      }
+      mostrar();
     }
     intro();
+    return api;
+  }
+
+  // ---------- Lição de teoria: explicação com exemplos na pauta + "Confira se entendeu" ----------
+  // { tipo: 'teoria', titulo, blocos: [texto | { pauta: { clave, notas: [[midi|[midis]|null, tempos, rótulo]], compasso, armadura, bemois, tab, vozes }, legenda }],
+  //   confira: [[pergunta, certa, errada…]], n }   opcoes.aoTerminar({ aprovado: true }) quando acerta todas.
+  function pautaDoExemplo(p, opcoes) {
+    var cordas = opcoes.instrumento === 'Violão' || opcoes.instrumento === 'Guitarra';
+    var fontes = p.vozes || [{ clave: p.clave || 'sol', notas: p.notas || [] }];
+    var vozes = fontes.map(function (f, k) {
+      var b = 0;
+      return { clave: f.clave || 'sol', eventos: f.notas.map(function (n, i) {
+        var e = { b: b, dur: n[1] || 1, midis: n[0] == null ? null : [].concat(n[0]), chave: k + ':' + i, rotulo: n[2] };
+        b += e.dur; return e;
+      }) };
+    });
+    // exemplos com tablatura: as notas são as escritas; o som do violão fica uma oitava abaixo
+    if (p.tab) vozes.forEach(function (vz) { vz.eventos.forEach(function (e) { if (e.midis) e.midis = e.midis.map(function (m) { return m - 12; }); }); });
+    var cfg = { vozes: vozes, compasso: p.compasso || 4, semCompasso: !p.compasso, armadura: p.armadura || 0, bemois: !!p.bemois,
+      transpor: p.tab ? 12 : 0, tab: p.tab ? function (m) { return posicaoNaRegiao(m, 0); } : null, rotulo: 'Exemplo na partitura' };
+    var desenho = desenharPauta(cfg);
+    function ouvir() {
+      var c = audio(); if (!c || !vozes[0].eventos.length) return;
+      var t0 = c.currentTime + 0.1, seg = 60 / 84;
+      vozes.forEach(function (vz) {
+        vz.eventos.forEach(function (e) {
+          var t = t0 + e.b * seg;
+          (e.midis || []).forEach(function (m) {
+            var som = p.tab ? m : cordas ? m - 12 : m;
+            if (cordas) somCorda(som, t, e.dur * seg, 0.6, opcoes.instrumento === 'Guitarra' ? 'aco' : 'nylon'); else somNota(som, t, e.dur * seg, 0.9, true);
+          });
+          setTimeout(function () { desenho.acender(e.chave, e.dur * seg); }, (t - c.currentTime) * 1000);
+        });
+      });
+    }
+    return { el: desenho.el, ouvir: ouvir, temSom: vozes.some(function (vz) { return vz.eventos.some(function (e) { return e.midis; }); }) };
+  }
+  function criarTeoria(v, opcoes) {
+    opcoes = opcoes || {};
+    var caixa = h('div', { class: 'teoria' }), api = { el: caixa, parar: function () {}, aprovado: false };
+    caixa.appendChild(h('div', { class: 'teoria-cab' }, h('span', { class: 'rotulo', text: 'Teoria' }), h('h3', { class: 'teoria-titulo', text: v.titulo || '' })));
+    var corpo = h('div', { class: 'teoria-corpo' });
+    (v.blocos || []).forEach(function (b) {
+      if (typeof b === 'string') { corpo.appendChild(h('p', { class: 'teoria-texto', text: b })); return; }
+      if (b.pauta) {
+        var ex = pautaDoExemplo(b.pauta, opcoes);
+        corpo.appendChild(h('figure', { class: 'teoria-fig' }, h('div', { class: 'prova-pauta larga' }, ex.el),
+          h('figcaption', null, b.legenda ? h('span', { text: b.legenda }) : null,
+            ex.temSom ? h('button', { type: 'button', class: 'botao mini vazado', text: '▶ Ouvir', onclick: ex.ouvir }) : null)));
+      }
+    });
+    caixa.appendChild(corpo);
+    var perguntas = embaralhar(v.confira || []).slice(0, v.n || 3), certas = 0;
+    if (!perguntas.length) { api.aprovado = true; return api; }
+    var confira = h('section', { class: 'teoria-confira' }, h('h4', { text: 'Confira se entendeu' }),
+      h('p', { class: 'pequeno suave', text: 'Acerte as ' + perguntas.length + ' perguntas para seguir. Errou? Releia o texto acima e tente outra opção.' }));
+    var aviso = h('p', { class: 'teoria-ok', role: 'status', hidden: true, text: '✓ Muito bem! Você entendeu a lição. Pode seguir.' });
+    perguntas.forEach(function (f) {
+      var qq = questao(f[0], f[1], f.slice(2)), feito = false, ret = h('p', { class: 'prova-retorno' });
+      var ops = h('div', { class: 'prova-opcoes' });
+      qq.o.forEach(function (o, k) {
+        ops.appendChild(h('button', { type: 'button', class: 'prova-op', text: o, onclick: function (e) {
+          if (feito) return;
+          var b = e.currentTarget;
+          if (k === qq.c) {
+            feito = true; b.classList.add('certa'); [].forEach.call(ops.children, function (x) { x.disabled = true; });
+            ret.textContent = '✓ Certo!'; ret.className = 'prova-retorno ok'; certas++;
+            if (certas === perguntas.length) { aviso.hidden = false; api.aprovado = true; if (opcoes.aoTerminar) opcoes.aoTerminar({ aprovado: true }); }
+          } else { b.classList.add('errada'); b.disabled = true; ret.textContent = 'Ainda não. Releia a explicação e tente outra.'; ret.className = 'prova-retorno nao'; }
+        } }));
+      });
+      confira.appendChild(h('div', { class: 'prova-q' }, h('p', { class: 'prova-perg', text: qq.p }), ops, ret));
+    });
+    confira.appendChild(aviso);
+    caixa.appendChild(confira);
     return api;
   }
 
@@ -1222,6 +1318,7 @@
   function criarPlayer(v, opcoes) {
     v = v || {}; opcoes = opcoes || {};
     if (v.tipo === 'prova') return criarProva(v, opcoes);
+    if (v.tipo === 'teoria') return criarTeoria(v, opcoes);
     var tipo = v.tipo || 'notas';
     var vocal = tipo === 'notas' && !v.demo;            // vocalize: tem voz e faixa de tons
     var cordas = (opcoes.instrumento === 'Violão' || opcoes.instrumento === 'Guitarra') && !vocal;
@@ -1607,6 +1704,6 @@
 
   window.AmaralCanto = {
     criarPlayer: criarPlayer, PADROES: PADROES, nomeNota: nomeNota, notasDaCifra: notasDaCifra,
-    DIAGRAMAS: DIAGRAMAS, liberarSom: liberarSom, desenharPauta: desenharPauta, TEMAS_PROVA: TEMAS, BANCO_PROVA: BANCO, pararTudo: function () { if (ativo) ativo.parar(); }
+    DIAGRAMAS: DIAGRAMAS, liberarSom: liberarSom, desenharPauta: desenharPauta, gerarQuestao: gerarQuestao, lerAcorde: function (c) { return lerAcorde(c); }, pararTudo: function () { if (ativo) ativo.parar(); }
   };
 })();

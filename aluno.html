@@ -329,34 +329,121 @@ td.num { font-variant-numeric: tabular-nums; }
 .pt-tab-num { font: 800 11px var(--f-texto); fill: currentColor; text-anchor: middle; }
 .pt-tab-letra { font: 800 10px var(--f-texto); fill: var(--tinta-suave); text-anchor: middle; }
 
-/* Prova de teoria */
-.prova { display: flex; flex-direction: column; gap: 14px; padding: 16px; border-radius: 14px; background: var(--papel-2); border: 1px solid var(--linha); scroll-margin-top: 80px; }
-.prova-cab { display: flex; justify-content: space-between; align-items: baseline; gap: 4px 12px; flex-wrap: wrap; }
-.prova-cab b { font-family: var(--f-display); font-size: 19px; }
-.prova-lista { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 14px; }
-.prova-q { padding: 12px; border-radius: 12px; background: var(--papel); border: 1.5px solid var(--linha); }
-.prova-q::marker { font-weight: 800; color: var(--madeira); }
-.prova-q.certa { border-color: var(--ok); }
-.prova-q.errada { border-color: var(--erro); }
-.prova-perg { font-weight: 700; margin-bottom: 8px; }
-.prova-opcoes { display: grid; gap: 6px; margin-top: 8px; }
-.prova-op { display: flex; gap: 10px; align-items: center; min-height: 44px; padding: 8px 10px; border-radius: 10px; border: 1.5px solid var(--linha); cursor: pointer; }
-.prova-op:has(input:checked) { border-color: var(--madeira); background: var(--papel-2); }
-.prova-op input { flex: none; width: 18px; height: 18px; accent-color: var(--madeira); }
-.prova-op.gabarito { border-color: var(--ok); }
-.prova-correcao { margin-top: 8px; font-size: 14px; font-weight: 700; }
-.prova-q.certa .prova-correcao { color: var(--ok); }
-.prova-q.errada .prova-correcao { color: var(--erro); }
-.prova-resultado { display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: 12px; border: 2px solid var(--linha); background: var(--papel); }
+/* Lição de teoria */
+.teoria { display: flex; flex-direction: column; gap: 18px; }
+.teoria-cab { display: flex; flex-direction: column; gap: 4px; }
+.teoria-titulo { font-size: clamp(21px, 2.4vw, 26px); }
+.teoria-corpo { display: flex; flex-direction: column; gap: 14px; }
+.teoria-texto { font-size: 17px; line-height: 1.65; max-width: 68ch; }
+.teoria-fig { margin: 0; display: flex; flex-direction: column; gap: 8px; max-width: 640px; }
+.teoria-fig figcaption { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; font-size: 14px; color: var(--tinta-suave); }
+.teoria-confira { display: flex; flex-direction: column; gap: 12px; padding: clamp(14px, 2vw, 20px); border-radius: 14px; background: var(--papel-2); border: 1px solid var(--linha); }
+.teoria-confira h4 { margin: 0; font: 800 18px var(--f-display); }
+.teoria-ok { font-weight: 800; color: var(--ok); }
+.pt-rotulo { font: 700 11px var(--f-texto); fill: var(--tinta-suave); text-anchor: middle; }
+.pt-evento.tocando .pt-rotulo { fill: var(--madeira); }
+.prova-pauta.larga { max-width: none; }
+
+/* Prova do módulo: uma questão por vez */
+.prova { display: flex; flex-direction: column; gap: 16px; padding: clamp(14px, 2vw, 24px); border-radius: 16px; background: var(--papel-2); border: 1px solid var(--linha); scroll-margin-top: 90px; }
+.prova-cab { display: flex; flex-direction: column; gap: 4px; }
+.prova-titulo { font-family: var(--f-display); font-size: 20px; font-weight: 800; }
+.prova-regras { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; line-height: 1.5; }
+.prova-topo { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; }
+.prova-conta { font-size: 14px; font-weight: 700; color: var(--tinta-suave); }
+.prova-erros { font-size: 14px; font-weight: 700; color: var(--tinta-suave); }
+.prova-erros.alerta { color: var(--erro); }
+.prova-palco { display: flex; flex-direction: column; gap: 14px; }
+.prova-q { padding: clamp(14px, 2vw, 22px); border-radius: 14px; background: var(--papel); border: 1.5px solid var(--linha); }
+.prova-perg { font-size: 18px; font-weight: 700; line-height: 1.4; }
+.q-figura { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 12px; }
+.prova-pauta { max-width: 300px; }
+.prova-braco { width: 150px; padding: 6px; border-radius: 12px; background: var(--papel-2); }
+.prova-teclado { overflow-x: auto; max-width: 100%; }
+.prova-teclado .piano { min-width: 0 !important; max-width: 440px; }
+.prova-opcoes { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin-top: 14px; }
+@media (min-width: 720px) { .prova-opcoes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.prova-op { width: 100%; min-height: 52px; padding: 10px 14px; border-radius: 12px; border: 1.5px solid var(--linha); background: var(--papel); text-align: left; font-weight: 600; line-height: 1.35; cursor: pointer; overflow-wrap: anywhere; }
+.prova-op:hover:not(:disabled) { border-color: var(--madeira); }
+.prova-op[aria-checked="true"] { border-color: var(--madeira); background: var(--papel-2); box-shadow: inset 0 0 0 1.5px var(--madeira); }
+.prova-op.certa { border-color: var(--ok); background: color-mix(in srgb, var(--ok) 14%, var(--papel)); color: var(--tinta); }
+.prova-op.errada { border-color: var(--erro); background: color-mix(in srgb, var(--erro) 12%, var(--papel)); }
+.prova-op:disabled { cursor: default; opacity: 1; }
+.prova-retorno { min-height: 1.4em; margin-top: 10px; font-weight: 800; }
+.prova-retorno.ok { color: var(--ok); }
+.prova-retorno.nao { color: var(--erro); }
+.prova-resultado { display: flex; flex-direction: column; gap: 8px; padding: 18px; border-radius: 14px; border: 2px solid var(--linha); background: var(--papel); }
 .prova-resultado.ok { border-color: var(--ok); }
 .prova-resultado.nao { border-color: var(--erro); }
 .prova-nota { font: 800 26px var(--f-display); }
 .prova-rodape { display: flex; justify-content: flex-end; }
+.botao.grande { min-height: 52px; padding: 0 24px; font-size: 16px; }
 
-/* Módulos na lista de aulas */
-.modulo-titulo { font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--tinta-suave); margin: 14px 0 -4px; }
-.aula-card.trancada { opacity: .6; cursor: not-allowed; }
+/* Lista de aulas: módulos */
+.modulo-cab { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 14px 0 -4px; padding-bottom: 6px; border-bottom: 1px solid var(--linha); }
+.modulo-titulo { font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--tinta-suave); margin: 0; }
+.modulo-conta { font-size: 13px; font-weight: 800; color: var(--tinta-suave); white-space: nowrap; }
+.modulo-conta.ok { color: var(--ok); }
+.aula-card.trancada { opacity: .55; cursor: not-allowed; }
+.aula-card.trancada:hover { border-color: var(--linha); }
 .aula-card.prova-card .aula-num { color: var(--ceu); }
+
+/* ---------- Layout responsivo: celular, tablet e computador ---------- */
+.wrap { max-width: 1240px; padding-inline: clamp(16px, 3vw, 40px); }
+#painel-progresso, #painel-comunidade { max-width: 880px; }
+.aulas-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); }
+.aula-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; align-items: start; }
+.aula-lado { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.aula-principal { display: flex; flex-direction: column; gap: 16px; min-width: 0; scroll-margin-top: 110px; }
+.aula-cab { display: flex; flex-direction: column; gap: 6px; }
+.aula-cab h1 { font-size: clamp(24px, 3.2vw, 32px); }
+.aula-sobre summary { cursor: pointer; font-weight: 800; color: var(--madeira); min-height: 32px; display: flex; align-items: center; }
+.aula-sobre p { color: var(--tinta-suave); margin-top: 4px; }
+.aula-andamento { display: flex; flex-direction: column; gap: 6px; }
+.passos-lista { list-style: none; margin: 0; padding: 2px 2px 8px; display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: thin; }
+.passos-lista li { flex: none; scroll-snap-align: center; }
+.passos-lista button { display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 6px 14px 6px 6px; border-radius: 999px; border: 1.5px solid var(--linha); background: var(--papel); text-align: left; font-weight: 600; cursor: pointer; }
+.passos-lista button:hover:not(:disabled) { border-color: var(--madeira); }
+.passos-lista button[aria-current="step"] { border: 2px solid var(--madeira); background: var(--papel-2); }
+.passos-lista button:disabled { opacity: .45; cursor: not-allowed; }
+.passo-num { flex: none; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--papel-2); font-weight: 800; font-size: 14px; }
+.passos-lista button.feito .passo-num { background: var(--ok); color: var(--papel); }
+.passo-nome { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+.exercicio { padding: clamp(16px, 2.4vw, 28px); gap: 14px; }
+.exercicio.teoria, .exercicio.prova { padding: clamp(16px, 2.4vw, 28px); background: var(--papel); border-radius: 16px; }
+.nav-aula .botao { min-height: 52px; font-size: 16px; }
+.voc-piano, .voc-braco-h { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* computador e notebook: a aula vira duas colunas (painel da aula fixo à esquerda, exercício largo à direita) */
+@media (min-width: 1000px) {
+  .aula-layout { grid-template-columns: minmax(270px, 330px) minmax(0, 1fr); gap: 36px; }
+  .aula-lado { position: sticky; top: 112px; max-height: calc(100vh - 128px); overflow-y: auto; padding-right: 6px; }
+  .passos-lista { flex-direction: column; overflow: visible; padding: 0; }
+  .passos-lista button { width: 100%; border-radius: 12px; }
+  .passo-nome { max-width: none; white-space: normal; line-height: 1.3; }
+  .nav-aula { position: static; padding: 0; border-top: 0; background: none; }
+  .nav-aula .botao { flex: 0 1 auto; min-width: 220px; }
+  .nav-aula { justify-content: flex-end; }
+  .nav-aula .botao.vazado { margin-right: auto; }
+}
+/* tablet */
+@media (min-width: 700px) and (max-width: 999px) {
+  .aula-cab h1 { font-size: 28px; }
+}
+/* celular: sem cartão dentro de cartão, botões grandes, navegação presa embaixo */
+@media (max-width: 699px) {
+  main.wrap { padding-block: 14px 0; }
+  h1 { font-size: 26px; }
+  .exercicio, .exercicio.teoria, .exercicio.prova { padding: 0; border: 0; background: none; border-radius: 0; }
+  .voc, .prova, .teoria-confira { padding: 12px; border-radius: 12px; }
+  .exercicio-texto { font-size: 17px; }
+  .teoria-texto { font-size: 16px; }
+  .prova-perg { font-size: 17px; }
+  .voc-campo input[type="range"] { width: 100px; }
+  .nav-aula { margin-inline: calc(-1 * clamp(16px, 3vw, 40px)); padding-inline: 16px; box-shadow: 0 -6px 16px rgba(0,0,0,.06); }
+  .aula-card { padding: 14px; }
+  .aula-nome { font-size: 17px; }
+}
 </style>
 </head>
 <body>
@@ -521,7 +608,7 @@ td.num { font-variant-numeric: tabular-nums; }
         <div class="prontas">
           <div class="pilha" style="gap: 4px; min-width: 0">
             <h2>Cursos básicos prontos</h2>
-            <p class="suave pequeno">Cursos em módulos de 4 aulas, com partitura em todas as aulas e prova de teoria no fim de cada módulo (o aluno só segue com 70% de acertos). Cada aluno vê só o curso do instrumento dele.</p>
+            <p class="suave pequeno">Cursos em módulos de 4 aulas. Cada aula ensina uma lição de partitura (com "Confira se entendeu") e termina com leitura; cada módulo termina com uma prova sobre o que foi estudado nele (70% para passar; 3 erros seguidos e o aluno refaz o módulo). As aulas abrem em sequência. Cada aluno vê só o curso do instrumento dele.</p>
           </div>
           <button class="botao" type="button" id="btn-prontas">Adicionar todos</button>
         </div>
@@ -757,8 +844,9 @@ td.num { font-variant-numeric: tabular-nums; }
   // Módulo de cada aula pronta (vem do cursos.js, pelo título)
   var PRONTA = {};
   (window.AmaralCursos || []).forEach(function (c) { c.aulas.forEach(function (a) { PRONTA[a.titulo] = a; }); });
-  function ehProva(it) { return !!(it && it.vocalize && it.vocalize.tipo === 'prova'); }
-  // prova aprovada (vale até o aluno finalizar a aula, mesmo se fechar a página)
+  // exercícios com trava própria: a lição de teoria (acertar o "Confira") e a prova do módulo (nota mínima)
+  function tipoTrava(it) { var t = it && it.vocalize && it.vocalize.tipo; return t === 'prova' || t === 'teoria' ? t : null; }
+  // teoria ou prova aprovada (vale até o aluno finalizar a aula, mesmo se fechar a página)
   function chaveProva(k) { return 'amaral-prova-' + eu.id + '-' + k; }
   function provaAprovada(k) { try { return localStorage.getItem(chaveProva(k)) === '1'; } catch (e) { return false; } }
   function gravarProva(k) { try { localStorage.setItem(chaveProva(k), '1'); } catch (e) { /* sem armazenamento */ } }
@@ -788,6 +876,23 @@ td.num { font-variant-numeric: tabular-nums; }
     if (r) mostrarAula(); else { aulaAtual = null; mostrarLista(); }
   }
 
+  // Aulas prontas seguem em ordem: cada uma abre quando a anterior do mesmo curso foi concluída
+  // (a prova do módulo é uma aula também, então o módulo seguinte só abre depois dela). O professor não tem trava.
+  function bloqueios() {
+    var mapa = {}, porCurso = {};
+    if (eu.papel === 'professor') return mapa;
+    aulas.forEach(function (r) {
+      var p = PRONTA[r.titulo]; if (!p) return;
+      var curso = infoAula(r).curso, antes = porCurso[curso], e = estadoDe(r);
+      if (antes && !e.concluida) {
+        var pa = PRONTA[antes.titulo] || {};
+        mapa[r.id] = pa.prova ? '🔒 Passe na prova do ' + String(pa.modulo).split(' · ')[0] : '🔒 Conclua antes a Aula ' + infoAula(antes).n;
+      }
+      if (!e.concluida && !antes) porCurso[curso] = r;
+    });
+    return mapa;
+  }
+
   function mostrarLista() {
     $('vista-lista').hidden = false; $('vista-aula').hidden = true;
     var lista = $('lista-rotinas'); lista.replaceChildren();
@@ -799,46 +904,44 @@ td.num { font-variant-numeric: tabular-nums; }
       lista.appendChild(el('div', { class: 'vazio', text: 'Ainda não há aulas para ' + (instrAtual || 'nenhum instrumento') + '. Quando o professor publicar, elas aparecem aqui.' }));
       return;
     }
-    var proxima = aulas.filter(function (r) { return !estadoDe(r).concluida; })[0];
-    var grade = null, cursoAtual = null, moduloAtual = null, provaPendente = null;
+    var trancas = bloqueios();
+    var proxima = aulas.filter(function (r) { return !estadoDe(r).concluida && !trancas[r.id]; })[0];
+    var grade = null, cursoAtual = null, moduloAtual = null;
     aulas.forEach(function (r) {
       var info = infoAula(r), e = estadoDe(r), pronta = PRONTA[r.titulo];
       var grupo = info.curso || 'Rotinas extras';
       if (grupo !== cursoAtual) {
-        cursoAtual = grupo; moduloAtual = null; provaPendente = null;
+        cursoAtual = grupo; moduloAtual = null;
         lista.appendChild(el('h2', { class: 'curso-titulo', text: NOME_CURSO[grupo] || grupo }));
         grade = el('div', { class: 'aulas-grid' }); lista.appendChild(grade);
       }
       if (pronta && pronta.modulo && pronta.modulo !== moduloAtual) {
         moduloAtual = pronta.modulo;
-        lista.appendChild(el('h3', { class: 'modulo-titulo', text: pronta.modulo }));
+        var doMod = aulas.filter(function (a) { var p = PRONTA[a.titulo]; return p && p.modulo === pronta.modulo && infoAula(a).curso === grupo; });
+        var feitas = doMod.filter(function (a) { return estadoDe(a).concluida; }).length;
+        lista.appendChild(el('div', { class: 'modulo-cab' }, el('h3', { class: 'modulo-titulo', text: pronta.modulo }),
+          el('span', { class: 'modulo-conta' + (feitas === doMod.length ? ' ok' : ''), text: feitas + ' de ' + doMod.length })));
         grade = el('div', { class: 'aulas-grid' }); lista.appendChild(grade);
       }
-      var trancada = !!provaPendente && eu.papel !== 'professor' && !e.concluida;
-      if (pronta && pronta.prova && !e.concluida && !provaPendente) provaPendente = r;
-      if (trancada) {
-        grade.appendChild(el('button', { type: 'button', class: 'aula-card trancada', disabled: true },
-          el('span', { class: 'aula-num', text: 'Aula ' + info.n }),
-          el('b', { class: 'aula-nome', text: info.nome }),
-          el('span', { class: 'aula-status', text: '🔒 Faça antes a prova do ' + String((PRONTA[provaPendente.titulo] || {}).modulo || 'módulo anterior').split(' · ')[0] })));
-        return;
-      }
-      var status = e.concluida ? el('span', { class: 'aula-status ok', text: '✓ Concluída' })
+      var tranca = trancas[r.id], ehP = pronta && pronta.prova;
+      var status = tranca ? el('span', { class: 'aula-status', text: tranca })
+        : e.concluida ? el('span', { class: 'aula-status ok', text: '✓ Concluída' })
         : r === proxima ? el('span', { class: 'aula-status vai', text: e.sempre ? '▶ Continuar · ' + e.sempre + ' de ' + e.total : '▶ Começar aqui' })
         : e.sempre ? el('span', { class: 'aula-status', text: 'Em andamento · ' + e.sempre + ' de ' + e.total })
         : el('span', { class: 'aula-status', text: 'Nova' });
-      grade.appendChild(el('button', { type: 'button', class: 'aula-card' + (e.concluida ? ' concluida' : '') + (r === proxima ? ' proxima' : '') + (pronta && pronta.prova ? ' prova-card' : ''),
+      grade.appendChild(el('button', { type: 'button', disabled: !!tranca,
+        class: 'aula-card' + (e.concluida ? ' concluida' : '') + (r === proxima ? ' proxima' : '') + (ehP ? ' prova-card' : '') + (tranca ? ' trancada' : ''),
         onclick: function () { abrirAula(r.id); } },
-        el('span', { class: 'aula-num', text: info.n ? (pronta && pronta.prova ? '📝 Prova · Aula ' : 'Aula ') + info.n : 'Rotina' }),
+        el('span', { class: 'aula-num', text: info.n ? (ehP ? '📝 Prova · Aula ' : 'Aula ') + info.n : 'Rotina' }),
         el('b', { class: 'aula-nome', text: info.nome }),
-        el('span', { class: 'aula-meta', text: e.total + ' exercícios · ' + e.minutos + ' min' + (info.n ? '' : ' · ' + r.instrumento) }),
+        tranca ? null : el('span', { class: 'aula-meta', text: e.total + ' exercícios · ' + e.minutos + ' min' + (info.n ? '' : ' · ' + r.instrumento) }),
         status));
     });
   }
 
   // Abrir e fechar a aula usam o histórico: o botão "voltar" do celular volta para a lista
   function abrirAula(id) {
-    var r = aulas.filter(function (a) { return a.id === id; })[0]; if (!r) return;
+    var r = aulas.filter(function (a) { return a.id === id; })[0]; if (!r || bloqueios()[id]) return;
     aulaAtual = id;
     var its = itensDe(r), primeiro = 0;
     while (primeiro < its.length && feitosHoje[id + ':' + primeiro]) primeiro++;
@@ -859,7 +962,9 @@ td.num { font-variant-numeric: tabular-nums; }
   });
   function irPara(n) {
     if (window.AmaralCanto) window.AmaralCanto.pararTudo();
-    passo = n; mostrarAula(); window.scrollTo(0, 0);
+    passo = n; mostrarAula();
+    var alvo = document.querySelector('.aula-principal');
+    if (alvo && window.innerWidth < 1000) alvo.scrollIntoView({ block: 'start' }); else window.scrollTo(0, 0);
   }
 
   // Tempo mínimo: o aluno só segue quando praticou os minutos do exercício (conta com a tela aberta;
@@ -869,43 +974,65 @@ td.num { font-variant-numeric: tabular-nums; }
   function lerTempo(k) { try { return Number(localStorage.getItem(chaveTempo(k))) || 0; } catch (e) { return 0; } }
   function gravarTempo(k, seg) { try { localStorage.setItem(chaveTempo(k), String(seg)); } catch (e) { /* sem armazenamento */ } }
   function mmss(seg) { seg = Math.max(0, Math.ceil(seg)); return Math.floor(seg / 60) + ':' + String(seg % 60).padStart(2, '0'); }
+  // nome curto de cada exercício na lista de passos
+  function nomePasso(it) {
+    var v = it.vocalize || {};
+    if (v.tipo === 'teoria') return 'Teoria: ' + v.titulo;
+    if (v.tipo === 'prova') return 'Prova do módulo';
+    if (v.leitura && /^(Leitura|Solfejo)/.test(it.texto || '')) return String(it.texto).split(':')[0] + ': ' + String(it.texto).split(':')[1].split('.')[0].trim();
+    var tx = String(it.texto || '').split(/[:.]/)[0];
+    return tx.length > 60 ? tx.slice(0, 57) + '…' : tx;
+  }
 
   function mostrarAula() {
     clearInterval(relogio);
     var r = aulas.filter(function (a) { return a.id === aulaAtual; })[0]; if (!r) return mostrarLista();
-    var info = infoAula(r), its = itensDe(r), v = $('vista-aula');
+    var info = infoAula(r), its = itensDe(r), v = $('vista-aula'), pronta = PRONTA[r.titulo] || {};
     $('vista-lista').hidden = true; v.hidden = false; v.replaceChildren();
-    v.appendChild(el('button', { type: 'button', class: 'link-botao voltar', text: '← Todas as aulas', onclick: fecharAula }));
-    v.appendChild(el('div', { class: 'pilha', style: 'gap: 6px' },
-      el('span', { class: 'rotulo', text: (NOME_CURSO[info.curso] || info.curso || r.instrumento) + (info.n ? ' · Aula ' + info.n : '') }),
-      el('h1', { text: info.nome }),
-      r.observacao ? el('p', { class: 'suave', text: r.observacao }) : null));
-    var passos = el('nav', { class: 'passos', 'aria-label': 'Exercícios da aula' });
     var semTrava = eu.papel === 'professor' || estadoDe(r).concluida, liberado = 0;
     while (liberado < its.length && feitosHoje[r.id + ':' + liberado]) liberado++;
+    var feitosAula = its.filter(function (x, i) { return feitosHoje[r.id + ':' + i]; }).length;
+
+    // coluna da aula: título, explicação e a lista de exercícios (no celular vira uma faixa que rola para o lado)
+    var passos = el('ol', { class: 'passos-lista', 'aria-label': 'Exercícios da aula' });
     its.forEach(function (it, i) {
-      passos.appendChild(el('button', { type: 'button', class: feitosHoje[r.id + ':' + i] ? 'feito' : null, 'aria-current': i === passo ? 'step' : null,
-        disabled: !semTrava && i > liberado,
-        'aria-label': 'Exercício ' + (i + 1) + (feitosHoje[r.id + ':' + i] ? ', feito hoje' : ''), text: String(i + 1), onclick: function () { irPara(i); } }));
+      var feito = feitosHoje[r.id + ':' + i];
+      passos.appendChild(el('li', null, el('button', { type: 'button', class: feito ? 'feito' : null, 'aria-current': i === passo ? 'step' : null,
+        disabled: !semTrava && i > liberado, title: nomePasso(it), onclick: function () { irPara(i); } },
+        el('span', { class: 'passo-num', 'aria-hidden': 'true', text: feito ? '✓' : String(i + 1) }),
+        el('span', { class: 'passo-nome', text: nomePasso(it) }))));
     });
-    v.appendChild(passos);
+    var sobre = r.observacao ? el('details', { class: 'aula-sobre', open: window.innerWidth >= 700 || passo === 0 },
+      el('summary', { text: 'Sobre esta aula' }), el('p', { text: r.observacao })) : null;
+    var lado = el('aside', { class: 'aula-lado' },
+      el('button', { type: 'button', class: 'link-botao voltar', text: '← Todas as aulas', onclick: fecharAula }),
+      el('div', { class: 'aula-cab' },
+        el('span', { class: 'rotulo', text: (NOME_CURSO[info.curso] || info.curso || r.instrumento) + (pronta.modulo ? ' · ' + String(pronta.modulo).split(' · ')[0] : '') + (info.n ? ' · Aula ' + info.n : '') }),
+        el('h1', { text: info.nome })),
+      sobre,
+      el('div', { class: 'aula-andamento' }, el('span', { class: 'pequeno suave', text: feitosAula + ' de ' + its.length + ' exercícios feitos hoje' }),
+        el('div', { class: 'barra', 'aria-hidden': 'true' }, el('i', { style: 'width: ' + Math.round(100 * feitosAula / Math.max(1, its.length)) + '%' }))),
+      passos);
+    var principal = el('section', { class: 'aula-principal' });
+    v.appendChild(el('div', { class: 'aula-layout' }, lado, principal));
+    var atual = passos.querySelector('[aria-current="step"]');
+    if (atual) setTimeout(function () { atual.scrollIntoView({ block: 'nearest', inline: 'center' }); }, 0);
 
-    if (passo >= its.length) return mostrarFim(r, v);
+    if (passo >= its.length) return mostrarFim(r, principal);
 
-    var it = its[passo], chave = r.id + ':' + passo, feito = !!feitosHoje[chave], min = Number(it.minutos) || 0;
-    var cartao = el('article', { class: 'exercicio' },
+    var it = its[passo], chave = r.id + ':' + passo, feito = !!feitosHoje[chave], min = Number(it.minutos) || 0, trava = tipoTrava(it);
+    var cartao = el('article', { class: 'exercicio' + (trava ? ' ' + trava : '') },
       el('span', { class: 'exercicio-num', text: 'Exercício ' + (passo + 1) + ' de ' + its.length + (min ? ' · ' + min + ' min' : '') }),
-      el('p', { class: 'exercicio-texto', text: String(it.texto || '') }));
-    var prova = ehProva(it);
+      trava ? null : el('p', { class: 'exercicio-texto', text: String(it.texto || '') }));
     if (it.vocalize && window.AmaralCanto) {
       if (!players[chave]) players[chave] = window.AmaralCanto.criarPlayer(it.vocalize, { instrumento: r.instrumento,
-        aoTerminar: function (res) { terminouProva(r, chave, res); } });
+        aoTerminar: function (res) { terminou(r, chave, res, tipoTrava(it)); } });
       cartao.appendChild(players[chave].el);
     }
     if (feito) cartao.appendChild(el('div', { class: 'feito-hoje' }, '✓ Feito hoje ',
       el('button', { type: 'button', class: 'link-botao', text: 'desmarcar', onclick: function () { desmarcar(r, passo); } })));
-    v.appendChild(cartao);
-    v.appendChild(el('p', { class: 'msg erro', id: 'msg-aula', role: 'status', hidden: true }));
+    principal.appendChild(cartao);
+    principal.appendChild(el('p', { class: 'msg erro', id: 'msg-aula', role: 'status', hidden: true }));
 
     var ultimo = passo === its.length - 1;
     var textoSeguir = ultimo ? 'Finalizar aula ✓' : (feito ? 'Próximo →' : 'Feito, próximo →');
@@ -916,27 +1043,33 @@ td.num { font-variant-numeric: tabular-nums; }
         else await marcarFeito(r, passo);
         irPara(passo + 1);
       } });
+    var anterior = el('button', { type: 'button', class: 'botao vazado', disabled: passo === 0, text: '← Anterior', onclick: function () { irPara(passo - 1); } });
 
-    // prova: só segue com a nota mínima
-    liberarProva = null;
-    if (prova && !feito && !semTrava && !provaAprovada(chave)) {
-      seguir.disabled = true; seguir.textContent = 'Passe na prova para seguir';
+    // teoria e prova: a trava é acertar (o "Confira" ou a nota mínima), não o tempo
+    liberarProva = null; aoRecomecar = null;
+    if (trava && !feito && !semTrava && !provaAprovada(chave)) {
+      seguir.disabled = true; seguir.textContent = trava === 'prova' ? 'Passe na prova para seguir' : 'Acerte o "Confira" para seguir';
       liberarProva = function (k) { if (k === chave && seguir.isConnected) { seguir.disabled = false; seguir.textContent = textoSeguir; } };
     }
+    aoRecomecar = function (k, primeira) {
+      if (k !== chave || !seguir.isConnected) return;
+      anterior.hidden = true; seguir.disabled = false; seguir.textContent = 'Recomeçar o módulo →';
+      seguir.onclick = function () { if (primeira) { aulaAtual = primeira.id; passo = 0; mostrarAula(); window.scrollTo(0, 0); } else fecharAula(); };
+    };
     // trava do tempo mínimo
     var minSeg = min * 60, gasto = lerTempo(chave);
-    if (!prova && !feito && !semTrava && minSeg > 0 && gasto < minSeg) {
-      var barra = el('i'), info = el('span', { class: 'tempo-txt' });
-      var caixaTempo = el('div', { class: 'tempo-min', role: 'status' }, info, el('div', { class: 'barra', 'aria-hidden': 'true' }, barra));
+    if (!trava && !feito && !semTrava && minSeg > 0 && gasto < minSeg) {
+      var barra = el('i'), txt = el('span', { class: 'tempo-txt' });
+      var caixaTempo = el('div', { class: 'tempo-min', role: 'status' }, txt, el('div', { class: 'barra', 'aria-hidden': 'true' }, barra));
       cartao.appendChild(caixaTempo);
       var atualizar = function () {
         var falta = minSeg - gasto;
         barra.style.width = Math.min(100, Math.round(100 * gasto / minSeg)) + '%';
         if (falta > 0) {
-          info.textContent = 'Pratique pelo menos ' + min + ' min. Tempo praticado: ' + mmss(gasto) + ' de ' + mmss(minSeg) + '.';
+          txt.textContent = 'Pratique pelo menos ' + min + ' min. Tempo praticado: ' + mmss(gasto) + ' de ' + mmss(minSeg) + '.';
           seguir.disabled = true; seguir.textContent = 'Faltam ' + mmss(falta);
         } else {
-          info.textContent = '✓ Tempo mínimo cumprido. Pode seguir!';
+          txt.textContent = '✓ Tempo mínimo cumprido. Pode seguir!';
           caixaTempo.classList.add('ok'); seguir.disabled = false; seguir.textContent = textoSeguir;
           clearInterval(relogio);
         }
@@ -949,28 +1082,48 @@ td.num { font-variant-numeric: tabular-nums; }
         atualizar();
       }, 1000);
     }
-
-    v.appendChild(el('div', { class: 'nav-aula' },
-      el('button', { type: 'button', class: 'botao vazado', disabled: passo === 0, text: '← Anterior', onclick: function () { irPara(passo - 1); } }),
-      seguir));
+    principal.appendChild(el('div', { class: 'nav-aula' }, anterior, seguir));
   }
 
-  var liberarProva = null;
-  async function terminouProva(r, chave, res) {
+  var liberarProva = null, aoRecomecar = null;
+  async function terminou(r, chave, res, trava) {
     if (res.aprovado) { gravarProva(chave); if (liberarProva) liberarProva(chave); }
-    if (eu.papel === 'professor') return;
+    if (trava !== 'prova' || eu.papel === 'professor') return;
     // a tabela "notas" é opcional (supabase/schema.sql): sem ela, a prova funciona e só não guarda a nota
-    try { await sb.from('notas').insert({ rotina_id: r.id, acertos: res.acertos, total: res.total }); } catch (e) { /* sem tabela */ }
+    try { await sb.from('notas').insert({ rotina_id: r.id, acertos: res.acertos, total: Math.max(1, res.total) }); } catch (e) { /* sem tabela */ }
+    if (res.refazer) { var primeira = await refazerModulo(r); if (aoRecomecar) aoRecomecar(chave, primeira); }
+  }
+  // 3 erros seguidos na prova: apaga o progresso das aulas do módulo (inclusive a prova) e o aluno recomeça pela 1ª aula dele
+  async function refazerModulo(r) {
+    var pronta = PRONTA[r.titulo]; if (!pronta) return null;
+    var curso = infoAula(r).curso;
+    var doModulo = aulas.filter(function (a) { var p = PRONTA[a.titulo]; return p && p.modulo === pronta.modulo && infoAula(a).curso === curso; });
+    var ids = doModulo.map(function (a) { return a.id; });
+    var res = await sb.from('progresso').delete().eq('aluno_id', eu.id).in('rotina_id', ids);
+    if (res && res.error) { var m = $('msg-aula'); if (m) { m.textContent = 'Não foi possível recomeçar o módulo: ' + res.error.message; m.hidden = false; } }
+    Object.keys(feitosSempre).concat(Object.keys(feitosHoje)).forEach(function (k) {
+      if (ids.indexOf(Number(k.split(':')[0])) >= 0) { delete feitosSempre[k]; delete feitosHoje[k]; }
+    });
+    Object.keys(players).forEach(function (k) { if (ids.indexOf(Number(k.split(':')[0])) >= 0 && k !== r.id + ':' + passo) delete players[k]; });
+    try {
+      var apagar = [];
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i), id = Number((k.match(/-(\d+):\d+$/) || [])[1]);
+        if ((k.indexOf('amaral-prova-' + eu.id) === 0 || k.indexOf('amaral-tempo-' + eu.id) === 0) && ids.indexOf(id) >= 0) apagar.push(k);
+      }
+      apagar.forEach(function (k) { localStorage.removeItem(k); });
+    } catch (e) { /* sem armazenamento */ }
+    return doModulo[0] || null;
   }
 
   function mostrarFim(r, v) {
-    var e = estadoDe(r), idx = aulas.indexOf(r);
-    var prox = aulas.slice(idx + 1).filter(function (a) { return !estadoDe(a).concluida && infoAula(a).curso === infoAula(r).curso; })[0];
+    var e = estadoDe(r), idx = aulas.indexOf(r), trancas = bloqueios();
+    var prox = aulas.slice(idx + 1).filter(function (a) { return !estadoDe(a).concluida && !trancas[a.id] && infoAula(a).curso === infoAula(r).curso; })[0];
     v.appendChild(el('div', { class: 'cartao pilha fim-aula' },
       el('div', { class: 'selo', 'aria-hidden': 'true', text: '🎉' }),
       el('h2', { text: 'Aula concluída!' }),
       el('p', { class: 'suave', text: 'Você fez os ' + e.total + ' exercícios (' + e.minutos + ' min). Bom estudo!' }),
-      prox ? el('button', { type: 'button', class: 'botao', text: 'Próxima: ' + infoAula(prox).nome + ' →', onclick: function () {
+      prox ? el('button', { type: 'button', class: 'botao grande', text: 'Próxima: ' + infoAula(prox).nome + ' →', onclick: function () {
         if (history.state && history.state.aula) { try { history.replaceState({ aula: prox.id }, ''); } catch (er) { /* sem histórico */ } }
         aulaAtual = prox.id; passo = 0; mostrarAula(); window.scrollTo(0, 0);
       } }) : null,
@@ -1165,6 +1318,22 @@ td.num { font-variant-numeric: tabular-nums; }
       return r && (r.titulo !== a.titulo || estavel(r.itens) !== estavel(a.itens) || r.observacao !== a.observacao || r.nivel !== a.nivel);
     });
   }
+  // aulas cadastradas de um curso que não existem mais na versão atual (mudaram de nome ou saíram)
+  function antigas(curso) {
+    var prefixo = infoAula(curso.aulas[0]).curso, usadas = {};
+    curso.aulas.forEach(function (a) { var s = salvaDe(a); if (s) usadas[s.id] = 1; });
+    return Object.keys(salvasProf).map(function (t) { return salvasProf[t]; })
+      .filter(function (r) { return r.ativa !== false && infoAula(r).curso === prefixo && infoAula(r).n && !usadas[r.id]; });
+  }
+  async function arquivarAntigas(curso, botao) {
+    botao.disabled = true;
+    var lista = antigas(curso), erro = null;
+    for (var i = 0; i < lista.length && !erro; i++) erro = (await sb.from('rotinas').update({ ativa: false }).eq('id', lista[i].id)).error;
+    botao.disabled = false;
+    if (erro) return aviso('msg-prontas', 'Não foi possível arquivar: ' + erro.message, 'erro');
+    aviso('msg-prontas', lista.length + ' aulas antigas de ' + (curso.nome || curso.instrumento) + ' arquivadas (o progresso dos alunos fica guardado).', 'ok');
+    carregarProfessor();
+  }
   function paraBanco(a) { return { titulo: a.titulo, instrumento: a.instrumento, nivel: a.nivel, observacao: a.observacao, itens: a.itens }; }
   async function atualizarCurso(curso, botao) {
     botao.disabled = true;
@@ -1198,14 +1367,18 @@ td.num { font-variant-numeric: tabular-nums; }
       if (falta) algumFalta = true;
       var b = el('button', { class: 'botao mini' + (falta ? '' : ' vazado'), type: 'button', disabled: !falta, text: falta ? (tem ? 'Adicionar as ' + falta + ' que faltam' : 'Adicionar') : '✓ Cadastrado' });
       b.addEventListener('click', function () { adicionarCursos([c], b); });
-      var velhas = desatualizadas(c).length, bAtual = null;
+      var velhas = desatualizadas(c).length, bAtual = null, sobra = antigas(c).length, bArq = null;
+      if (sobra && !velhas) {
+        bArq = el('button', { class: 'botao mini vazado', type: 'button', text: 'Arquivar ' + sobra + (sobra > 1 ? ' aulas antigas' : ' aula antiga') });
+        bArq.addEventListener('click', function () { arquivarAntigas(c, bArq); });
+      }
       if (velhas) {
         bAtual = el('button', { class: 'botao mini', type: 'button', text: 'Atualizar ' + velhas + (velhas > 1 ? ' aulas' : ' aula') });
         bAtual.addEventListener('click', function () { atualizarCurso(c, bAtual); });
       }
       l.appendChild(el('div', { class: 'curso-linha' },
         el('div', null, el('b', { text: c.nome || c.instrumento }), el('span', { class: 'pequeno suave', text: ' · ' + c.aulas.length + ' aulas' + (tem && falta ? ' (' + tem + ' já cadastradas)' : '') + (velhas ? ' · nova versão disponível' : '') })),
-        el('span', { style: 'display: flex; gap: 6px; flex-wrap: wrap' }, bAtual, falta || !velhas ? b : null)));
+        el('span', { style: 'display: flex; gap: 6px; flex-wrap: wrap' }, bAtual, falta || !velhas ? b : null, bArq)));
     });
     $('btn-prontas').hidden = !algumFalta;
   }
