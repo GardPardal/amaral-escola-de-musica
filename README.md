@@ -52,7 +52,7 @@ Site e área do aluno da Amaral Escola de Música (Wenceslau Braz, PR).
   (teclado com dedos ou braço do violão) e a tabela nota por nota com dedo e função (3ª, 7ª, 9ª…). O cartão do
   acorde que está tocando fica destacado.
 - O aluno só passa para o próximo exercício depois de praticar os minutos dele (o professor não tem trava).
-- **Partitura ensinada passo a passo**: cada aula começa com uma lição de teoria (`LICOES` no `cursos.js`: explicação,
+- **Partitura ensinada passo a passo** (instrumentos e Teoria; o Canto coral não tem partitura, é aula de voz): cada aula começa com uma lição de teoria (`LICOES` no `cursos.js`: explicação,
   exemplos na pauta que tocam e um "Confira se entendeu" que o aluno precisa acertar para seguir) e termina com uma leitura que
   usa só o que já foi ensinado. A ordem das lições de cada curso fica em `SEQ` (pauta e clave de sol → figuras → compasso →
   oitava → pausas → colcheias → acidentes → armaduras → intervalos → tríades → campo harmônico…). Exercícios de notas que cabem

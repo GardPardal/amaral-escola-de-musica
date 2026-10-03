@@ -405,7 +405,6 @@
     'Teclado Pro': ['primeira-vista', 'semicolcheias', 'armaduras-sust', 'armaduras-bem', 'tetrades-pauta', 'sistema', 'campo', 'tensoes', 'intervalos', 'cifra', 'escala-maior', 'dominantes',
       'tercinas', 'sinais', 'sincope', 'tres', 'menor', 'triades', 'nashville', 'modos', 'ponto', 'lead-sheet', 'transposicao', 'roteiro'],
     'Piano': ['pauta', 'figuras', 'clave-fa', 'compasso', 'oitava', 'armadura-sol', 'sinais', 'triades'],
-    'Canto': ['pauta', 'figuras', 'compasso', 'oitava', 'pausas', 'colcheias', 'intervalos', 'triades'],
     'Teoria': [['pauta', 'clave-fa'], ['figuras', 'compasso'], ['intervalos', 'acidentes'], ['escala-maior', 'armadura-sol'], ['menor', 'armadura-fa'], ['triades'], ['campo'], ['sinais', 'sincope']]
   };
 
@@ -529,7 +528,6 @@
     'Guitarra': { raiz: 48, texto: function (n, lp) { return 'Leitura de partitura: ' + n + '. Use o que aprendeu em "' + lp + '": diga as notas no ritmo e depois toque junto, com palhetada alternada.'; } },
     'Teclado': { raiz: 60, raizFa: 48, maos: true, texto: function (n, lp, fa) { return 'Leitura de partitura: ' + n + (fa ? ', mão esquerda' : ', mão direita') + '. Use o que aprendeu em "' + lp + '": diga as notas no ritmo e depois toque junto.'; } },
     'Piano': { raiz: 60, raizFa: 48, maos: true, texto: function (n, lp, fa) { return 'Leitura de partitura: ' + n + (fa ? ', mão esquerda' : ', mão direita') + '. Use o que aprendeu em "' + lp + '": diga as notas no ritmo e depois toque junto.'; } },
-    'Canto coral': { raiz: 60, texto: function (n, lp) { return 'Solfejo: ' + n + '. Use o que aprendeu em "' + lp + '": leia na pauta e cante dizendo o nome das notas, junto com o piano.'; } },
     'Concurso': { raiz: 60, raizFa: 48, texto: function (n, lp) { return 'Leitura e solfejo: ' + n + '. Use o que aprendeu em "' + lp + '": diga as notas no ritmo antes de ouvir e depois confira.'; } }
   };
   function itemTeoria(id) {
@@ -573,7 +571,7 @@
 
   // ---------- Módulos e provas: cada módulo tem 4 aulas e termina com a prova do que foi estudado nele ----------
   var MODULOS = {
-    'Canto': ['Respiração, afinação e leitura', 'Dicção, registros e vozes'],
+    'Canto': ['Respiração, afinação e extensão', 'Dicção, registros e vozes'],
     'Teclado': ['Primeiros passos', 'Ritmo e harmonia', 'Escalas e arpejos', 'Blues, jazz e independência'],
     'Teclado Pro': ['Técnica e escalas nos 12 tons', 'Tétrades, ii-V-I e voicings', 'Tensões e rearmonização', 'Groove e ritmos brasileiros', 'Gospel, percepção e improviso', 'Banda, palco e estúdio'],
     'Piano': ['Leitura e as duas claves', 'Escalas, dinâmica e primeira peça'],
@@ -582,6 +580,9 @@
     'Teoria': ['Leitura, ritmo e intervalos', 'Escalas, acordes e percepção']
   };
   var CORDAS = { 'Violão': 1, 'Guitarra': 1 }, TECLAS = { 'Teclado': 1, 'Piano': 1 };
+  // canto coral é aula de voz: sem partitura nas aulas; a prova cobra as aulas e a percepção de ouvido treinada nelas
+  var SEM_PARTITURA = { 'Canto': 1 };
+  var GERA_EXTRA = { 'Canto': [[{ tema: 'intervalo-ouvido', lista: [4, 7, 12] }], [{ tema: 'intervalo-ouvido', lista: [3, 4, 7, 12] }]] };
   // acordes treinados nas aulas do módulo (viram questões de desenho no braço ou de notas do acorde)
   function acordesDoModulo(info, instrumento) {
     var C = window.AmaralCanto, l = [];
@@ -607,17 +608,18 @@
     if (acum.sol.length >= 3) addGera({ tema: 'nota', clave: 'sol', notas: acum.sol.slice().sort() });
     if (acum.fa.length >= 3) addGera({ tema: 'nota', clave: 'fa', notas: acum.fa.slice().sort() });
     if (CORDAS[instrumento] && acum.sol.length >= 3) addGera({ tema: 'casa', notas: acum.sol.slice().sort() });
-    var acordes = acordesDoModulo(info, instrumento);
+    ((GERA_EXTRA[prefixo] || [])[k] || []).forEach(addGera);
+    var acordes = SEM_PARTITURA[prefixo] ? [] : acordesDoModulo(info, instrumento);
     if (acordes.length >= 2) {
       addGera(CORDAS[instrumento] ? { tema: 'acorde-desenho', acordes: acordes } : { tema: 'acorde-notas', acordes: acordes });
       if (TECLAS[instrumento]) addGera({ tema: 'acorde-teclado', acordes: acordes });
       addGera({ tema: 'cifra', acordes: acordes });
     }
-    var n = prefixo === 'Teoria' || ultimo ? 12 : 10;
+    var n = SEM_PARTITURA[prefixo] ? 8 : prefixo === 'Teoria' || ultimo ? 12 : 10;
     return { titulo: titulo, instrumento: instrumento, nivel: nivel,
-      observacao: 'Prova sobre o que você estudou neste módulo: as lições de partitura e os assuntos das aulas. Precisa de 70% para liberar o próximo módulo. Atenção: 3 erros seguidos encerram a prova e o módulo recomeça.',
+      observacao: 'Prova sobre o que você estudou neste módulo' + (SEM_PARTITURA[prefixo] ? ': os assuntos das aulas e a percepção de ouvido.' : ': as lições de partitura e os assuntos das aulas.') + ' Precisa de 70% para liberar o próximo módulo. Atenção: 3 erros seguidos encerram a prova e o módulo recomeça.',
       itens: [
-        t('Revisão antes da prova: releia a teoria do módulo (' + licoes.join('; ') + ') e refaça a leitura de partitura em que teve mais dificuldade.', 5),
+        t(licoes.length ? 'Revisão antes da prova: releia a teoria do módulo (' + licoes.join('; ') + ') e refaça a leitura de partitura em que teve mais dificuldade.' : 'Revisão antes da prova: releia a explicação de cada aula do módulo e refaça o exercício em que teve mais dificuldade.', 5),
         { texto: 'Prova do módulo: ' + n + ' questões, uma por vez.', minutos: 20,
           vocalize: { tipo: 'prova', titulo: titulo, blocos: blocos, gera: gera, n: n, minimo: 70, errosSeguidos: 3 } }
       ] };
@@ -640,7 +642,7 @@
           (L.notasFa || []).forEach(function (m) { if (acum.fa.indexOf(m) < 0) acum.fa.push(m); });
         });
         // a aula: teoria primeiro, depois a prática do instrumento e, no fim, a leitura com o que acabou de aprender
-        var itens = licoes.map(itemTeoria).concat(a[3].map(comPauta));
+        var itens = licoes.map(itemTeoria).concat(SEM_PARTITURA[prefixo] ? a[3] : a[3].map(comPauta));
         var ler = licoes.length ? itemLeitura(instrumento, licoes[licoes.length - 1]) : null;
         if (ler) itens.push(ler);
         nova({ titulo: a[0], instrumento: instrumento, nivel: a[1], observacao: a[2], itens: itens }, modulo);

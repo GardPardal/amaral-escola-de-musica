@@ -1152,6 +1152,7 @@
       var gera = embaralhar(v.gera || []), nFixas = gera.length ? Math.ceil(n * 0.6) : n;
       // uma questão de cada aula e de cada lição; depois as sorteadas; se faltar, mais fixas
       blocos.forEach(function (b) { if (lista.length < nFixas) { var f = escolher(b); add(questao(f[0], f[1], f.slice(2))); } });
+      embaralhar([].concat.apply([], v.blocos || [])).forEach(function (f) { if (lista.length < nFixas) add(questao(f[0], f[1], f.slice(2))); });
       for (var i = 0, t = 0; lista.length < n && gera.length && t < 200; i++, t++) { try { add(gerarQuestao(gera[i % gera.length])); } catch (e) { /* especificação sem dados suficientes */ } }
       embaralhar([].concat.apply([], v.blocos || [])).forEach(function (f) { if (lista.length < n) add(questao(f[0], f[1], f.slice(2))); });
       return embaralhar(lista);
