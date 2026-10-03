@@ -1,4 +1,5 @@
-// Cursos básicos prontos da Amaral Escola de Música: 8 aulas por instrumento.
+// Cursos básicos prontos da Amaral Escola de Música, em módulos de 4 aulas. Cada módulo termina com uma prova de teoria
+// e toda aula tem um exercício de leitura de partitura.
 // Cada aula vira uma rotina; o "instrumento" precisa ser igual ao do cadastro do aluno.
 // Os exercícios com som usam o tocador do canto.js (veja os tipos no topo daquele arquivo).
 (function () {
@@ -78,21 +79,137 @@
   })();
   var ODE = [[4, 1], [4, 1], [5, 1], [7, 1], [7, 1], [5, 1], [4, 1], [2, 1], [0, 1], [0, 1], [2, 1], [4, 1], [4, 1.5], [2, 0.5], [2, 2],
              [4, 1], [4, 1], [5, 1], [7, 1], [7, 1], [5, 1], [4, 1], [2, 1], [0, 1], [0, 1], [2, 1], [4, 1], [2, 1.5], [0, 0.5], [0, 2]];
-  var DO_RE_MI_FA = [[0, 1], [2, 1], [4, 1], [5, 1], [5, 1], [5, 2], [0, 1], [2, 1], [0, 1], [2, 1], [2, 1], [2, 2],
-                     [0, 1], [7, 1], [5, 1], [4, 1], [4, 1], [4, 2], [0, 1], [2, 1], [4, 1], [5, 1], [5, 1], [5, 2]];
+  var DO_RE_MI_FA = [[0, 1], [2, 1], [4, 1], [5, 1], [5, 2], [5, 2], [0, 1], [2, 1], [0, 1], [2, 1], [2, 2], [2, 2],
+                     [0, 1], [7, 1], [5, 1], [4, 1], [4, 2], [4, 2], [0, 1], [2, 1], [4, 1], [5, 1], [5, 2], [5, 2]];
   function pares(semitons, baixo, alto, dedosE, dedosD) { // duas mãos, uma oitava de distância
     var n = ['Dó', 'Dó♯', 'Ré', 'Mi♭', 'Mi', 'Fá', 'Fá♯', 'Sol', 'Lá♭', 'Lá', 'Si♭', 'Si'];
     var e = dedosE.split(' '), d = dedosD.split(' ');
     return semitons.map(function (s, i) { return [n[(s % 12 + 12) % 12], 1, [baixo + s, alto + s], 'E' + e[i] + ' D' + d[i]]; });
   }
 
+  // ---------- Leitura de partitura: melodias em ordem de dificuldade (semitons a partir de Dó; compassos completos) ----------
+  var LEITURAS = [
+    { nome: 'Dó, Ré e Mi', padrao: [[0, 1], [2, 1], [4, 1], [2, 1], [0, 1], [2, 1], [4, 2]] },
+    { nome: 'Mi, Ré, Dó', padrao: [[4, 1], [2, 1], [0, 2], [4, 1], [2, 1], [0, 2], [0, 1], [2, 1], [4, 1], [2, 1], [4, 1], [2, 1], [0, 2]] },
+    { nome: 'Subindo até o Sol', padrao: [[0, 1], [2, 1], [4, 1], [5, 1], [7, 2], [7, 2], [5, 1], [4, 1], [2, 1], [0, 1], [0, 4]] },
+    { nome: 'Ode à Alegria (Beethoven)', padrao: [[4, 1], [4, 1], [5, 1], [7, 1], [7, 1], [5, 1], [4, 1], [2, 1], [0, 1], [0, 1], [2, 1], [4, 1], [4, 1.5], [2, 0.5], [2, 2]] },
+    { nome: 'Mínimas e pausas', padrao: [[0, 2], [4, 2], [7, 1], [null, 1], [4, 2], [5, 1], [4, 1], [2, 1], [null, 1], [0, 4]] },
+    { nome: 'Brilha, brilha, estrelinha', padrao: [[0, 1], [0, 1], [7, 1], [7, 1], [9, 1], [9, 1], [7, 2], [5, 1], [5, 1], [4, 1], [4, 1], [2, 1], [2, 1], [0, 2]] },
+    { nome: 'Valsa em 3/4', compasso: 3, padrao: [[0, 2], [4, 1], [7, 2], [4, 1], [5, 1], [4, 1], [2, 1], [0, 3]] },
+    { nome: 'Colcheias', padrao: [[0, 0.5], [2, 0.5], [4, 0.5], [5, 0.5], [7, 1], [7, 1], [9, 0.5], [7, 0.5], [5, 0.5], [4, 0.5], [2, 2], [4, 0.5], [5, 0.5], [4, 0.5], [2, 0.5], [0, 1], [2, 1], [0, 4]] },
+    { nome: 'Ponto de aumento', padrao: [[0, 1.5], [2, 0.5], [4, 1], [0, 1], [4, 1.5], [5, 0.5], [7, 2], [9, 1.5], [7, 0.5], [5, 1], [4, 1], [2, 1.5], [2, 0.5], [0, 2]] },
+    { nome: 'Sol maior (Fá♯ na armadura)', desloc: 7, armadura: 1, padrao: [[0, 1], [2, 1], [4, 1], [0, 1], [-1, 1], [0, 1], [2, 2], [4, 1], [5, 1], [7, 1], [4, 1], [2, 1], [-1, 1], [0, 2]] },
+    { nome: 'Saltos', padrao: [[0, 1], [7, 1], [4, 1], [12, 1], [11, 1], [7, 1], [9, 2], [5, 1], [9, 1], [7, 1], [4, 1], [2, 1], [7, 1], [0, 2]] },
+    { nome: 'Lá menor (Sol♯ da harmônica)', desloc: 9, padrao: [[0, 1], [3, 1], [7, 1], [3, 1], [5, 1], [3, 1], [2, 2], [0, 1], [2, 1], [3, 1], [5, 1], [7, 1], [11, 1], [12, 2]] },
+    { nome: 'Fá maior (Si♭ na armadura)', desloc: 5, armadura: -1, padrao: [[0, 1], [2, 1], [4, 1], [5, 1], [7, 1], [5, 1], [4, 1], [2, 1], [0, 1], [4, 1], [7, 2], [4, 1], [2, 1], [0, 2]] },
+    { nome: 'Síncope', padrao: [[0, 0.5], [2, 1], [4, 0.5], [5, 1], [4, 1], [7, 0.5], [5, 1], [4, 0.5], [2, 2], [0, 0.5], [2, 1], [4, 0.5], [2, 1], [0, 1], [0, 4]] },
+    { nome: 'Semicolcheias', padrao: [[0, 0.25], [2, 0.25], [4, 0.25], [5, 0.25], [7, 1], [5, 0.25], [4, 0.25], [2, 0.25], [0, 0.25], [2, 1], [4, 0.5], [5, 0.5], [7, 0.5], [9, 0.5], [7, 2], [4, 1], [2, 1], [0, 2]] },
+    { nome: 'Ré maior (Fá♯ e Dó♯)', desloc: 2, armadura: 2, padrao: [[0, 1], [2, 1], [4, 1], [5, 1], [7, 1], [9, 1], [7, 2], [5, 1], [4, 1], [2, 1], [0, 1], [2, 0.5], [4, 0.5], [-1, 1], [0, 2]] }
+  ];
+  // como cada instrumento lê: clave, nota de partida e o texto do exercício
+  var LER = {
+    'Violão': { raiz: 48, texto: function (n) { return 'Leitura de partitura: ' + n + '. Leia as notas na pauta (a tablatura embaixo mostra corda e casa), diga o nome de cada uma e depois toque junto.'; } },
+    'Guitarra': { raiz: 48, texto: function (n) { return 'Leitura de partitura: ' + n + '. Leia na pauta (a tablatura embaixo ajuda no começo), diga as notas e depois toque junto, com palhetada alternada.'; } },
+    'Teclado': { raiz: 60, raizFa: 48, maos: true, texto: function (n, fa) { return 'Leitura de partitura: ' + n + ', mão ' + (fa ? 'esquerda na clave de fá' : 'direita na clave de sol') + '. Diga o nome das notas no ritmo e depois toque junto.'; } },
+    'Piano': { raiz: 60, raizFa: 48, maos: true, texto: function (n, fa) { return 'Leitura de partitura: ' + n + ', mão ' + (fa ? 'esquerda na clave de fá' : 'direita na clave de sol') + '. Diga o nome das notas no ritmo e depois toque junto.'; } },
+    'Canto coral': { raiz: 60, texto: function (n) { return 'Solfejo: ' + n + '. Leia na pauta e cante dizendo o nome das notas, junto com o piano.'; } },
+    'Concurso': { raiz: 60, raizFa: 48, texto: function (n, fa) { return 'Leitura e solfejo: ' + n + ', na clave de ' + (fa ? 'fá' : 'sol') + '. Diga as notas no ritmo antes de ouvir; depois confira com o exemplo.'; } }
+  };
+  function leituraDaAula(instrumento, i, total, inicio) {
+    var cfg = LER[instrumento]; if (!cfg) return null;
+    var k = Math.min(LEITURAS.length - 1, (inicio || 0) + Math.floor(i * (LEITURAS.length - (inicio || 0)) / total)), L = LEITURAS[k];
+    var fa = !!cfg.raizFa && i % 2 === 1;
+    var extra = { pauta: fa ? 'fa' : true, leitura: true, repeticoes: 2 };
+    if (L.compasso) extra.compasso = L.compasso;
+    if (L.armadura) extra.armadura = L.armadura;
+    if (cfg.maos) extra.mao = fa ? 'E' : 'D';
+    var raiz = (fa ? cfg.raizFa : cfg.raiz) + (L.desloc || 0);
+    if (fa && raiz > 52) raiz -= 12;   // na clave de fá a melodia fica dentro da pauta
+    return t(cfg.texto(L.nome, fa), 4, demo(L.padrao, raiz, L.compasso === 3 ? 84 : 66, 'Leia na pauta', extra));
+  }
+  // Exercícios de notas que cabem certinho nos compassos ganham a partitura (sem cortar nota na barra de compasso)
+  function cabeNaPauta(v) {
+    if (!v || v.tipo !== 'notas' || !v.demo || v.ocultar || v.pauta || v.semPauta) return false;
+    var vozes = v.maos ? Object.keys(v.maos).map(function (k) { return v.maos[k].padrao; }) : [v.padrao || []];
+    var bpc = v.compasso || 4;
+    return vozes.every(function (p) {
+      var b = 0;
+      if (!p.length || p.length > 64) return false;
+      return p.every(function (n) {
+        var d = Number(n[1]) || 1, ok = Math.floor(b / bpc + 1e-6) === Math.floor((b + d) / bpc - 1e-6) && [4, 3, 2, 1.5, 1, 0.75, 0.5, 0.25].indexOf(d) >= 0;
+        b += d; return ok;
+      });
+    });
+  }
+  function comPauta(it) {
+    if (!it.vocalize || !cabeNaPauta(it.vocalize)) return it;
+    var v = {}; Object.keys(it.vocalize).forEach(function (k) { v[k] = it.vocalize[k]; });
+    v.pauta = v.maos ? 'sol' : true;
+    return { texto: it.texto, minutos: it.minutos, vocalize: v };
+  }
+
+  // ---------- Módulos e provas: cada módulo tem 4 aulas e termina com uma prova de teoria ----------
+  // [nome do módulo, temas sorteados, bancos de questões fixas, nº de questões]
+  var MODULOS = {
+    'Canto': [['Respiração e afinação', ['notas-sol', 'figuras', 'compassos', 'intervalos-ouvido'], ['canto', 'pauta']],
+      ['Dicção, registros e vozes', ['notas-sol', 'intervalos', 'intervalos-ouvido', 'escalas', 'pausas'], ['canto', 'sinais']]],
+    'Teclado': [['Primeiros passos', ['notas-sol', 'figuras', 'triades', 'cifras'], ['teclado', 'pauta']],
+      ['Ritmo e harmonia', ['notas-fa', 'notas-sol', 'compassos', 'campo', 'triades'], ['teclado']],
+      ['Escalas e arpejos', ['escalas', 'armaduras', 'notas-sol-sup', 'notas-fa', 'intervalos'], ['escalas', 'acidentes']],
+      ['Blues, jazz e independência', ['tetrades', 'campo', 'funcoes', 'acordes-ouvido', 'intervalos-ouvido'], ['harmonia']]],
+    'Teclado Pro': [['Técnica e escalas nos 12 tons', ['escalas', 'armaduras', 'notas-sol-sup', 'notas-fa'], ['escalas']],
+      ['Tétrades, ii-V-I e voicings', ['tetrades', 'harmonia', 'campo', 'funcoes'], ['harmonia']],
+      ['Tensões e rearmonização', ['harmonia', 'tetrades', 'intervalos', 'acordes-ouvido'], []],
+      ['Groove e ritmos brasileiros', ['compassos', 'figuras', 'pausas', 'notas-fa', 'campo'], ['sinais']],
+      ['Gospel, percepção e improviso', ['intervalos-ouvido', 'acordes-ouvido', 'harmonia', 'escalas', 'campo'], []],
+      ['Banda, palco e estúdio', ['harmonia', 'tetrades', 'funcoes', 'armaduras', 'intervalos-ouvido'], ['sinais'], 12]],
+    'Piano': [['Leitura e as duas claves', ['notas-sol', 'notas-fa', 'figuras', 'compassos'], ['teclado', 'pauta']],
+      ['Escalas, dinâmica e primeira peça', ['escalas', 'armaduras', 'notas-sol-sup', 'notas-fa', 'intervalos'], ['sinais', 'acidentes']]],
+    'Violão': [['Primeiros passos', ['notas-violao', 'violao-casa', 'figuras', 'cifras'], ['violao', 'pauta']],
+      ['Ritmo e primeiras músicas', ['notas-violao', 'violao-casa', 'figuras', 'pausas', 'compassos', 'tab'], ['violao', 'sinais']],
+      ['Baixos, sétimas e a escala', ['notas-violao', 'notas-violao-graves', 'violao-casa-graves', 'escalas', 'intervalos', 'cifras'], ['violao']],
+      ['Pestana e tonalidades', ['armaduras', 'escalas', 'campo', 'notas-violao', 'violao-casa', 'compassos'], ['violao', 'acidentes']],
+      ['Harmonia no violão', ['campo', 'funcoes', 'triades', 'notas-violao', 'pausas', 'figuras', 'acordes-ouvido'], ['harmonia']],
+      ['Rumo ao repertório', ['notas-violao', 'violao-casa', 'tab', 'campo', 'funcoes', 'armaduras', 'intervalos-ouvido'], ['violao', 'sinais'], 12]],
+    'Guitarra': [['Técnica e base', ['notas-violao', 'tab', 'cifras', 'figuras'], ['guitarra', 'pauta']],
+      ['Ritmo, ligados e improviso', ['tab', 'notas-violao', 'intervalos', 'compassos', 'campo'], ['guitarra', 'sinais']]],
+    'Teoria': [['Leitura, ritmo e intervalos', ['notas-sol', 'notas-fa', 'figuras', 'compassos', 'intervalos', 'escalas'], ['pauta', 'acidentes', 'sinais'], 12],
+      ['Escalas, acordes e percepção', ['armaduras', 'triades', 'tetrades', 'campo', 'funcoes', 'intervalos-ouvido', 'acordes-ouvido'], ['escalas', 'harmonia'], 12]]
+  };
+  var PROVA_FIXAS = {
+    'Teclado Pro': [['No sistema Nashville, os acordes são escritos como:', 'Números dos graus (1, 4, 5, 6m)', 'Letras da cifra (C, F, G)', 'Notas na pauta', 'Nomes das funções (T, S, D)'],
+      ['Para que serve o click no ao vivo?', 'Manter a banda no mesmo andamento e sincronizar o playback', 'Afinar os instrumentos', 'Aumentar o volume do retorno', 'Gravar o show'],
+      ['O baterista conta "1, 2, 3, 4" e a banda entra no:', 'Tempo 1 do compasso seguinte', 'Tempo 4', 'Meio do compasso', 'Quando o cantor entrar']]
+  };
+  function aulaDeProva(prefixo, instrumento, k, md, nivel) {
+    var titulo = 'Prova do Módulo ' + (k + 1) + ' (' + md[0] + ')';
+    return { titulo: titulo, instrumento: instrumento, nivel: nivel,
+      observacao: 'Prova de teoria musical do módulo. As questões são sorteadas e você precisa de 70% de acertos para liberar o próximo módulo. Pode refazer quantas vezes precisar.',
+      itens: [
+        t('Revisão: releia a explicação de cada aula do módulo e refaça o exercício de leitura de partitura mais difícil.', 5),
+        { texto: 'Prova de teoria musical: ' + (md[3] || 10) + ' questões. Responda tudo e entregue.', minutos: 20,
+          vocalize: { tipo: 'prova', titulo: titulo, temas: md[1], bancos: md[2], fixas: PROVA_FIXAS[prefixo] || [], n: md[3] || 10, minimo: 70 } }
+      ] };
+  }
+
   function curso(instrumento, prefixo, aulas, nome) {
-    return {
-      instrumento: instrumento, nome: nome || instrumento,
-      aulas: aulas.map(function (a, i) {
-        return { titulo: prefixo + ' · Aula ' + (i + 1) + ': ' + a[0], instrumento: instrumento, nivel: a[1], observacao: a[2], itens: a[3] };
-      })
-    };
+    var mods = MODULOS[prefixo] || [], lista = [], n = 0;
+    var porMod = mods.length ? Math.ceil(aulas.length / mods.length) : aulas.length;
+    function nova(a, modulo, prova) {
+      a.titulo = prefixo + ' · Aula ' + (++n) + ': ' + a.titulo; a.modulo = modulo; if (prova) a.prova = true;
+      lista.push(a);
+    }
+    (mods.length ? mods : [null]).forEach(function (md, k) {
+      var modulo = md ? 'Módulo ' + (k + 1) + ' · ' + md[0] : '';
+      var parte = aulas.slice(k * porMod, (k + 1) * porMod);
+      parte.forEach(function (a, j) {
+        var i = k * porMod + j, itens = a[3].map(comPauta), ler = leituraDaAula(instrumento, i, aulas.length, prefixo === 'Teclado Pro' ? 8 : 0);
+        if (ler) itens.push(ler);
+        nova({ titulo: a[0], instrumento: instrumento, nivel: a[1], observacao: a[2], itens: itens }, modulo);
+      });
+      if (md && parte.length) nova(aulaDeProva(prefixo, instrumento, k, md, parte[parte.length - 1][1]), modulo, true);
+    });
+    return { instrumento: instrumento, nome: nome || instrumento, aulas: lista };
   }
 
   // ---------- Ajudantes da trilha profissional ----------
@@ -544,23 +661,32 @@
       ]]
     ]),
 
-    // ======================= VIOLÃO =======================
+    // ======================= VIOLÃO (24 aulas em 6 módulos) =======================
     curso('Violão', 'Violão', [
+      // ----- Módulo 1: Primeiros passos -----
       ['Conhecendo o violão e afinação', 'Iniciante', 'Unhas da mão esquerda curtas. Aperte a corda perto do traste, não em cima dele.', [
         t('Cordas: da mais fina (1ª, Mi) para a mais grossa (6ª, Mi grave). Postura: violão na perna, polegar da mão esquerda atrás do braço.', 3),
         t('Afinação: ouça cada nota e afine a corda até soar igual', 5, demo(AFINACAO, 40, 60, 'Afine cada corda até soar igual à nota de referência', { repeticoes: 2, semPiano: true })),
-        t('Mão direita: polegar (p) nas cordas 6, 5 e 4; indicador (i), médio (m) e anelar (a) nas cordas 3, 2 e 1', 5, demo([[0, 1, 'p · 6ª corda'], [5, 1, 'p · 5ª corda'], [10, 1, 'p · 4ª corda'], [15, 1, 'i · 3ª corda'], [19, 1, 'm · 2ª corda'], [24, 1, 'a · 1ª corda']], 40, 60, 'Uma corda solta por tempo', { repeticoes: 4, semPiano: true }))
+        t('Mão direita: polegar (p) nas cordas 6, 5 e 4; indicador (i), médio (m) e anelar (a) nas cordas 3, 2 e 1', 5, demo([[0, 1, 'p · 6ª corda'], [5, 1, 'p · 5ª corda'], [10, 1, 'p · 4ª corda'], [15, 1, 'i · 3ª corda'], [19, 1, 'm · 2ª corda'], [24, 1, 'a · 1ª corda']], 40, 60, 'Uma corda solta por tempo', { repeticoes: 4, semPiano: true })),
+        t('Como se lê música de violão: clave de sol com um 8 embaixo (o violão soa uma oitava abaixo do que está escrito). Embaixo vem a tablatura: 6 linhas = 6 cordas (a linha de cima é a 1ª corda) e o número é a casa.', 3)
       ]],
       ['Primeiros acordes: Em e Am', 'Iniciante', 'No braço da tela, as linhas deitadas são as cordas (Mi grave embaixo). Bolinha com número = dedo que aperta; × = não toca; ○ = corda solta; pontilhado = próximo acorde.', [
         t('Troque entre Em e Am', 6, acordes('Em:4 Am:4', 60, { braco: true, repeticoes: 4 })),
         t('Toque corda por corda: todas precisam soar limpas. Se alguma abafar, ajuste o dedo.', 3),
         t('Mais rápido, sem parar antes do tempo 1', 5, acordes('Em:4 Am:4', 76, { braco: true, repeticoes: 6 }))
       ]],
+      ['Leitura: notas da 1ª e da 2ª corda', 'Iniciante', '1ª corda: Mi (solta), Fá (casa 1, dedo 1) e Sol (casa 3, dedo 3). 2ª corda: Si (solta), Dó (casa 1) e Ré (casa 3). Toque alternando i e m.', [
+        t('1ª corda: Mi, Fá e Sol (o Mi fica no 4º espaço da pauta)', 4, demo([[0, 1], [1, 1], [3, 1], [1, 1], [0, 2], [null, 2]], 64, 60, 'Leia e toque', { repeticoes: 3 })),
+        t('2ª corda: Si, Dó e Ré (o Si fica na 3ª linha, bem no meio da pauta)', 4, demo([[0, 1], [1, 1], [3, 1], [1, 1], [0, 2], [null, 2]], 59, 60, 'Leia e toque', { repeticoes: 3 })),
+        t('Juntando as duas cordas: Dó, Ré, Mi, Fá e Sol', 5, demo([[0, 1], [2, 1], [4, 1], [5, 1], [7, 2], [5, 1], [4, 1], [2, 1], [4, 1], [0, 2]], 60, 63, 'Leia e toque', { repeticoes: 2, leitura: true })),
+        t('No caderno: desenhe uma pauta e escreva Mi, Fá, Sol, Si, Dó e Ré. Embaixo de cada uma, escreva a corda e a casa.', 3)
+      ]],
       ['Acordes D, A e E', 'Iniciante', 'Dica: quando dois acordes têm um dedo no mesmo lugar, deixe esse dedo parado na troca.', [
         t('D e A', 5, acordes('D:4 A:4', 60, { braco: true, repeticoes: 4 })),
         t('A e E', 5, acordes('A:4 E:4', 60, { braco: true, repeticoes: 4 })),
         t('E - A - D - A', 6, acordes('E:4 A:4 D:4 A:4', 66, { braco: true, repeticoes: 4 }))
       ]],
+      // ----- Módulo 2: Ritmo e primeiras músicas -----
       ['G e C: a primeira progressão', 'Iniciante', 'G e C são os acordes mais usados do violão popular. Vale cada minuto de treino.', [
         t('G e C', 5, acordes('G:4 C:4', 60, { braco: true, repeticoes: 4 })),
         t('G - D - C - G', 6, acordes('G:4 D:4 C:4 G:4', 66, { braco: true, repeticoes: 4 })),
@@ -570,24 +696,107 @@
       ['Ritmo: batidas', 'Iniciante', '↓ = para baixo, ↑ = para cima. A mão direita nunca para: sobe e desce o tempo todo, mesmo quando não toca a corda.', [
         t('Uma batida para baixo em cada tempo', 3, metronomo(70, 4, '↓ ↓ ↓ ↓', 16)),
         t('Colcheias: para baixo no número, para cima no "e"', 4, metronomo(70, 4, '↓↑ ↓↑ ↓↑ ↓↑', 16)),
+        t('Leitura rítmica: semínima = 1 tempo (↓), colcheias = 2 por tempo (↓↑). Toque as figuras da pauta na 2ª corda solta.', 4, demo([[0, 1], [0, 1], [0, 0.5], [0, 0.5], [0, 1], [0, 0.5], [0, 0.5], [0, 0.5], [0, 0.5], [0, 2]], 59, 70, 'Siga as figuras', { repeticoes: 3 })),
         t('Levada pop: ↓ ↓↑ ↑↓↑', 5, metronomo(80, 4, '↓ · ↓↑ · ↑↓↑ (1 · 2 e · e 4 e)', 16)),
         t('Levada pop na progressão', 6, acordes('G:4 D:4 Em:4 C:4', 80, { braco: true, repeticoes: 4, texto: 'Levada: ↓ ↓↑ ↑↓↑' }))
+      ]],
+      ['Leitura: 3ª corda e a primeira melodia', 'Iniciante', '3ª corda: Sol (solta) e Lá (casa 2, dedo 2). Com as três primeiras cordas já dá para ler uma melodia inteira na primeira posição.', [
+        t('3ª corda: Sol e Lá, e a volta para o Si da 2ª corda', 4, demo([[0, 1], [2, 1], [4, 2], [2, 1], [0, 1], [2, 2]], 55, 60, 'Leia e toque', { repeticoes: 3 })),
+        t('Ode à Alegria (Beethoven) lendo a partitura', 8, demo(ODE, 60, 80, 'Leia e toque', { repeticoes: 2, leitura: true })),
+        t('Grave a Ode à Alegria lendo a partitura e poste na Comunidade.', 3)
       ]],
       ['Dedilhado', 'Intermediário', 'p = polegar, i = indicador, m = médio, a = anelar. O polegar toca o baixo (a corda que dá nome ao acorde).', [
         t('Am e E com dedilhado p-i-m-a', 6, acordes('Am:4 E:4', 60, { braco: true, repeticoes: 4, dedilhado: ['p', 'i', 'm', 'a'], texto: 'Uma nota por tempo: p · i · m · a' })),
         t('C - G - Am - Em com dedilhado p-i-m-a', 6, acordes('C:4 G:4 Am:4 Em:4', 66, { braco: true, repeticoes: 4, dedilhado: ['p', 'i', 'm', 'a'], texto: 'p · i · m · a' })),
         t('Variação p-i-m-a-m-i, duas notas por tempo (compasso de 3)', 5, acordes('C:3 Am:3 Em:3 G:3', 60, { braco: true, repeticoes: 4, dedilhado: ['p', 'i', 'm', 'a', 'm', 'i'], passo: 0.5, texto: 'p · i · m · a · m · i' }))
       ]],
+      // ----- Módulo 3: Baixos, sétimas e a escala -----
+      ['Leitura: as cordas graves', 'Intermediário', 'Os baixos ficam embaixo da pauta, com linhas suplementares. 6ª corda: Mi, Fá (casa 1), Sol (casa 3). 5ª: Lá, Si (casa 2), Dó (casa 3). 4ª: Ré, Mi (casa 2), Fá (casa 3). Toque com o polegar.', [
+        t('6ª corda: Mi, Fá e Sol', 4, demo([[0, 1], [1, 1], [3, 1], [1, 1], [0, 2], [null, 2]], 40, 60, 'Polegar (p)', { repeticoes: 3 })),
+        t('5ª corda: Lá, Si e Dó', 4, demo([[0, 1], [2, 1], [3, 1], [2, 1], [0, 2], [null, 2]], 45, 60, 'Polegar (p)', { repeticoes: 3 })),
+        t('4ª corda: Ré, Mi e Fá', 4, demo([[0, 1], [2, 1], [3, 1], [2, 1], [0, 2], [null, 2]], 50, 60, 'Polegar (p)', { repeticoes: 3 })),
+        t('Todas as notas naturais das cordas graves, do Mi ao Fá e de volta', 5, demo(seq([0, 1, 3, 5, 7, 8, 10, 12, 13, 12, 10, 8, 7, 5, 3, 1, 0], 1, 4), 40, 66, 'Leia e toque com o polegar', { leitura: true }))
+      ]],
       ['Acordes com sétima', 'Intermediário', 'O acorde com sétima (7) cria tensão e pede para resolver no próximo acorde.', [
         t('Conheça A7, D7, E7 e B7', 4, acordes('A7:4 D7:4 E7:4 B7:4', 60, { braco: true, repeticoes: 2 })),
         t('Em - Am - B7 - Em', 6, acordes('Em:4 Am:4 B7:4 Em:4', 70, { braco: true, repeticoes: 4 })),
         t('A - A7 - D - E7', 6, acordes('A:4 A7:4 D:4 E7:4', 70, { braco: true, repeticoes: 4 }))
       ]],
+      ['Baixo alternado e valsa', 'Intermediário', 'O polegar toca o baixo e os dedos i-m-a tocam o acorde juntos. Na valsa (compasso 3/4): baixo no 1, acorde no 2 e no 3.', [
+        t('Valsa em 3/4: C - G7 - G7 - C', 6, acordes('C:3 G7:3 G7:3 C:3', 90, { braco: true, repeticoes: 4, texto: 'Baixo · acorde · acorde (1 2 3)' })),
+        t('Valsa em Lá menor: Am - E7 - E7 - Am', 6, acordes('Am:3 E7:3 E7:3 Am:3', 90, { braco: true, repeticoes: 4, texto: 'Baixo · acorde · acorde (1 2 3)' })),
+        t('Baixo alternado em 4/4: baixo, acorde, outro baixo do acorde, acorde', 6, acordes('C:4 G7:4 Am:4 E7:4', 76, { braco: true, repeticoes: 4, texto: 'Baixo · acorde · baixo · acorde' }))
+      ]],
+      ['Escala de Dó maior na primeira posição', 'Intermediário', 'A escala de Dó usa as notas que você já leu nas cordas graves e agudas. Um dedo por casa: casa 1 = dedo 1, casa 2 = dedo 2, casa 3 = dedo 3.', [
+        t('Escala de Dó maior, do Dó da 5ª corda ao Dó da 2ª corda', 6, demo(seq(MAIOR, 1, 2), 48, 60, 'Leia na pauta e toque', { leitura: true })),
+        t('Em colcheias, alternando i e m', 5, demo(seq(MAIOR, 0.5, 1), 48, 70, 'Duas notas por tempo')),
+        t('Terças na escala: Dó-Mi, Ré-Fá, Mi-Sol…', 5, demo(seq([0, 4, 2, 5, 4, 7, 5, 9, 7, 11, 9, 12, 0], 1, 4), 48, 60, 'Leia e toque', { leitura: true }))
+      ]],
+      // ----- Módulo 4: Pestana e tonalidades -----
       ['Pestana e primeira música', 'Intermediário', 'Pestana: o dedo 1 deitado aperta várias cordas. No começo cansa; pare quando doer.', [
         t('F com pestana e C', 5, acordes('F:4 C:4', 56, { braco: true, repeticoes: 4, texto: 'Dedo 1 reto, perto do traste' })),
         t('Campo harmônico de Sol: G - Em - Bm - C - D', 6, acordes('G:4 Em:4 Bm:4 C:4 D:4', 72, { braco: true, repeticoes: 3 })),
         t('C - G - Am - F com a levada pop', 6, acordes('C:4 G:4 Am:4 F:4', 76, { braco: true, repeticoes: 4, texto: 'Levada: ↓ ↓↑ ↑↓↑' })),
         t('Escolha uma música com G, D, Em e C e toque inteira com a levada pop. Poste na Comunidade!', 4)
+      ]],
+      ['Pestana na 2ª casa: Bm, F♯m e o tom de Ré', 'Intermediário', 'Bm e F♯m usam pestana na casa 2. Com eles você toca todo o campo harmônico de Ré maior: D, Em, F♯m, G, A e Bm.', [
+        t('Bm e F♯m', 5, acordes('Bm:4 F#m:4', 56, { braco: true, repeticoes: 4, texto: 'Pestana na casa 2' })),
+        t('Campo harmônico de Ré: D - Em - F♯m - G - A - Bm', 6, acordes('D:4 Em:4 F#m:4 G:4 A:4 Bm:4', 66, { braco: true, repeticoes: 2 })),
+        t('D - Bm - G - A com a levada pop', 6, acordes('D:4 Bm:4 G:4 A:4', 76, { braco: true, repeticoes: 4, texto: 'Levada: ↓ ↓↑ ↑↓↑' }))
+      ]],
+      ['Leitura: Sol maior e o Fá♯', 'Intermediário', 'O sustenido no começo da pauta (armadura de clave) quer dizer: todo Fá vira Fá♯. Isso é o tom de Sol maior.', [
+        t('Escala de Sol maior: o Fá♯ fica na 1ª corda, casa 2', 5, demo(seq(MAIOR, 1, 2), 55, 60, 'Leia a armadura!', { armadura: 1, leitura: true })),
+        t('Melodia em Sol maior: lembre do Fá♯ (4ª corda, casa 4, e 1ª corda, casa 2)', 6, demo([[0, 1], [4, 1], [7, 1], [4, 1], [5, 1], [2, 1], [-1, 1], [0, 1], [4, 0.5], [5, 0.5], [7, 0.5], [9, 0.5], [11, 1], [12, 1], [11, 1], [9, 1], [7, 2]], 55, 63, 'Leia e toque', { armadura: 1, leitura: true, repeticoes: 2 })),
+        t('Acompanhe em Sol: G - Em - C - D', 4, acordes('G:4 Em:4 C:4 D:4', 72, { braco: true, repeticoes: 4 }))
+      ]],
+      ['Levadas brasileiras: baião e xote', 'Intermediário', 'No baião, o polegar faz a célula da zabumba (1 · e 2) e os dedos respondem no contratempo. No xote, a levada balança com acento no 2 e no 4.', [
+        t('Célula do baião só no baixo: 1 · e 2', 4, metronomo(84, 2, 'p · p p (1 · e 2)', 16)),
+        t('Baião: Am - D - Am - E7', 6, acordes('Am:2 D:2 Am:2 E7:2', 84, { braco: true, repeticoes: 6, texto: 'Baixo na célula, acorde no contratempo' })),
+        t('Xote: ↓ · ↓↑ · ↓ · ↓↑, acento no 2 e no 4', 6, acordes('G:4 D:4 D:4 G:4', 80, { braco: true, repeticoes: 4, texto: 'Xote: ↓ · ↓↑ · ↓ · ↓↑' }))
+      ]],
+      // ----- Módulo 5: Harmonia no violão -----
+      ['Campo harmônico de Dó e funções', 'Intermediário', 'Tônica (C, Am, Em) = repouso; subdominante (F, Dm) = afastamento; dominante (G7, Bdim) = tensão que pede o C.', [
+        t('Campo harmônico de Dó: C - Dm - Em - F - G - Am - Bdim', 6, acordes('C:4 Dm:4 Em:4 F:4 G:4 Am:4 Bdim:4 C:4', 60, { braco: true })),
+        t('T - S - D - T: C - F - G7 - C', 5, acordes('C:4 F:4 G7:4 C:4', 70, { braco: true, repeticoes: 4 })),
+        t('Com o ii: C - Am - Dm - G7', 5, acordes('C:4 Am:4 Dm:4 G7:4', 72, { braco: true, repeticoes: 4 })),
+        t('No caderno: escreva a função (T, S ou D) de cada acorde de uma música que você toca.', 3)
+      ]],
+      ['Tonalidades menores', 'Intermediário', 'Em tom menor, o V vira maior com sétima (E7 em Lá menor) por causa da escala menor harmônica, que tem o Sol♯.', [
+        t('Lá menor: Am - Dm - E7 - Am', 6, acordes('Am:4 Dm:4 E7:4 Am:4', 70, { braco: true, repeticoes: 4 })),
+        t('Mi menor: Em - Am - B7 - Em', 6, acordes('Em:4 Am:4 B7:4 Em:4', 70, { braco: true, repeticoes: 4 })),
+        t('Escala de Lá menor harmônica lida na pauta (repare no Sol♯)', 5, demo(seq(MENOR_HAR, 1, 2), 57, 60, 'Leia e toque', { leitura: true }))
+      ]],
+      ['Leitura: colcheias, ponto de aumento e pausas', 'Intermediário', 'Colcheia = meio tempo (conte "1 e 2 e"). O ponto soma metade do valor: semínima pontuada = 1 tempo e meio. Pausa também se conta.', [
+        t('Colcheias', 5, demo(LEITURAS[7].padrao, 48, 63, 'Conte "1 e 2 e"', { leitura: true, repeticoes: 2 })),
+        t('Ponto de aumento', 5, demo(LEITURAS[8].padrao, 48, 63, 'Segure o ponto', { leitura: true, repeticoes: 2 })),
+        t('Pausas: abafe a corda no silêncio', 4, demo([[0, 1], [null, 1], [4, 1], [null, 1], [7, 0.5], [null, 0.5], [7, 0.5], [null, 0.5], [4, 1], [null, 1], [0, 2], [null, 2]], 48, 66, 'Silêncio também é música', { leitura: true, repeticoes: 2 }))
+      ]],
+      ['Arpejos e dedilhado de balada', 'Intermediário', 'Na balada, o polegar toca o baixo e i-m-a-m-i desenham o acorde, uma nota de cada vez, em colcheias.', [
+        t('C - G - Am - F com p-i-m-a-m-i-m-i', 6, acordes('C:4 G:4 Am:4 F:4', 66, { braco: true, repeticoes: 4, dedilhado: ['p', 'i', 'm', 'a', 'm', 'i', 'm', 'i'], passo: 0.5, texto: 'p · i · m · a · m · i · m · i' })),
+        t('Am - Em - F - C', 6, acordes('Am:4 Em:4 F:4 C:4', 66, { braco: true, repeticoes: 4, dedilhado: ['p', 'i', 'm', 'a', 'm', 'i', 'm', 'i'], passo: 0.5, texto: 'p · i · m · a · m · i · m · i' })),
+        t('Arpejo de Dó maior lido na pauta: Dó, Mi, Sol, Dó, Mi', 4, demo(seq([0, 4, 7, 12, 16, 12, 7, 4, 0], 1, 4), 48, 66, 'Leia e toque', { leitura: true }))
+      ]],
+      // ----- Módulo 6: Rumo ao repertório -----
+      ['Pentatônica no violão', 'Intermediário', 'A pentatônica de Lá menor (Lá, Dó, Ré, Mi e Sol) serve para solos e introduções. A posição começa na 5ª casa.', [
+        t('Leia e toque a pentatônica (siga o desenho no braço)', 8, demo(seq(PENTA_NOTAS, 1, 2), 45, 60, 'Siga o desenho no braço', { semPiano: true, diagrama: PENTA })),
+        t('Improvise sobre Am - G - F - G usando só essas notas', 8, acordes('Am:4 G:4 F:4 G:4', 80, { repeticoes: 6, semPiano: true, diagrama: PENTA, texto: 'Improvise com a pentatônica de Lá menor' }))
+      ]],
+      ['Pestana na 5ª corda: B, Cm e C♯m', 'Avançado', 'É o desenho do A ou do Am com o dedo 1 fazendo pestana. Mova a forma pelo braço para mudar de acorde.', [
+        t('Dó menor: Cm - Fm - G - Cm', 6, acordes('Cm:4 Fm:4 G:4 Cm:4', 60, { braco: true, repeticoes: 4 })),
+        t('Mi maior: E - B - C♯m - A', 6, acordes('E:4 B:4 C#m:4 A:4', 66, { braco: true, repeticoes: 4 })),
+        t('Bm - G - D - A com a levada pop', 5, acordes('Bm:4 G:4 D:4 A:4', 76, { braco: true, repeticoes: 4, texto: 'Levada: ↓ ↓↑ ↑↓↑' }))
+      ]],
+      ['Cifra, tablatura e partitura juntas', 'Avançado', 'Na vida real a música chega em cifra (acordes), tablatura (riffs e solos) ou partitura (melodia). Aqui você treina as três.', [
+        t('Riff nas cordas graves: leia a tablatura (corda e casa) e confira na pauta', 5, demo([[0, 1], [3, 1], [5, 2], [0, 1], [3, 1], [6, 0.5], [5, 1.5], [0, 1], [3, 1], [5, 2], [3, 1], [0, 3]], 40, 80, 'Leia a tablatura', { repeticoes: 2 })),
+        t('Cifras novas: C7M, Am7, Dsus4 e Asus4', 5, acordes('Cmaj7:4 Am7:4 Dsus4:2 D:2 Asus4:2 A:2', 66, { braco: true, repeticoes: 3 })),
+        t('Brilha, brilha, estrelinha: leia a melodia na partitura', 5, demo(LEITURAS[5].padrao, 48, 72, 'Leia e toque', { leitura: true, repeticoes: 2 })),
+        t('Agora acompanhe a mesma melodia com a cifra', 4, acordes('C:4 F:2 C:2 F:2 C:2 G:2 C:2', 72, { braco: true, repeticoes: 3 }))
+      ]],
+      ['Repertório e apresentação', 'Avançado', 'Hora de juntar tudo: escolher uma música, montar o arranjo (introdução, levada, dedilhado) e tocar do começo ao fim.', [
+        t('Aquecimento: escala de Dó em colcheias, limpa e no tempo', 5, demo(seq(MAIOR, 0.5, 1), 48, 72, 'Aquecimento')),
+        t('Escolha uma música do seu repertório. Escreva a cifra no caderno e marque as partes (introdução, verso, refrão).', 5),
+        t('Toque a música inteira junto com o metrônomo, sem parar nos erros', 10, metronomo(72, 4, 'Toque a música inteira junto com o clique', 64)),
+        t('Grave um vídeo tocando a música completa e poste na Comunidade. Parabéns por concluir o curso de violão!', 5)
       ]]
     ]),
 
@@ -648,8 +857,8 @@
         t('Solfejo rítmico: leia a lição de ritmo da apostila falando "tá" em cada nota, com metrônomo.', 5)
       ]],
       ['Intervalos', 'Intermediário', 'Intervalo é a distância entre duas notas. Conte as notas incluindo a primeira e a última: Dó-Mi = 3ª.', [
-        t('Intervalos maiores e justos a partir de Dó', 5, demo([[0, 1, 'Dó'], [2, 2, '2ª maior'], [0, 1, 'Dó'], [4, 2, '3ª maior'], [0, 1, 'Dó'], [5, 2, '4ª justa'], [0, 1, 'Dó'], [7, 2, '5ª justa'], [0, 1, 'Dó'], [9, 2, '6ª maior'], [0, 1, 'Dó'], [11, 2, '7ª maior'], [0, 1, 'Dó'], [12, 2, '8ª justa']], 60, 72, 'Ouça e cante cada intervalo')),
-        t('Intervalos menores e o trítono', 4, demo([[0, 1, 'Dó'], [1, 2, '2ª menor'], [0, 1, 'Dó'], [3, 2, '3ª menor'], [0, 1, 'Dó'], [6, 2, '4ª aumentada (trítono)'], [0, 1, 'Dó'], [8, 2, '6ª menor'], [0, 1, 'Dó'], [10, 2, '7ª menor']], 60, 72, 'Compare com os maiores')),
+        t('Intervalos maiores e justos a partir de Dó', 5, demo([[0, 2, 'Dó'], [2, 2, '2ª maior'], [0, 2, 'Dó'], [4, 2, '3ª maior'], [0, 2, 'Dó'], [5, 2, '4ª justa'], [0, 2, 'Dó'], [7, 2, '5ª justa'], [0, 2, 'Dó'], [9, 2, '6ª maior'], [0, 2, 'Dó'], [11, 2, '7ª maior'], [0, 2, 'Dó'], [12, 2, '8ª justa']], 60, 72, 'Ouça e cante cada intervalo')),
+        t('Intervalos menores e o trítono', 4, demo([[0, 2, 'Dó'], [1, 2, '2ª menor'], [0, 2, 'Dó'], [3, 2, '3ª menor'], [0, 2, 'Dó'], [6, 2, '4ª aumentada (trítono)'], [0, 2, 'Dó'], [8, 2, '6ª menor'], [0, 2, 'Dó'], [10, 2, '7ª menor']], 60, 72, 'Compare com os maiores')),
         t('Para lembrar: 2ª maior = "Pa-ra-béns"; 5ª justa = tema de Star Wars; 8ª = "Somewhere over the rainbow".', 3)
       ]],
       ['Escalas maiores e armaduras', 'Intermediário', 'Escala maior: tom - tom - semitom - tom - tom - tom - semitom.', [

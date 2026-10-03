@@ -159,3 +159,21 @@ create policy curtidas_tirar on public.curtidas for delete using (autor_id = aut
 -- Depois de se cadastrar no app, torne-se professor (troque o e-mail):
 -- update public.perfis set papel = 'professor', aprovado = true
 --   where id = (select id from auth.users where email = 'SEU-EMAIL@exemplo.com');
+
+-- Notas das provas de módulo ---------------------------------------------------
+-- Cada tentativa de prova guarda acertos e total. O aluno vê as próprias notas; o professor vê todas.
+create table if not exists public.notas (
+  id bigint generated always as identity primary key,
+  aluno_id uuid not null default auth.uid() references public.perfis (id) on delete cascade,
+  rotina_id bigint not null references public.rotinas (id) on delete cascade,
+  acertos int not null check (acertos >= 0),
+  total int not null check (total > 0 and acertos <= total),
+  criado_em timestamptz not null default now()
+);
+alter table public.notas enable row level security;
+drop policy if exists notas_ler on public.notas;
+create policy notas_ler on public.notas for select
+  using (aluno_id = auth.uid() or public.eh_professor());
+drop policy if exists notas_gravar on public.notas;
+create policy notas_gravar on public.notas for insert
+  with check (aluno_id = auth.uid() and public.eh_aprovado());

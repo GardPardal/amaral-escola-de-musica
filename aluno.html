@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Noto+Music&family=Figtree:wght@400;500;600;700&display=swap">
 <style>
 /* Layout: app de uma coluna (max 760px), abas fixas no topo; rotinas como partitura de tarefas */
 :root {
@@ -301,6 +301,62 @@ th { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: 
 td.num { font-variant-numeric: tabular-nums; }
 .vazio { padding: 28px 20px; border: 1.5px dashed var(--linha); border-radius: 16px; text-align: center; color: var(--tinta-suave); }
 .separador { height: 1px; background: var(--linha); margin-block: 8px; }
+/* Partitura (pauta desenhada pelo canto.js) */
+.voc-pauta, .prova-pauta { overflow-x: auto; background: var(--papel); border: 1px solid var(--linha); border-radius: 10px; padding: 4px; }
+.prova-pauta { max-width: 300px; margin-bottom: 8px; }
+.pauta-svg { width: 100%; height: auto; display: block; color: var(--tinta); }
+.pt-linha { stroke: var(--tinta-suave); stroke-width: 1; }
+.pt-linha.tab { opacity: .55; }
+.pt-barra { stroke: var(--tinta); stroke-width: 1.3; }
+.pt-barra-final, .pt-barra-lig { fill: var(--tinta); }
+.pt-clave { font-family: 'Noto Music', 'Bravura Text', 'Segoe UI Symbol', 'Apple Symbols', serif; font-size: 38px; fill: var(--tinta); }
+.pt-clave.fa { font-size: 31px; }
+.pt-oito { font: 700 10px var(--f-texto); fill: var(--tinta); text-anchor: middle; }
+.pt-acid-fino { fill: none; stroke: currentColor; stroke-width: 1.3; }
+.pt-acid-fino.bemol { stroke-width: 1.6; }
+.pt-acid-grosso { fill: none; stroke: currentColor; stroke-width: 2.6; }
+.pt-formula { font: 800 21px var(--f-display); fill: var(--tinta); text-anchor: middle; }
+.pt-evento { color: var(--tinta); }
+.pt-evento.tocando { color: var(--madeira); }
+.pt-cabeca { fill: currentColor; stroke: currentColor; stroke-width: 1; }
+.pt-cabeca.vazia { fill: var(--papel); stroke-width: 2; }
+.pt-haste { stroke: currentColor; stroke-width: 1.4; }
+.pt-bandeira { fill: none; stroke: currentColor; stroke-width: 2.2; }
+.pt-pausa, .pt-ponto { fill: currentColor; }
+.pt-pausa-traco { fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linejoin: round; stroke-linecap: round; }
+.pt-pausa-traco.fino { stroke-width: 1.6; }
+.pt-tab-fundo { fill: var(--papel); }
+.pt-tab-num { font: 800 11px var(--f-texto); fill: currentColor; text-anchor: middle; }
+.pt-tab-letra { font: 800 10px var(--f-texto); fill: var(--tinta-suave); text-anchor: middle; }
+
+/* Prova de teoria */
+.prova { display: flex; flex-direction: column; gap: 14px; padding: 16px; border-radius: 14px; background: var(--papel-2); border: 1px solid var(--linha); scroll-margin-top: 80px; }
+.prova-cab { display: flex; justify-content: space-between; align-items: baseline; gap: 4px 12px; flex-wrap: wrap; }
+.prova-cab b { font-family: var(--f-display); font-size: 19px; }
+.prova-lista { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 14px; }
+.prova-q { padding: 12px; border-radius: 12px; background: var(--papel); border: 1.5px solid var(--linha); }
+.prova-q::marker { font-weight: 800; color: var(--madeira); }
+.prova-q.certa { border-color: var(--ok); }
+.prova-q.errada { border-color: var(--erro); }
+.prova-perg { font-weight: 700; margin-bottom: 8px; }
+.prova-opcoes { display: grid; gap: 6px; margin-top: 8px; }
+.prova-op { display: flex; gap: 10px; align-items: center; min-height: 44px; padding: 8px 10px; border-radius: 10px; border: 1.5px solid var(--linha); cursor: pointer; }
+.prova-op:has(input:checked) { border-color: var(--madeira); background: var(--papel-2); }
+.prova-op input { flex: none; width: 18px; height: 18px; accent-color: var(--madeira); }
+.prova-op.gabarito { border-color: var(--ok); }
+.prova-correcao { margin-top: 8px; font-size: 14px; font-weight: 700; }
+.prova-q.certa .prova-correcao { color: var(--ok); }
+.prova-q.errada .prova-correcao { color: var(--erro); }
+.prova-resultado { display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: 12px; border: 2px solid var(--linha); background: var(--papel); }
+.prova-resultado.ok { border-color: var(--ok); }
+.prova-resultado.nao { border-color: var(--erro); }
+.prova-nota { font: 800 26px var(--f-display); }
+.prova-rodape { display: flex; justify-content: flex-end; }
+
+/* Módulos na lista de aulas */
+.modulo-titulo { font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--tinta-suave); margin: 14px 0 -4px; }
+.aula-card.trancada { opacity: .6; cursor: not-allowed; }
+.aula-card.prova-card .aula-num { color: var(--ceu); }
 </style>
 </head>
 <body>
@@ -465,7 +521,7 @@ td.num { font-variant-numeric: tabular-nums; }
         <div class="prontas">
           <div class="pilha" style="gap: 4px; min-width: 0">
             <h2>Cursos básicos prontos</h2>
-            <p class="suave pequeno">8 aulas por instrumento, com piano na tela, desenhos no braço e metrônomo. Cada aluno vê só o curso do instrumento dele.</p>
+            <p class="suave pequeno">Cursos em módulos de 4 aulas, com partitura em todas as aulas e prova de teoria no fim de cada módulo (o aluno só segue com 70% de acertos). Cada aluno vê só o curso do instrumento dele.</p>
           </div>
           <button class="botao" type="button" id="btn-prontas">Adicionar todos</button>
         </div>
@@ -525,6 +581,12 @@ td.num { font-variant-numeric: tabular-nums; }
       <div class="pilha">
         <h2>Quem estudou nos últimos 7 dias</h2>
         <div class="tabela-caixa"><table><thead><tr><th>Aluno</th><th>Instrumento</th><th>Dias</th><th>Minutos</th><th>Último estudo</th></tr></thead><tbody id="tabela-alunos"></tbody></table></div>
+      </div>
+
+      <div class="pilha">
+        <h2>Provas de teoria</h2>
+        <p class="suave pequeno" id="notas-aviso">Melhor nota de cada aluno em cada prova de módulo.</p>
+        <div class="tabela-caixa"><table><thead><tr><th>Aluno</th><th>Prova</th><th>Melhor nota</th><th>Tentativas</th><th>Última</th></tr></thead><tbody id="tabela-notas"></tbody></table></div>
       </div>
     </section>
   </main>
@@ -692,6 +754,14 @@ td.num { font-variant-numeric: tabular-nums; }
     });
   }
   function itensDe(r) { return Array.isArray(r.itens) ? r.itens : []; }
+  // Módulo de cada aula pronta (vem do cursos.js, pelo título)
+  var PRONTA = {};
+  (window.AmaralCursos || []).forEach(function (c) { c.aulas.forEach(function (a) { PRONTA[a.titulo] = a; }); });
+  function ehProva(it) { return !!(it && it.vocalize && it.vocalize.tipo === 'prova'); }
+  // prova aprovada (vale até o aluno finalizar a aula, mesmo se fechar a página)
+  function chaveProva(k) { return 'amaral-prova-' + eu.id + '-' + k; }
+  function provaAprovada(k) { try { return localStorage.getItem(chaveProva(k)) === '1'; } catch (e) { return false; } }
+  function gravarProva(k) { try { localStorage.setItem(chaveProva(k), '1'); } catch (e) { /* sem armazenamento */ } }
   function estadoDe(r) {
     var its = itensDe(r), e = { total: its.length, sempre: 0, hoje: 0, minutos: 0 };
     its.forEach(function (it, i) { e.minutos += Number(it.minutos) || 0; if (feitosSempre[r.id + ':' + i]) e.sempre++; if (feitosHoje[r.id + ':' + i]) e.hoje++; });
@@ -730,22 +800,36 @@ td.num { font-variant-numeric: tabular-nums; }
       return;
     }
     var proxima = aulas.filter(function (r) { return !estadoDe(r).concluida; })[0];
-    var grade = null, cursoAtual = null;
+    var grade = null, cursoAtual = null, moduloAtual = null, provaPendente = null;
     aulas.forEach(function (r) {
-      var info = infoAula(r), e = estadoDe(r);
+      var info = infoAula(r), e = estadoDe(r), pronta = PRONTA[r.titulo];
       var grupo = info.curso || 'Rotinas extras';
       if (grupo !== cursoAtual) {
-        cursoAtual = grupo;
+        cursoAtual = grupo; moduloAtual = null; provaPendente = null;
         lista.appendChild(el('h2', { class: 'curso-titulo', text: NOME_CURSO[grupo] || grupo }));
         grade = el('div', { class: 'aulas-grid' }); lista.appendChild(grade);
+      }
+      if (pronta && pronta.modulo && pronta.modulo !== moduloAtual) {
+        moduloAtual = pronta.modulo;
+        lista.appendChild(el('h3', { class: 'modulo-titulo', text: pronta.modulo }));
+        grade = el('div', { class: 'aulas-grid' }); lista.appendChild(grade);
+      }
+      var trancada = !!provaPendente && eu.papel !== 'professor' && !e.concluida;
+      if (pronta && pronta.prova && !e.concluida && !provaPendente) provaPendente = r;
+      if (trancada) {
+        grade.appendChild(el('button', { type: 'button', class: 'aula-card trancada', disabled: true },
+          el('span', { class: 'aula-num', text: 'Aula ' + info.n }),
+          el('b', { class: 'aula-nome', text: info.nome }),
+          el('span', { class: 'aula-status', text: '🔒 Faça antes a prova do ' + String((PRONTA[provaPendente.titulo] || {}).modulo || 'módulo anterior').split(' · ')[0] })));
+        return;
       }
       var status = e.concluida ? el('span', { class: 'aula-status ok', text: '✓ Concluída' })
         : r === proxima ? el('span', { class: 'aula-status vai', text: e.sempre ? '▶ Continuar · ' + e.sempre + ' de ' + e.total : '▶ Começar aqui' })
         : e.sempre ? el('span', { class: 'aula-status', text: 'Em andamento · ' + e.sempre + ' de ' + e.total })
         : el('span', { class: 'aula-status', text: 'Nova' });
-      grade.appendChild(el('button', { type: 'button', class: 'aula-card' + (e.concluida ? ' concluida' : '') + (r === proxima ? ' proxima' : ''),
+      grade.appendChild(el('button', { type: 'button', class: 'aula-card' + (e.concluida ? ' concluida' : '') + (r === proxima ? ' proxima' : '') + (pronta && pronta.prova ? ' prova-card' : ''),
         onclick: function () { abrirAula(r.id); } },
-        el('span', { class: 'aula-num', text: info.n ? 'Aula ' + info.n : 'Rotina' }),
+        el('span', { class: 'aula-num', text: info.n ? (pronta && pronta.prova ? '📝 Prova · Aula ' : 'Aula ') + info.n : 'Rotina' }),
         el('b', { class: 'aula-nome', text: info.nome }),
         el('span', { class: 'aula-meta', text: e.total + ' exercícios · ' + e.minutos + ' min' + (info.n ? '' : ' · ' + r.instrumento) }),
         status));
@@ -812,8 +896,10 @@ td.num { font-variant-numeric: tabular-nums; }
     var cartao = el('article', { class: 'exercicio' },
       el('span', { class: 'exercicio-num', text: 'Exercício ' + (passo + 1) + ' de ' + its.length + (min ? ' · ' + min + ' min' : '') }),
       el('p', { class: 'exercicio-texto', text: String(it.texto || '') }));
+    var prova = ehProva(it);
     if (it.vocalize && window.AmaralCanto) {
-      if (!players[chave]) players[chave] = window.AmaralCanto.criarPlayer(it.vocalize, { instrumento: r.instrumento });
+      if (!players[chave]) players[chave] = window.AmaralCanto.criarPlayer(it.vocalize, { instrumento: r.instrumento,
+        aoTerminar: function (res) { terminouProva(r, chave, res); } });
       cartao.appendChild(players[chave].el);
     }
     if (feito) cartao.appendChild(el('div', { class: 'feito-hoje' }, '✓ Feito hoje ',
@@ -831,9 +917,15 @@ td.num { font-variant-numeric: tabular-nums; }
         irPara(passo + 1);
       } });
 
+    // prova: só segue com a nota mínima
+    liberarProva = null;
+    if (prova && !feito && !semTrava && !provaAprovada(chave)) {
+      seguir.disabled = true; seguir.textContent = 'Passe na prova para seguir';
+      liberarProva = function (k) { if (k === chave && seguir.isConnected) { seguir.disabled = false; seguir.textContent = textoSeguir; } };
+    }
     // trava do tempo mínimo
     var minSeg = min * 60, gasto = lerTempo(chave);
-    if (!feito && !semTrava && minSeg > 0 && gasto < minSeg) {
+    if (!prova && !feito && !semTrava && minSeg > 0 && gasto < minSeg) {
       var barra = el('i'), info = el('span', { class: 'tempo-txt' });
       var caixaTempo = el('div', { class: 'tempo-min', role: 'status' }, info, el('div', { class: 'barra', 'aria-hidden': 'true' }, barra));
       cartao.appendChild(caixaTempo);
@@ -861,6 +953,14 @@ td.num { font-variant-numeric: tabular-nums; }
     v.appendChild(el('div', { class: 'nav-aula' },
       el('button', { type: 'button', class: 'botao vazado', disabled: passo === 0, text: '← Anterior', onclick: function () { irPara(passo - 1); } }),
       seguir));
+  }
+
+  var liberarProva = null;
+  async function terminouProva(r, chave, res) {
+    if (res.aprovado) { gravarProva(chave); if (liberarProva) liberarProva(chave); }
+    if (eu.papel === 'professor') return;
+    // a tabela "notas" é opcional (supabase/schema.sql): sem ela, a prova funciona e só não guarda a nota
+    try { await sb.from('notas').insert({ rotina_id: r.id, acertos: res.acertos, total: res.total }); } catch (e) { /* sem tabela */ }
   }
 
   function mostrarFim(r, v) {
@@ -1047,32 +1147,44 @@ td.num { font-variant-numeric: tabular-nums; }
     if (x && typeof x === 'object') return '{' + Object.keys(x).sort().map(function (k) { return JSON.stringify(k) + ':' + estavel(x[k]); }).join(',') + '}';
     return JSON.stringify(x);
   }
-  // Aulas já cadastradas cujo conteúdo mudou nesta versão do site
+  // Aula já cadastrada que corresponde a uma aula pronta: mesmo título ou, se a numeração mudou
+  // (entraram aulas e provas novas no meio), o mesmo curso e o mesmo nome. Assim o progresso dos alunos fica.
+  function salvaDe(a) {
+    if (salvasProf[a.titulo]) return salvasProf[a.titulo];
+    var ia = infoAula(a), achadas = [];
+    Object.keys(salvasProf).forEach(function (t) {
+      var is = infoAula(salvasProf[t]);
+      if (is.n && is.curso === ia.curso && is.nome === ia.nome && !PRONTA[t]) achadas.push(salvasProf[t]);
+    });
+    return achadas.length === 1 ? achadas[0] : null;
+  }
+  // Aulas já cadastradas cujo conteúdo (ou número) mudou nesta versão do site
   function desatualizadas(curso) {
     return curso.aulas.filter(function (a) {
-      var r = salvasProf[a.titulo];
-      return r && (estavel(r.itens) !== estavel(a.itens) || r.observacao !== a.observacao || r.nivel !== a.nivel);
+      var r = salvaDe(a);
+      return r && (r.titulo !== a.titulo || estavel(r.itens) !== estavel(a.itens) || r.observacao !== a.observacao || r.nivel !== a.nivel);
     });
   }
+  function paraBanco(a) { return { titulo: a.titulo, instrumento: a.instrumento, nivel: a.nivel, observacao: a.observacao, itens: a.itens }; }
   async function atualizarCurso(curso, botao) {
     botao.disabled = true;
     var lista = desatualizadas(curso), erro = null;
     for (var i = 0; i < lista.length && !erro; i++) {
       var a = lista[i];
-      erro = (await sb.from('rotinas').update({ itens: a.itens, observacao: a.observacao, nivel: a.nivel }).eq('id', salvasProf[a.titulo].id)).error;
+      erro = (await sb.from('rotinas').update({ titulo: a.titulo, itens: a.itens, observacao: a.observacao, nivel: a.nivel }).eq('id', salvaDe(a).id)).error;
     }
     botao.disabled = false;
     if (erro) return aviso('msg-prontas', 'Não foi possível atualizar: ' + erro.message, 'erro');
     aviso('msg-prontas', lista.length + ' aulas de ' + (curso.nome || curso.instrumento) + ' atualizadas.', 'ok');
     carregarProfessor();
   }
-  function faltando(curso) { return curso.aulas.filter(function (a) { return titulosProf.indexOf(a.titulo) < 0; }); }
+  function faltando(curso) { return curso.aulas.filter(function (a) { return !salvaDe(a); }); }
   async function adicionarCursos(cursos, botao) {
     var novas = [];
     cursos.forEach(function (c) { novas = novas.concat(faltando(c)); });
     if (!novas.length) return;
     botao.disabled = true;
-    var r = await sb.from('rotinas').insert(novas);
+    var r = await sb.from('rotinas').insert(novas.map(paraBanco));
     botao.disabled = false;
     if (r.error) return aviso('msg-prontas', 'Não foi possível adicionar: ' + r.error.message, 'erro');
     aviso('msg-prontas', novas.length + ' aulas adicionadas. Os alunos já podem ver.', 'ok');
@@ -1161,6 +1273,31 @@ td.num { font-variant-numeric: tabular-nums; }
         el('td', { text: l.ult ? new Date(l.ult + 'T12:00').toLocaleDateString('pt-BR') : 'não estudou' })));
     });
     if (!tb.children.length) tb.appendChild(el('tr', null, el('td', { colspan: '5', class: 'suave', text: 'Nenhum aluno aprovado ainda.' })));
+    carregarNotas(perfis, rotinas);
+  }
+
+  // Notas das provas de módulo: melhor nota e número de tentativas de cada aluno em cada prova
+  async function carregarNotas(perfis, rotinas) {
+    var tn = $('tabela-notas'); tn.replaceChildren();
+    var r = await sb.from('notas').select('aluno_id,rotina_id,acertos,total,criado_em').order('criado_em', { ascending: false }).limit(1000);
+    if (r.error) {
+      $('notas-aviso').textContent = 'Para guardar as notas, rode no Supabase (SQL Editor) a parte "Notas das provas" do arquivo supabase/schema.sql. Sem isso a prova funciona, só não guarda a nota.';
+      return;
+    }
+    var nomes = {}, titulos = {}, grupos = {};
+    perfis.forEach(function (p) { nomes[p.id] = p.nome || 'Sem nome'; });
+    rotinas.forEach(function (x) { titulos[x.id] = x.titulo; });
+    (r.data || []).forEach(function (n) {
+      var k = n.aluno_id + ':' + n.rotina_id, pct = Math.round(100 * n.acertos / Math.max(1, n.total));
+      var g = grupos[k] || (grupos[k] = { aluno: nomes[n.aluno_id] || '—', prova: titulos[n.rotina_id] || 'Prova', melhor: 0, vezes: 0, ultima: n.criado_em });
+      g.melhor = Math.max(g.melhor, pct); g.vezes++;
+    });
+    Object.keys(grupos).map(function (k) { return grupos[k]; }).sort(function (a, b) { return String(b.ultima).localeCompare(String(a.ultima)); }).forEach(function (g) {
+      tn.appendChild(el('tr', null, el('td', { text: g.aluno }), el('td', { text: g.prova.replace(/ · Aula \d+: /, ' · ') }),
+        el('td', { class: 'num', text: g.melhor + '%' + (g.melhor >= 70 ? ' ✓' : '') }), el('td', { class: 'num', text: String(g.vezes) }),
+        el('td', { text: quando(g.ultima) })));
+    });
+    if (!tn.children.length) tn.appendChild(el('tr', null, el('td', { colspan: '5', class: 'suave', text: 'Nenhuma prova feita ainda.' })));
   }
 })();
 </script>
